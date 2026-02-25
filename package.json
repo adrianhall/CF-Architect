@@ -1,0 +1,43 @@
+{
+  "name": "cf-architect",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "start": "wrangler dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "deploy": "wrangler d1 migrations apply DB --remote && wrangler deploy",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "lint": "eslint . && prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "astro": "^5.5.0",
+    "@astrojs/react": "^4.2.1",
+    "@astrojs/cloudflare": "^12.5.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "@xyflow/react": "^12.6.0",
+    "zustand": "^5.0.0",
+    "drizzle-orm": "^0.39.0",
+    "zod": "^3.24.0",
+    "elkjs": "^0.9.3",
+    "nanoid": "^5.1.0",
+    "@tailwindcss/vite": "^4.1.0",
+    "tailwindcss": "^4.1.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250224.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "drizzle-kit": "^0.30.0",
+    "typescript": "^5.7.0",
+    "wrangler": "^4.0.0",
+    "vitest": "^3.0.0"
+  }
+}

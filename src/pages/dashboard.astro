@@ -1,0 +1,12 @@
+---
+import Layout from "../components/Layout.astro";
+import Navbar from "../components/Navbar.astro";
+import DiagramList from "../islands/dashboard/DiagramList";
+---
+
+<Layout title="Dashboard — CF Architect">
+  <Navbar />
+  <main class="dashboard">
+    <DiagramList client:load />
+  </main>
+</Layout>

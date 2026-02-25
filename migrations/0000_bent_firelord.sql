@@ -1,0 +1,37 @@
+CREATE TABLE `diagrams` (
+	`id` text PRIMARY KEY NOT NULL,
+	`owner_id` text NOT NULL,
+	`title` text DEFAULT 'Untitled Diagram' NOT NULL,
+	`description` text,
+	`graph_data` text DEFAULT '{}' NOT NULL,
+	`thumbnail_key` text,
+	`blueprint_id` text,
+	`created_at` text DEFAULT (datetime('now')) NOT NULL,
+	`updated_at` text DEFAULT (datetime('now')) NOT NULL,
+	FOREIGN KEY (`owner_id`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE TABLE `share_links` (
+	`id` text PRIMARY KEY NOT NULL,
+	`diagram_id` text NOT NULL,
+	`token` text NOT NULL,
+	`created_by` text NOT NULL,
+	`expires_at` text,
+	`created_at` text DEFAULT (datetime('now')) NOT NULL,
+	FOREIGN KEY (`diagram_id`) REFERENCES `diagrams`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`created_by`) REFERENCES `users`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `share_links_token_unique` ON `share_links` (`token`);--> statement-breakpoint
+CREATE TABLE `users` (
+	`id` text PRIMARY KEY NOT NULL,
+	`email` text,
+	`display_name` text,
+	`avatar_url` text,
+	`created_at` text DEFAULT (datetime('now')) NOT NULL,
+	`updated_at` text DEFAULT (datetime('now')) NOT NULL
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `users_email_unique` ON `users` (`email`);--> statement-breakpoint
+INSERT INTO `users` (`id`, `display_name`, `created_at`, `updated_at`)
+VALUES ('00000000-0000-0000-0000-000000000000', 'Default User', datetime('now'), datetime('now'));

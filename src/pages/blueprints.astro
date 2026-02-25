@@ -1,0 +1,37 @@
+---
+import Layout from "../components/Layout.astro";
+import Navbar from "../components/Navbar.astro";
+import { BLUEPRINTS } from "../lib/blueprints";
+---
+
+<Layout title="Blueprints — CF Architect">
+  <Navbar />
+  <main class="dashboard">
+    <div class="dashboard-header">
+      <h1 class="dashboard-title">Blueprint Templates</h1>
+    </div>
+    {
+      BLUEPRINTS.length === 0 ? (
+        <div class="empty-state">
+          <h3>Coming Soon</h3>
+          <p>
+            Blueprint templates for common Cloudflare architectures will be
+            available in a future update.
+          </p>
+        </div>
+      ) : (
+        <div class="diagram-grid">
+          {BLUEPRINTS.map((bp) => (
+            <div class="diagram-card">
+              <div class="diagram-card-preview">{bp.category}</div>
+              <div class="diagram-card-body">
+                <div class="diagram-card-title">{bp.title}</div>
+                <div class="diagram-card-meta">{bp.description}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )
+    }
+  </main>
+</Layout>

@@ -1,0 +1,13 @@
+---
+import Layout from "../../components/Layout.astro";
+import DiagramCanvasWrapper from "../../islands/DiagramCanvasWrapper";
+
+const { id } = Astro.params;
+if (!id) {
+  return Astro.redirect("/dashboard");
+}
+---
+
+<Layout title="Editor — CF Architect" fullscreen>
+  <DiagramCanvasWrapper diagramId={id} client:only="react" />
+</Layout>

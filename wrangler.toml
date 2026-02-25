@@ -1,0 +1,24 @@
+name = "cf-architect"
+compatibility_date = "2025-02-25"
+compatibility_flags = ["nodejs_compat"]
+
+[observability]
+enabled = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "cf-architect-db"
+database_id = "local"
+migrations_dir = "migrations"
+
+[[kv_namespaces]]
+binding = "KV"
+id = "local"
+
+[[kv_namespaces]]
+binding = "SESSION"
+id = "local-session"
+
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "cf-architect-assets"

@@ -1,0 +1,49 @@
+---
+import Layout from "../../components/Layout.astro";
+import DiagramCanvasWrapper from "../../islands/DiagramCanvasWrapper";
+import { createDb } from "../../lib/db/client";
+import { resolveShareToken } from "../../lib/share";
+import { diagrams } from "../../lib/db/schema";
+import { eq } from "drizzle-orm";
+
+const { token } = Astro.params;
+if (!token) {
+  return Astro.redirect("/dashboard");
+}
+
+const db = createDb(Astro.locals.runtime.env.DB);
+const meta = await resolveShareToken(Astro.locals.runtime.env.KV, db, token);
+
+if (!meta) {
+  return new Response("Share link not found or expired", { status: 404 });
+}
+
+const diagram = await db
+  .select()
+  .from(diagrams)
+  .where(eq(diagrams.id, meta.diagramId))
+  .get();
+
+if (!diagram) {
+  return new Response("Diagram not found", { status: 404 });
+}
+
+const initialData = {
+  title: diagram.title,
+  description: diagram.description ?? "",
+  graphData: diagram.graphData,
+};
+---
+
+<Layout title={`${diagram.title} — CF Architect`} fullscreen>
+  <div class="shared-banner">
+    You're viewing a shared diagram.
+    <a href="/dashboard">Create your own &rarr;</a>
+  </div>
+  <DiagramCanvasWrapper
+    diagramId={diagram.id}
+    readOnly={true}
+    initialData={initialData}
+    client:only="react"
+  />
+</Layout>
