@@ -10,17 +10,34 @@ import {
 const grouped = getNodesByCategory();
 const categories = Object.keys(grouped) as NodeCategory[];
 
+/**
+ * Left sidebar listing all node types grouped by category. Each item is
+ * draggable (sets `application/cf-node-type` transfer data). Has a type-ahead
+ * search filter and collapsible category sections.
+ */
 export function ServicePalette() {
   const [search, setSearch] = useState("");
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   const filterTerm = search.toLowerCase().trim();
 
+  /**
+   * Initiate a drag operation from the palette, attaching the node typeId
+   * as transfer data so the canvas `onDrop` handler can create the node.
+   *
+   * @param event  - The native drag event.
+   * @param typeId - Catalog type identifier of the node being dragged.
+   */
   const onDragStart = (event: DragEvent, typeId: string) => {
     event.dataTransfer.setData("application/cf-node-type", typeId);
     event.dataTransfer.effectAllowed = "move";
   };
 
+  /**
+   * Toggle the collapsed/expanded state of a category section.
+   *
+   * @param cat - The category key to toggle.
+   */
   const toggleCategory = (cat: string) => {
     setCollapsed((prev) => ({ ...prev, [cat]: !prev[cat] }));
   };
@@ -82,6 +99,12 @@ export function ServicePalette() {
   );
 }
 
+/**
+ * Renders a single draggable palette item with icon and label.
+ *
+ * @param props.node - NodeTypeDef for the node type
+ * @param props.onDragStart - Callback invoked when drag starts, receives event and typeId
+ */
 function PaletteItem({
   node,
   onDragStart,

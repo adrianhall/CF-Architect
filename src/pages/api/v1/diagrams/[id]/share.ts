@@ -1,3 +1,7 @@
+/**
+ * Share link management for a specific diagram.
+ */
+
 import type { APIContext } from "astro";
 import { eq, and } from "drizzle-orm";
 import { createDb } from "@lib/db/client";
@@ -6,6 +10,13 @@ import { CreateShareSchema, apiSuccess, apiError } from "@lib/validation";
 import { jsonResponse } from "@lib/helpers";
 import { createShareLink, revokeShareLink } from "@lib/share";
 
+/**
+ * Creates a new share link.
+ * Generates a token and writes to D1 + KV.
+ *
+ * @param context - Astro API context with request, params (id), locals (user, runtime.env)
+ * @returns 201 with token and URL, or 404 if diagram not found
+ */
 export async function POST({ request, params, locals }: APIContext) {
   const body = await request.json().catch(() => ({}));
   const parsed = CreateShareSchema.safeParse(body);
@@ -42,6 +53,13 @@ export async function POST({ request, params, locals }: APIContext) {
   return jsonResponse(apiSuccess({ ...result, url }), 201);
 }
 
+/**
+ * Revokes a share link.
+ * Expects `?token=` query parameter.
+ *
+ * @param context - Astro API context with request, params (id), locals (user, runtime.env)
+ * @returns 204 on success, or 404 if share link not found
+ */
 export async function DELETE({ request, params, locals }: APIContext) {
   const url = new URL(request.url);
   const token = url.searchParams.get("token");
@@ -60,7 +78,7 @@ export async function DELETE({ request, params, locals }: APIContext) {
       and(
         eq(shareLinks.token, token),
         eq(shareLinks.diagramId, params.id!),
-        eq(shareLinks.createdBy, locals.user.id),
+        eq(shareLinks.createdBy , locals.user.id),
       ),
     )
     .get();

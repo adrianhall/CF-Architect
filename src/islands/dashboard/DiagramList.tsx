@@ -1,23 +1,27 @@
 import { useEffect, useState } from "react";
+import {
+  type Diagram,
+  DiagramListResponseSchema,
+  DiagramResponseSchema,
+  fetchApi,
+} from "../../lib/validation";
 
-interface Diagram {
-  id: string;
-  title: string;
-  description: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-
+/**
+ * Dashboard page island. Fetches diagrams on mount, renders a responsive card grid.
+ */
 export default function DiagramList() {
   const [diagrams, setDiagrams] = useState<Diagram[]>([]);
   const [loading, setLoading] = useState(true);
 
+  /** Fetches the list of diagrams from the API. */
   const fetchDiagrams = async () => {
     try {
-      const res = await fetch("/api/v1/diagrams");
-      const data = await res.json();
-      if (data.ok) {
-        setDiagrams(data.data);
+      const result = await fetchApi(
+        "/api/v1/diagrams",
+        DiagramListResponseSchema,
+      );
+      if (result.ok) {
+        setDiagrams(result.data);
       }
     } catch (err) {
       console.error("Failed to fetch diagrams:", err);
@@ -30,40 +34,54 @@ export default function DiagramList() {
     fetchDiagrams();
   }, []);
 
+  /** Creates a new diagram and navigates to its editor. */
   const createDiagram = async () => {
     try {
-      const res = await fetch("/api/v1/diagrams", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      });
-      const data = await res.json();
-      if (data.ok) {
-        window.location.href = `/diagram/${data.data.id}`;
+      const result = await fetchApi(
+        "/api/v1/diagrams",
+        DiagramResponseSchema,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        },
+      );
+      if (result.ok) {
+        window.location.href = `/diagram/${result.data.id}`;
       }
     } catch (err) {
       console.error("Failed to create diagram:", err);
     }
   };
 
+  /**
+   * Duplicates a diagram by fetching its data and creating a new diagram with the same graph.
+   *
+   * @param diagram - The diagram to duplicate
+   */
   const duplicateDiagram = async (diagram: Diagram) => {
     try {
-      const origRes = await fetch(`/api/v1/diagrams/${diagram.id}`);
-      const origData = await origRes.json();
-      if (!origData.ok) return;
+      const origResult = await fetchApi(
+        `/api/v1/diagrams/${diagram.id}`,
+        DiagramResponseSchema,
+      );
+      if (!origResult.ok) return;
 
-      const res = await fetch("/api/v1/diagrams", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: `${diagram.title} (copy)` }),
-      });
-      const newData = await res.json();
-      if (!newData.ok) return;
+      const newResult = await fetchApi(
+        "/api/v1/diagrams",
+        DiagramResponseSchema,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: `${diagram.title} (copy)` }),
+        },
+      );
+      if (!newResult.ok) return;
 
-      await fetch(`/api/v1/diagrams/${newData.data.id}/graph`, {
+      await fetch(`/api/v1/diagrams/${newResult.data.id}/graph`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ graphData: origData.data.graphData }),
+        body: JSON.stringify({ graphData: origResult.data.graphData }),
       });
 
       fetchDiagrams();
@@ -72,6 +90,11 @@ export default function DiagramList() {
     }
   };
 
+  /**
+   * Deletes a diagram after confirmation.
+   *
+   * @param id - The diagram ID to delete
+   */
   const deleteDiagram = async (id: string) => {
     if (!confirm("Are you sure you want to delete this diagram?")) return;
     try {
@@ -82,6 +105,12 @@ export default function DiagramList() {
     }
   };
 
+  /**
+   * Formats an ISO date string for display.
+   *
+   * @param iso - ISO 8601 date string
+   * @returns Formatted date string (e.g. "Feb 25, 2025, 2:30 PM")
+   */
   const formatDate = (iso: string) => {
     const d = new Date(iso);
     return d.toLocaleDateString(undefined, {

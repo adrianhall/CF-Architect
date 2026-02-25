@@ -20,6 +20,13 @@ import { PropertiesPanel } from "./panels/PropertiesPanel";
 import { Toolbar } from "./toolbar/Toolbar";
 import { StatusBar } from "./toolbar/StatusBar";
 
+/**
+ * Props for the DiagramCanvas component.
+ *
+ * @property diagramId - Unique identifier for the diagram
+ * @property readOnly - If true, hides editing UI and disables modifications
+ * @property initialData - Optional pre-loaded data (title, description, graphData) to avoid API fetch
+ */
 interface DiagramCanvasProps {
   diagramId: string;
   readOnly?: boolean;
@@ -30,6 +37,13 @@ interface DiagramCanvasProps {
   };
 }
 
+/**
+ * Main editor component. Loads diagram data on mount (from initialData or via API
+ * fetch), sets up autosave (500ms debounce), beforeunload guard, title save,
+ * drag-and-drop from palette, keyboard shortcuts (Delete, Ctrl+Z, Ctrl+Shift+Z),
+ * and renders the full editor layout (Toolbar, ServicePalette, ReactFlow,
+ * PropertiesPanel, StatusBar). Conditional read-only mode hides editing UI.
+ */
 export default function DiagramCanvas({
   diagramId,
   readOnly = false,
@@ -151,11 +165,13 @@ export default function DiagramCanvas({
     return () => clearTimeout(timer);
   }, [title, readOnly, diagramId]);
 
+  /** Allows drop by preventing default and setting dropEffect to "move". */
   const onDragOver = useCallback((event: DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
   }, []);
 
+  /** Handles drop from palette: reads typeId, creates node at drop position. */
   const onDrop = useCallback(
     (event: DragEvent) => {
       event.preventDefault();
@@ -186,6 +202,7 @@ export default function DiagramCanvas({
     [screenToFlowPosition, addNode],
   );
 
+  /** Selects the clicked node. */
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
       setSelectedNode(node.id);
@@ -193,6 +210,7 @@ export default function DiagramCanvas({
     [setSelectedNode],
   );
 
+  /** Selects the clicked edge. */
   const onEdgeClick = useCallback(
     (_: React.MouseEvent, edge: { id: string }) => {
       setSelectedEdge(edge.id);
@@ -200,11 +218,13 @@ export default function DiagramCanvas({
     [setSelectedEdge],
   );
 
+  /** Clears selection when clicking on empty pane. */
   const onPaneClick = useCallback(() => {
     setSelectedNode(null);
     setSelectedEdge(null);
   }, [setSelectedNode, setSelectedEdge]);
 
+  /** Handles Delete/Backspace, Ctrl+Z (undo), Ctrl+Shift+Z (redo). */
   const onKeyDown = useCallback(
     (event: KeyboardEvent) => {
       if (readOnly) return;

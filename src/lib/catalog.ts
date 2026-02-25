@@ -1,3 +1,13 @@
+/**
+ * Cloudflare product catalog — node types, edge types, and category metadata.
+ *
+ * This module is the single source of truth for every service that can appear
+ * on the canvas. It is consumed by the React Flow node/edge renderers, the
+ * service palette sidebar, the auto-layout engine, and (post-MVP) the AI
+ * prompt builder and project scaffold generator.
+ */
+
+/** Broad grouping for Cloudflare product nodes. */
 export type NodeCategory =
   | "compute"
   | "storage"
@@ -6,33 +16,58 @@ export type NodeCategory =
   | "network"
   | "external";
 
+/** Definition of a single connection handle (port) on a node. */
 export interface HandleDef {
+  /** Unique handle identifier within the node (e.g. "target-top"). */
   id: string;
+  /** Whether this handle accepts incoming ("target") or outgoing ("source") connections. */
   type: "source" | "target";
+  /** Edge of the node where the handle is rendered. */
   position: "top" | "bottom" | "left" | "right";
 }
 
+/** Static definition of a Cloudflare product node type in the catalog. */
 export interface NodeTypeDef {
+  /** Machine-readable identifier (e.g. "worker", "d1"). Used as the key in React Flow `data.typeId`. */
   typeId: string;
+  /** Human-readable product name shown in the palette and on the canvas. */
   label: string;
+  /** Category this product belongs to, used for palette grouping and color coding. */
   category: NodeCategory;
+  /** Path to the SVG icon in `/public/icons/`. */
   iconPath: string;
+  /** Short description shown in palette tooltips. */
   description: string;
+  /** Default connection handles (ports) for new instances of this node type. */
   defaultHandles: HandleDef[];
+  /** Corresponding `wrangler.toml` binding type, used by the future scaffold generator. */
   wranglerBinding?: string;
 }
 
+/** Static definition of a connection edge type in the catalog. */
 export interface EdgeTypeDef {
+  /** Machine-readable identifier (e.g. "data-flow"). Stored in `edge.data.edgeType`. */
   edgeType: string;
+  /** Human-readable label shown in the properties panel edge type selector. */
   label: string;
+  /** CSS stroke style: solid, dashed, or dotted. */
   style: "solid" | "dashed" | "dotted";
+  /** Whether the edge stroke is animated (moving dashes). */
   animated: boolean;
+  /** Whether an arrowhead marker is drawn at the target end. */
   markerEnd: boolean;
+  /** Default stroke colour (hex). */
   color: string;
+  /** Short description of this edge type's purpose. */
   description: string;
+  /** Wrangler binding type for the future scaffold generator (e.g. "service", "http"). */
   bindingType?: string;
 }
 
+/**
+ * Standard four-handle layout used by most node types.
+ * Target handles on top and left; source handles on bottom and right.
+ */
 const defaultHandles: HandleDef[] = [
   { id: "target-top", type: "target", position: "top" },
   { id: "source-bottom", type: "source", position: "bottom" },
@@ -40,6 +75,7 @@ const defaultHandles: HandleDef[] = [
   { id: "source-right", type: "source", position: "right" },
 ];
 
+/** Hex colour associated with each node category, used for borders and handles. */
 export const CATEGORY_COLORS: Record<NodeCategory, string> = {
   compute: "#3B82F6",
   storage: "#10B981",
@@ -49,6 +85,7 @@ export const CATEGORY_COLORS: Record<NodeCategory, string> = {
   external: "#6B7280",
 };
 
+/** Human-readable label for each node category, shown in the palette headers. */
 export const CATEGORY_LABELS: Record<NodeCategory, string> = {
   compute: "Compute",
   storage: "Storage & Data",
@@ -58,6 +95,7 @@ export const CATEGORY_LABELS: Record<NodeCategory, string> = {
   external: "External / Generic",
 };
 
+/** Complete list of all 30 Cloudflare product node types available on the canvas. */
 export const NODE_TYPES: NodeTypeDef[] = [
   // Compute
   {
@@ -333,6 +371,7 @@ export const NODE_TYPES: NodeTypeDef[] = [
   },
 ];
 
+/** All available edge types with their visual and semantic metadata. */
 export const EDGE_TYPES: EdgeTypeDef[] = [
   {
     edgeType: "data-flow",
@@ -376,9 +415,19 @@ export const EDGE_TYPES: EdgeTypeDef[] = [
   },
 ];
 
+/** O(1) lookup map from node `typeId` to its full definition. */
 export const NODE_TYPE_MAP = new Map(NODE_TYPES.map((n) => [n.typeId, n]));
+
+/** O(1) lookup map from edge `edgeType` to its full definition. */
 export const EDGE_TYPE_MAP = new Map(EDGE_TYPES.map((e) => [e.edgeType, e]));
 
+/**
+ * Group all node types by their category.
+ *
+ * Used by the {@link ServicePalette} to render collapsible category sections.
+ *
+ * @returns A record keyed by `NodeCategory` with arrays of node definitions.
+ */
 export function getNodesByCategory(): Record<NodeCategory, NodeTypeDef[]> {
   const grouped = {} as Record<NodeCategory, NodeTypeDef[]>;
   for (const node of NODE_TYPES) {

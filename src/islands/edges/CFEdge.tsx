@@ -8,6 +8,12 @@ import {
 import { EDGE_TYPE_MAP } from "../../lib/catalog";
 import type { CFEdgeData } from "../types";
 
+/**
+ * Renders edges between nodes with four visual styles based on `data.edgeType`:
+ * solid animated (data-flow), dashed (service-binding), dotted (trigger),
+ * thin gray (external). Uses smooth step path with SVG arrow markers.
+ * Shows optional label at midpoint.
+ */
 function CFEdgeComponent({
   id,
   sourceX,
@@ -86,4 +92,5 @@ function CFEdgeComponent({
   );
 }
 
+/** Memoised export of CFEdgeComponent for React Flow's edgeTypes registry. */
 export const CFEdge = memo(CFEdgeComponent);

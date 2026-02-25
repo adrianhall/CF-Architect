@@ -1,3 +1,11 @@
+/**
+ * Zustand store for the diagram editor canvas.
+ *
+ * Holds the complete client-side state for a single diagram editing session:
+ * React Flow graph state (nodes, edges, viewport), selection tracking, save
+ * status, and a session-scoped undo/redo history stack. All canvas mutations
+ * flow through this store so that the dirty flag and history are kept in sync.
+ */
 import { create } from "zustand";
 import {
   type Node,
@@ -15,33 +23,59 @@ import {
 } from "@xyflow/react";
 import type { CFNodeData, CFEdgeData } from "../types";
 
+/** A snapshot of the node and edge arrays for undo/redo. */
 interface HistoryEntry {
   nodes: Node<CFNodeData>[];
   edges: Edge<CFEdgeData>[];
 }
 
+/** Read-only state slice of the diagram store. */
 interface DiagramState {
+  /** UUID of the currently loaded diagram, or null before initial fetch. */
   diagramId: string | null;
+  /** User-editable diagram title. */
   title: string;
+  /** User-editable diagram description. */
   description: string;
 
+  /** React Flow node array (each node carries {@link CFNodeData}). */
   nodes: Node<CFNodeData>[];
+  /** React Flow edge array (each edge carries {@link CFEdgeData}). */
   edges: Edge<CFEdgeData>[];
+  /** Current canvas viewport (pan x/y and zoom level). */
   viewport: Viewport;
 
+  /** ID of the currently selected node, or null. */
   selectedNodeId: string | null;
+  /** ID of the currently selected edge, or null. */
   selectedEdgeId: string | null;
 
+  /** Whether the graph has unsaved changes since the last successful save. */
   dirty: boolean;
+  /** Whether an autosave request is currently in flight. */
   saving: boolean;
+  /** Unix timestamp (ms) of the last successful save, or null if never saved. */
   lastSavedAt: number | null;
+  /** Human-readable error message from the most recent failed save, or null. */
   saveError: string | null;
 
+  /** Stack of previous states for undo. Most recent entry is at the end. */
   undoStack: HistoryEntry[];
+  /** Stack of undone states for redo. Most recent entry is at the end. */
   redoStack: HistoryEntry[];
 }
 
+/** Mutation actions exposed by the diagram store. */
 interface DiagramActions {
+  /**
+   * Initialise the store with a loaded diagram.
+   * @param id          - Diagram UUID.
+   * @param title       - Diagram title.
+   * @param description - Diagram description.
+   * @param nodes       - Parsed React Flow nodes.
+   * @param edges       - Parsed React Flow edges.
+   * @param viewport    - Parsed viewport state.
+   */
   setDiagram: (
     id: string,
     title: string,
@@ -50,33 +84,111 @@ interface DiagramActions {
     edges: Edge<CFEdgeData>[],
     viewport: Viewport,
   ) => void;
+
+  /** React Flow `onNodesChange` handler. Pushes history on structural changes (add/remove). */
   onNodesChange: OnNodesChange;
+  /** React Flow `onEdgesChange` handler. Pushes history on structural changes (add/remove). */
   onEdgesChange: OnEdgesChange;
+  /** React Flow `onConnect` handler. Creates a new `data-flow` edge and pushes history. */
   onConnect: OnConnect;
+  /**
+   * Update the stored viewport (pan/zoom). Does not mark dirty.
+   * @param viewport - The new viewport state from React Flow.
+   */
   onViewportChange: (viewport: Viewport) => void;
+
+  /**
+   * Add a new node to the canvas. Pushes history before mutating.
+   * @param node - The fully constructed React Flow node to add.
+   */
   addNode: (node: Node<CFNodeData>) => void;
+  /**
+   * Merge partial data into an existing node's `data` payload.
+   * @param nodeId - ID of the target node.
+   * @param data   - Partial `CFNodeData` fields to merge.
+   */
   updateNodeData: (nodeId: string, data: Partial<CFNodeData>) => void;
+  /**
+   * Merge partial data into an existing edge's `data` payload.
+   * @param edgeId - ID of the target edge.
+   * @param data   - Partial `CFEdgeData` fields to merge.
+   */
   updateEdgeData: (edgeId: string, data: Partial<CFEdgeData>) => void;
+  /** Remove all currently selected nodes and edges. Pushes history. */
   removeSelected: () => void;
+
+  /**
+   * Set the selected node (clears any edge selection).
+   * @param id - Node ID, or null to deselect.
+   */
   setSelectedNode: (id: string | null) => void;
+  /**
+   * Set the selected edge (clears any node selection).
+   * @param id - Edge ID, or null to deselect.
+   */
   setSelectedEdge: (id: string | null) => void;
+
+  /**
+   * Update the diagram title and mark dirty.
+   * @param title - New title string.
+   */
   setTitle: (title: string) => void;
+  /**
+   * Update the diagram description and mark dirty.
+   * @param description - New description string.
+   */
   setDescription: (description: string) => void;
+
+  /**
+   * Replace the entire nodes array. Used by auto-layout.
+   * @param nodes - New node array.
+   */
   setNodes: (nodes: Node<CFNodeData>[]) => void;
+  /**
+   * Replace the entire edges array.
+   * @param edges - New edge array.
+   */
   setEdges: (edges: Edge<CFEdgeData>[]) => void;
+
+  /** Set `saving` to true and clear any previous save error. */
   markSaving: () => void;
+  /** Set `saving` to false, clear `dirty`, record `lastSavedAt`, clear error. */
   markSaved: () => void;
+  /**
+   * Record a save failure.
+   * @param error - Human-readable error message.
+   */
   markSaveError: (error: string) => void;
+  /** Manually set the dirty flag (e.g. after a title change). */
   markDirty: () => void;
+
+  /** Revert to the most recent undo snapshot. No-op if the stack is empty. */
   undo: () => void;
+  /** Re-apply the most recently undone snapshot. No-op if the stack is empty. */
   redo: () => void;
+  /** Push the current nodes/edges onto the undo stack and clear the redo stack. */
   pushHistory: () => void;
 }
 
+/** Maximum number of undo snapshots retained in memory. */
 const MAX_HISTORY = 50;
 
+/** Combined state + actions type for the diagram Zustand store. */
 export type DiagramStore = DiagramState & DiagramActions;
 
+/**
+ * Zustand store hook for diagram editor state.
+ *
+ * Use inside React components:
+ * ```ts
+ * const { nodes, edges, addNode } = useDiagramStore();
+ * ```
+ *
+ * Access outside React (e.g. in autosave callbacks):
+ * ```ts
+ * const state = useDiagramStore.getState();
+ * ```
+ */
 export const useDiagramStore = create<DiagramStore>((set, get) => ({
   diagramId: null,
   title: "Untitled Diagram",

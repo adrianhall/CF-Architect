@@ -2,6 +2,12 @@ import { useDiagramStore } from "../store/diagramStore";
 import { NODE_TYPE_MAP, EDGE_TYPES, CATEGORY_LABELS } from "../../lib/catalog";
 import type { CFNodeData, CFEdgeData } from "../types";
 
+/**
+ * Right sidebar that shows editable properties for the currently selected node
+ * or edge. For nodes: type, category, label, description, accent colour. For
+ * edges: edge type selector, label, protocol, description. Shows empty-state
+ * message when nothing is selected.
+ */
 export function PropertiesPanel() {
   const {
     nodes,

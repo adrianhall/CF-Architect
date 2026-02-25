@@ -2,6 +2,12 @@ import { useEffect, useState } from "react";
 import { useReactFlow } from "@xyflow/react";
 import { useDiagramStore } from "../store/diagramStore";
 
+/**
+ * Converts a unix timestamp to a relative time string (e.g. "just now", "5s ago", "2m ago").
+ *
+ * @param ts - Unix timestamp in milliseconds
+ * @returns Relative time string
+ */
 function timeAgo(ts: number): string {
   const seconds = Math.floor((Date.now() - ts) / 1000);
   if (seconds < 5) return "just now";
@@ -10,6 +16,12 @@ function timeAgo(ts: number): string {
   return `${minutes}m ago`;
 }
 
+/**
+ * Bottom bar showing node/edge count, zoom percentage, and save status.
+ * Polls zoom level every second.
+ *
+ * @param props.readOnly - Whether the diagram is in read-only mode
+ */
 export function StatusBar({ readOnly }: { readOnly: boolean }) {
   const { saving, dirty, lastSavedAt, saveError, nodes, edges } =
     useDiagramStore();

@@ -3,6 +3,16 @@ import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { NODE_TYPE_MAP, CATEGORY_COLORS } from "../../lib/catalog";
 import type { CFNodeData } from "../types";
 
+/**
+ * Generic custom React Flow node renderer for all Cloudflare product types.
+ * Looks up the product definition from the catalog via `data.typeId`, renders a
+ * category-colored border, product icon, label, optional description, and typed
+ * connection handles.
+ *
+ * @param props - React Flow NodeProps
+ * @param props.data - Node data containing typeId, label, description, style
+ * @param props.selected - Whether the node is currently selected
+ */
 function CFNodeComponent({ data, selected }: NodeProps) {
   const nodeData = data as unknown as CFNodeData;
   const typeDef = NODE_TYPE_MAP.get(nodeData.typeId);
@@ -57,4 +67,5 @@ function CFNodeComponent({ data, selected }: NodeProps) {
   );
 }
 
+/** Memoised export of CFNodeComponent for React Flow's nodeTypes registry. */
 export const CFNode = memo(CFNodeComponent);

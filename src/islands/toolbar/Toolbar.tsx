@@ -4,12 +4,21 @@ import { useDiagramStore } from "../store/diagramStore";
 import type { CFNodeData } from "../types";
 import { NODE_TYPE_MAP } from "../../lib/catalog";
 
+/**
+ * Top toolbar with diagram title input, undo/redo buttons, zoom controls,
+ * auto-layout button (ELK), and share button.
+ */
 export function Toolbar() {
   const { fitView, zoomIn, zoomOut } = useReactFlow();
   const { undo, redo, undoStack, redoStack, title, setTitle } =
     useDiagramStore();
   const [layouting, setLayouting] = useState(false);
 
+  /**
+   * Dynamically imports ELK, builds a layered graph description from current
+   * nodes/edges, runs layout, applies computed positions, and fits the viewport.
+   * Pushes history before applying.
+   */
   const applyAutoLayout = useCallback(async () => {
     setLayouting(true);
     try {
@@ -153,12 +162,17 @@ export function Toolbar() {
   );
 }
 
+/**
+ * Internal component that POSTs to the share API, displays a modal with the
+ * share URL and copy-to-clipboard.
+ */
 function ShareButton() {
   const { diagramId } = useDiagramStore();
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [copying, setCopying] = useState(false);
 
+  /** POSTs to the share API and opens the modal with the share URL. */
   const handleShare = async () => {
     if (!diagramId) return;
     try {
@@ -177,6 +191,7 @@ function ShareButton() {
     }
   };
 
+  /** Copies the share URL to the clipboard and shows "Copied!" feedback. */
   const copyToClipboard = async () => {
     if (!shareUrl) return;
     await navigator.clipboard.writeText(shareUrl);

@@ -1,3 +1,8 @@
+/**
+ * Diagrams collection API.
+ * Handles GET (list) and POST (create) for diagrams.
+ */
+
 import type { APIContext } from "astro";
 import { eq, desc } from "drizzle-orm";
 import { createDb } from "@lib/db/client";
@@ -6,6 +11,12 @@ import { CreateDiagramSchema, apiSuccess, apiError } from "@lib/validation";
 import { generateId, nowISO, jsonResponse } from "@lib/helpers";
 import { BLUEPRINT_MAP } from "@lib/blueprints";
 
+/**
+ * Lists all diagrams for the current user, ordered by most recently updated.
+ *
+ * @param context - Astro API context with locals (user, runtime.env)
+ * @returns ApiResult<Diagram[]>
+ */
 export async function GET({ locals }: APIContext) {
   const db = createDb(locals.runtime.env.DB);
   const rows = await db
@@ -17,6 +28,13 @@ export async function GET({ locals }: APIContext) {
   return jsonResponse(apiSuccess(rows));
 }
 
+/**
+ * Creates a new diagram, optionally cloning graph data from a blueprint.
+ * Validates request body via CreateDiagramSchema.
+ *
+ * @param context - Astro API context with request, locals (user, runtime.env)
+ * @returns 201 with the new diagram, or 404 if blueprintId is invalid
+ */
 export async function POST({ request, locals }: APIContext) {
   const body = await request.json().catch(() => ({}));
   const parsed = CreateDiagramSchema.safeParse(body);

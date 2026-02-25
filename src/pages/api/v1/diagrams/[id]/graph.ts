@@ -1,3 +1,7 @@
+/**
+ * Autosave endpoint for diagram graph data.
+ */
+
 import type { APIContext } from "astro";
 import { eq, and } from "drizzle-orm";
 import { createDb } from "@lib/db/client";
@@ -5,6 +9,13 @@ import { diagrams } from "@lib/db/schema";
 import { SaveGraphSchema, apiSuccess, apiError } from "@lib/validation";
 import { nowISO, jsonResponse } from "@lib/helpers";
 
+/**
+ * Idempotent full replacement of graph_data.
+ * Validates request body via SaveGraphSchema.
+ *
+ * @param context - Astro API context with request, params (id), locals (user, runtime.env)
+ * @returns The updated timestamp, or 404 if diagram not found
+ */
 export async function PUT({ request, params, locals }: APIContext) {
   const body = await request.json().catch(() => ({}));
   const parsed = SaveGraphSchema.safeParse(body);
