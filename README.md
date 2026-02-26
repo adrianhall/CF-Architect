@@ -6,19 +6,19 @@ Built with Astro, React, and React Flow, running entirely on the Cloudflare Deve
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | Astro 5 (SSR on Cloudflare Workers) |
-| UI Islands | React 19 |
-| Diagram Engine | React Flow (`@xyflow/react` v12) |
-| Styling | Tailwind CSS 4 |
-| State | Zustand |
-| Database | Cloudflare D1 (SQLite) |
-| Blob Storage | Cloudflare R2 |
-| Cache | Cloudflare Workers KV |
-| ORM | Drizzle ORM |
-| Validation | Zod |
-| Auto-Layout | ELK (`elkjs`) |
+| Layer          | Technology                          |
+| -------------- | ----------------------------------- |
+| Framework      | Astro 5 (SSR on Cloudflare Workers) |
+| UI Islands     | React 19                            |
+| Diagram Engine | React Flow (`@xyflow/react` v12)    |
+| Styling        | Tailwind CSS 4                      |
+| State          | Zustand                             |
+| Database       | Cloudflare D1 (SQLite)              |
+| Blob Storage   | Cloudflare R2                       |
+| Cache          | Cloudflare Workers KV               |
+| ORM            | Drizzle ORM                         |
+| Validation     | Zod                                 |
+| Auto-Layout    | ELK (`elkjs`)                       |
 
 ## Prerequisites
 
@@ -60,17 +60,37 @@ Navigate to http://localhost:4321. You'll be redirected to the dashboard where y
 
 ## Available Scripts
 
-| Script | Command | Description |
-|--------|---------|-------------|
-| `npm run dev` | `astro dev` | Astro dev server with HMR and Cloudflare platform proxy |
-| `npm start` | `wrangler dev` | Full Cloudflare Workers local runtime (`workerd`) |
-| `npm run build` | `astro build` | Production build |
-| `npm run preview` | `astro preview` | Preview the production build locally |
-| `npm run deploy` | `wrangler d1 migrations apply DB --remote && wrangler deploy` | Deploy to Cloudflare (see below) |
-| `npm run db:generate` | `drizzle-kit generate` | Generate a new D1 migration from schema changes |
-| `npm run db:migrate:local` | `wrangler d1 migrations apply DB --local` | Apply migrations to the local D1 database |
-| `npm run typecheck` | `tsc --noEmit` | TypeScript type checking |
-| `npm run test` | `vitest run` | Run unit and integration tests |
+| Script                     | Command                                                       | Description                                             |
+| -------------------------- | ------------------------------------------------------------- | ------------------------------------------------------- |
+| `npm run dev`              | `astro dev`                                                   | Astro dev server with HMR and Cloudflare platform proxy |
+| `npm start`                | `wrangler dev`                                                | Full Cloudflare Workers local runtime (`workerd`)       |
+| `npm run build`            | `astro build`                                                 | Production build                                        |
+| `npm run preview`          | `astro preview`                                               | Preview the production build locally                    |
+| `npm run deploy`           | `wrangler d1 migrations apply DB --remote && wrangler deploy` | Deploy to Cloudflare (see below)                        |
+| `npm run db:generate`      | `drizzle-kit generate`                                        | Generate a new D1 migration from schema changes         |
+| `npm run db:migrate:local` | `wrangler d1 migrations apply DB --local`                     | Apply migrations to the local D1 database               |
+| `npm run lint`             | `eslint . && prettier --check .`                              | Run ESLint and check Prettier formatting                |
+| `npm run format`           | `prettier --write .`                                          | Auto-format all files with Prettier                     |
+| `npm run typecheck`        | `tsc --noEmit`                                                | TypeScript type checking                                |
+| `npm run test`             | `vitest run`                                                  | Run unit and integration tests                          |
+
+## Linting & Formatting
+
+The project uses [ESLint](https://eslint.org/) for static analysis and [Prettier](https://prettier.io/) for code formatting.
+
+```bash
+npm run lint       # check for lint errors and formatting issues
+npm run format     # auto-format all files with Prettier
+```
+
+ESLint is configured in `eslint.config.mjs` (ESLint 9 flat config) with:
+
+- **`typescript-eslint`** recommended type-checked rules for TypeScript files
+- **`eslint-plugin-astro`** for `.astro` component linting
+- **`eslint-plugin-react-hooks`** for React hooks rules in `.tsx` files
+- **`eslint-config-prettier`** to disable formatting rules that conflict with Prettier
+
+Prettier is configured in `.prettierrc.mjs` with `prettier-plugin-astro` for `.astro` file formatting.
 
 ## First-Time Deployment
 
@@ -129,6 +149,7 @@ npm run deploy
 ```
 
 This command:
+
 1. Applies any pending D1 migrations to the remote database (including seeding the default user)
 2. Builds the Astro site for production
 3. Deploys to Cloudflare Workers
@@ -156,6 +177,8 @@ npm run deploy             # applies migration remotely, then deploys
 ```
 cf-architect/
 ├── astro.config.mjs          # Astro + Cloudflare adapter config
+├── eslint.config.mjs         # ESLint 9 flat config
+├── .prettierrc.mjs           # Prettier config (Astro plugin)
 ├── wrangler.toml             # D1, KV, R2 bindings
 ├── drizzle.config.ts         # Drizzle ORM config
 ├── package.json

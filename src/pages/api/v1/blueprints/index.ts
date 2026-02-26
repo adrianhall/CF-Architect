@@ -13,7 +13,9 @@ import { jsonResponse } from "@lib/helpers";
  * @param _context - Astro API context (unused)
  * @returns ApiResult with list of blueprint metadata
  */
+// eslint-disable-next-line @typescript-eslint/require-await, @typescript-eslint/no-unused-vars
 export async function GET(_context: APIContext) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const list = BLUEPRINTS.map(({ graphData: _, ...rest }) => rest);
   return jsonResponse(apiSuccess(list));
 }

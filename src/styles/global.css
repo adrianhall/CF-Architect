@@ -1,43 +1,47 @@
 @import "tailwindcss";
 
 @theme {
-  --color-cf-orange: #F6821F;
-  --color-cf-orange-light: #FF9F47;
-  --color-cf-orange-dark: #D46B10;
+  --color-cf-orange: #f6821f;
+  --color-cf-orange-light: #ff9f47;
+  --color-cf-orange-dark: #d46b10;
 
-  --color-cat-compute: #3B82F6;
-  --color-cat-storage: #10B981;
-  --color-cat-ai: #8B5CF6;
-  --color-cat-media: #EC4899;
-  --color-cat-network: #F59E0B;
-  --color-cat-external: #6B7280;
+  --color-cat-compute: #3b82f6;
+  --color-cat-storage: #10b981;
+  --color-cat-ai: #8b5cf6;
+  --color-cat-media: #ec4899;
+  --color-cat-network: #f59e0b;
+  --color-cat-external: #6b7280;
 
-  --color-surface: #FFFFFF;
-  --color-surface-alt: #F9FAFB;
-  --color-surface-raised: #FFFFFF;
-  --color-border: #E5E7EB;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f9fafb;
+  --color-surface-raised: #ffffff;
+  --color-border: #e5e7eb;
   --color-text-primary: #111827;
-  --color-text-secondary: #6B7280;
-  --color-canvas-bg: #FAFAFA;
-  --color-canvas-dot: #E5E7EB;
+  --color-text-secondary: #6b7280;
+  --color-canvas-bg: #fafafa;
+  --color-canvas-dot: #e5e7eb;
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Dark theme overrides via .dark class on <html> */
 .dark {
-  --color-surface: #1F2937;
+  --color-surface: #1f2937;
   --color-surface-alt: #111827;
   --color-surface-raised: #374151;
   --color-border: #374151;
-  --color-text-primary: #F9FAFB;
-  --color-text-secondary: #9CA3AF;
+  --color-text-primary: #f9fafb;
+  --color-text-secondary: #9ca3af;
   --color-canvas-bg: #111827;
   --color-canvas-dot: #374151;
 }
 
 html {
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    sans-serif;
 }
 
 body {

@@ -13,6 +13,7 @@ import { jsonResponse } from "@lib/helpers";
  * @param context - Astro API context with params (id)
  * @returns The full blueprint, or 404 if not found
  */
+// eslint-disable-next-line @typescript-eslint/require-await
 export async function GET({ params }: APIContext) {
   const blueprint = BLUEPRINT_MAP.get(params.id!);
 
