@@ -9,10 +9,7 @@ import { render, screen } from "@testing-library/react";
 import { CFNode } from "@islands/nodes/CFNode";
 import { NODE_TYPE_MAP, CATEGORY_COLORS } from "@lib/catalog";
 
-function renderCFNode(
-  data: Record<string, unknown>,
-  selected = false,
-) {
+function renderCFNode(data: Record<string, unknown>, selected = false) {
   const Unwrapped = (CFNode as any).type ?? CFNode;
   return render(
     <Unwrapped
@@ -96,19 +93,13 @@ describe("CFNode", () => {
   });
 
   it("applies selected box-shadow", () => {
-    const { container } = renderCFNode(
-      { typeId: "worker", label: "W" },
-      true,
-    );
+    const { container } = renderCFNode({ typeId: "worker", label: "W" }, true);
     const node = container.querySelector(".cf-node") as HTMLElement;
     expect(node.style.boxShadow).not.toBe("none");
   });
 
   it("has no box-shadow when not selected", () => {
-    const { container } = renderCFNode(
-      { typeId: "worker", label: "W" },
-      false,
-    );
+    const { container } = renderCFNode({ typeId: "worker", label: "W" }, false);
     const node = container.querySelector(".cf-node") as HTMLElement;
     expect(node.style.boxShadow).toBe("none");
   });

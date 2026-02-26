@@ -111,7 +111,9 @@ describe("ServicePalette", () => {
 
   it("renders search input", () => {
     render(<ServicePalette />);
-    expect(screen.getByPlaceholderText("Search services...")).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText("Search services..."),
+    ).toBeInTheDocument();
   });
 
   it("shows the Services heading", () => {

@@ -50,7 +50,8 @@ export function createXyflowMock() {
 
     // Stub React components
     ReactFlow: ({ children, nodes, edges, ...props }: any) => {
-      void nodes; void edges;
+      void nodes;
+      void edges;
       const domSafe = ["className", "id", "style", "tabIndex", "role"];
       const filtered: Record<string, any> = { "data-testid": "react-flow" };
       for (const k of domSafe) {
@@ -62,9 +63,11 @@ export function createXyflowMock() {
     ReactFlowProvider: ({ children }: any) =>
       React.createElement(React.Fragment, null, children),
 
-    Background: () => React.createElement("div", { "data-testid": "rf-background" }),
+    Background: () =>
+      React.createElement("div", { "data-testid": "rf-background" }),
     MiniMap: () => React.createElement("div", { "data-testid": "rf-minimap" }),
-    Controls: () => React.createElement("div", { "data-testid": "rf-controls" }),
+    Controls: () =>
+      React.createElement("div", { "data-testid": "rf-controls" }),
 
     Handle: (props: any) =>
       React.createElement("div", {
@@ -83,7 +86,11 @@ export function createXyflowMock() {
       }),
 
     EdgeLabelRenderer: ({ children }: any) =>
-      React.createElement("div", { "data-testid": "edge-label-renderer" }, children),
+      React.createElement(
+        "div",
+        { "data-testid": "edge-label-renderer" },
+        children,
+      ),
 
     getSmoothStepPath: () => ["M0,0 L100,100", 50, 50],
 

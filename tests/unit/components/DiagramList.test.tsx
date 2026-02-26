@@ -119,7 +119,9 @@ describe("DiagramList", () => {
   it("deletes a diagram after confirmation", async () => {
     mockFetchApi.mockResolvedValueOnce({ ok: true, data: DIAGRAMS });
     vi.spyOn(globalThis, "confirm").mockReturnValue(true);
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("{}"));
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response("{}"));
 
     render(<DiagramList />);
     await waitFor(() => {
@@ -142,7 +144,9 @@ describe("DiagramList", () => {
   it("does not delete when confirmation is cancelled", async () => {
     mockFetchApi.mockResolvedValueOnce({ ok: true, data: DIAGRAMS });
     vi.spyOn(globalThis, "confirm").mockReturnValue(false);
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("{}"));
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response("{}"));
 
     render(<DiagramList />);
     await waitFor(() => {

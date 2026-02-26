@@ -22,11 +22,27 @@ describe("StatusBar", () => {
   it("displays node and edge count", () => {
     useDiagramStore.setState({
       nodes: [
-        { id: "n1", type: "cf-node", position: { x: 0, y: 0 }, data: { typeId: "worker", label: "W" } },
-        { id: "n2", type: "cf-node", position: { x: 0, y: 0 }, data: { typeId: "d1", label: "D" } },
+        {
+          id: "n1",
+          type: "cf-node",
+          position: { x: 0, y: 0 },
+          data: { typeId: "worker", label: "W" },
+        },
+        {
+          id: "n2",
+          type: "cf-node",
+          position: { x: 0, y: 0 },
+          data: { typeId: "d1", label: "D" },
+        },
       ] as any,
       edges: [
-        { id: "e1", source: "n1", target: "n2", type: "cf-edge", data: { edgeType: "data-flow" } },
+        {
+          id: "e1",
+          source: "n1",
+          target: "n2",
+          type: "cf-edge",
+          data: { edgeType: "data-flow" },
+        },
       ] as any,
     });
     renderStatusBar();

@@ -71,7 +71,14 @@ describe("Toolbar", () => {
 
   it("calls undo on undo button click", () => {
     useDiagramStore.setState({
-      nodes: [{ id: "n1", type: "cf-node", position: { x: 0, y: 0 }, data: { typeId: "worker", label: "W" } }] as any,
+      nodes: [
+        {
+          id: "n1",
+          type: "cf-node",
+          position: { x: 0, y: 0 },
+          data: { typeId: "worker", label: "W" },
+        },
+      ] as any,
       edges: [],
       undoStack: [{ nodes: [], edges: [] }],
     });
@@ -86,7 +93,14 @@ describe("Toolbar", () => {
       edges: [],
       redoStack: [
         {
-          nodes: [{ id: "n1", type: "cf-node", position: { x: 0, y: 0 }, data: { typeId: "worker", label: "W" } }] as any,
+          nodes: [
+            {
+              id: "n1",
+              type: "cf-node",
+              position: { x: 0, y: 0 },
+              data: { typeId: "worker", label: "W" },
+            },
+          ] as any,
           edges: [],
         },
       ],

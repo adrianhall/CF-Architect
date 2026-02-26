@@ -17,7 +17,13 @@ vi.mock("@lib/validation", () => ({
 }));
 
 import React from "react";
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
 import DiagramCanvas from "@islands/DiagramCanvas";
 import { useDiagramStore } from "@islands/store/diagramStore";
 import { resetStore } from "../../helpers/render-helpers";
@@ -30,7 +36,12 @@ const sampleInitialData = {
   description: "Test desc",
   graphData: JSON.stringify({
     nodes: [
-      { id: "n1", type: "cf-node", position: { x: 0, y: 0 }, data: { typeId: "worker", label: "W" } },
+      {
+        id: "n1",
+        type: "cf-node",
+        position: { x: 0, y: 0 },
+        data: { typeId: "worker", label: "W" },
+      },
     ],
     edges: [],
     viewport: { x: 0, y: 0, zoom: 1 },
@@ -47,10 +58,7 @@ describe("DiagramCanvas", () => {
   describe("data loading", () => {
     it("loads from initialData prop and populates store", () => {
       render(
-        <DiagramCanvas
-          diagramId="diag-1"
-          initialData={sampleInitialData}
-        />,
+        <DiagramCanvas diagramId="diag-1" initialData={sampleInitialData} />,
       );
 
       const state = useDiagramStore.getState();
@@ -87,30 +95,21 @@ describe("DiagramCanvas", () => {
   describe("edit mode layout", () => {
     it("renders Toolbar in edit mode", () => {
       render(
-        <DiagramCanvas
-          diagramId="diag-1"
-          initialData={sampleInitialData}
-        />,
+        <DiagramCanvas diagramId="diag-1" initialData={sampleInitialData} />,
       );
       expect(screen.getByTitle("Back to Dashboard")).toBeInTheDocument();
     });
 
     it("renders ServicePalette in edit mode", () => {
       render(
-        <DiagramCanvas
-          diagramId="diag-1"
-          initialData={sampleInitialData}
-        />,
+        <DiagramCanvas diagramId="diag-1" initialData={sampleInitialData} />,
       );
       expect(screen.getByText("Services")).toBeInTheDocument();
     });
 
     it("renders PropertiesPanel in edit mode", () => {
       render(
-        <DiagramCanvas
-          diagramId="diag-1"
-          initialData={sampleInitialData}
-        />,
+        <DiagramCanvas diagramId="diag-1" initialData={sampleInitialData} />,
       );
       expect(
         screen.getByText("Select a node or edge to view its properties"),
@@ -119,20 +118,14 @@ describe("DiagramCanvas", () => {
 
     it("renders StatusBar in edit mode", () => {
       render(
-        <DiagramCanvas
-          diagramId="diag-1"
-          initialData={sampleInitialData}
-        />,
+        <DiagramCanvas diagramId="diag-1" initialData={sampleInitialData} />,
       );
       expect(screen.getByText(/nodes,/)).toBeInTheDocument();
     });
 
     it("renders ReactFlow canvas", () => {
       render(
-        <DiagramCanvas
-          diagramId="diag-1"
-          initialData={sampleInitialData}
-        />,
+        <DiagramCanvas diagramId="diag-1" initialData={sampleInitialData} />,
       );
       expect(screen.getByTestId("react-flow")).toBeInTheDocument();
     });
@@ -203,10 +196,7 @@ describe("DiagramCanvas", () => {
       });
 
       render(
-        <DiagramCanvas
-          diagramId="diag-1"
-          initialData={sampleInitialData}
-        />,
+        <DiagramCanvas diagramId="diag-1" initialData={sampleInitialData} />,
       );
 
       const editor = document.querySelector(".diagram-editor")!;
@@ -219,17 +209,19 @@ describe("DiagramCanvas", () => {
       useDiagramStore.setState({
         diagramId: "diag-1",
         nodes: [
-          { id: "n1", type: "cf-node", position: { x: 0, y: 0 }, data: { typeId: "worker", label: "W" } },
+          {
+            id: "n1",
+            type: "cf-node",
+            position: { x: 0, y: 0 },
+            data: { typeId: "worker", label: "W" },
+          },
         ] as any,
         edges: [],
         undoStack: [{ nodes: [], edges: [] }],
       });
 
       render(
-        <DiagramCanvas
-          diagramId="diag-1"
-          initialData={sampleInitialData}
-        />,
+        <DiagramCanvas diagramId="diag-1" initialData={sampleInitialData} />,
       );
 
       const editor = document.querySelector(".diagram-editor")!;
@@ -246,7 +238,12 @@ describe("DiagramCanvas", () => {
         redoStack: [
           {
             nodes: [
-              { id: "n1", type: "cf-node", position: { x: 0, y: 0 }, data: { typeId: "worker", label: "W" } },
+              {
+                id: "n1",
+                type: "cf-node",
+                position: { x: 0, y: 0 },
+                data: { typeId: "worker", label: "W" },
+              },
             ] as any,
             edges: [],
           },
@@ -254,10 +251,7 @@ describe("DiagramCanvas", () => {
       });
 
       render(
-        <DiagramCanvas
-          diagramId="diag-1"
-          initialData={sampleInitialData}
-        />,
+        <DiagramCanvas diagramId="diag-1" initialData={sampleInitialData} />,
       );
 
       const editor = document.querySelector(".diagram-editor")!;

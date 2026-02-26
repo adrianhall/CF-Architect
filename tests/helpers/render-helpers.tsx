@@ -11,7 +11,10 @@ function FlowWrapper({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-export function renderWithFlow(ui: React.ReactElement, options?: RenderOptions) {
+export function renderWithFlow(
+  ui: React.ReactElement,
+  options?: RenderOptions,
+) {
   return render(ui, { wrapper: FlowWrapper, ...options });
 }
 
@@ -34,4 +37,10 @@ export function resetStore() {
   });
 }
 
-export { screen, fireEvent, within, waitFor, act } from "@testing-library/react";
+export {
+  screen,
+  fireEvent,
+  within,
+  waitFor,
+  act,
+} from "@testing-library/react";

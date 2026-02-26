@@ -51,7 +51,9 @@ describe("PropertiesPanel", () => {
   describe("node properties", () => {
     beforeEach(() => {
       useDiagramStore.setState({
-        nodes: [makeNode("n1", { label: "My Worker", description: "Does things" })],
+        nodes: [
+          makeNode("n1", { label: "My Worker", description: "Does things" }),
+        ],
         selectedNodeId: "n1",
       });
     });
@@ -113,7 +115,9 @@ describe("PropertiesPanel", () => {
     beforeEach(() => {
       useDiagramStore.setState({
         nodes: [makeNode("n1"), makeNode("n2")],
-        edges: [makeEdge("e1", "n1", "n2", { label: "REST", protocol: "http" })],
+        edges: [
+          makeEdge("e1", "n1", "n2", { label: "REST", protocol: "http" }),
+        ],
         selectedEdgeId: "e1",
       });
     });
