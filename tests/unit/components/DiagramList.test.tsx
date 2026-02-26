@@ -76,44 +76,26 @@ describe("DiagramList", () => {
     expect(dateElements.length).toBe(2);
   });
 
-  it("shows '+ New Diagram' button in header when diagrams exist", async () => {
+  it("shows '+ New Diagram' link in header when diagrams exist", async () => {
     mockFetchApi.mockResolvedValueOnce({ ok: true, data: DIAGRAMS });
     render(<DiagramList />);
 
     await waitFor(() => {
       expect(screen.getByText("My Diagrams")).toBeInTheDocument();
     });
-    expect(screen.getByText("+ New Diagram")).toBeInTheDocument();
+    const link = screen.getByText("+ New Diagram");
+    expect(link.closest("a")).toHaveAttribute("href", "/blueprints");
   });
 
-  it("creates a new diagram on button click", async () => {
-    mockFetchApi.mockResolvedValueOnce({ ok: true, data: DIAGRAMS });
+  it("'+ New Diagram' links to /blueprints in empty state", async () => {
+    mockFetchApi.mockResolvedValueOnce({ ok: true, data: [] });
     render(<DiagramList />);
 
     await waitFor(() => {
-      expect(screen.getByText("My Diagrams")).toBeInTheDocument();
+      expect(screen.getByText("No diagrams yet")).toBeInTheDocument();
     });
-
-    mockFetchApi.mockResolvedValueOnce({
-      ok: true,
-      data: { id: "new-1", title: "Untitled Diagram" },
-    });
-
-    const originalHref = window.location.href;
-    Object.defineProperty(window, "location", {
-      writable: true,
-      value: { ...window.location, href: originalHref },
-    });
-
-    fireEvent.click(screen.getByText("+ New Diagram"));
-
-    await waitFor(() => {
-      expect(mockFetchApi).toHaveBeenCalledWith(
-        "/api/v1/diagrams",
-        expect.anything(),
-        expect.objectContaining({ method: "POST" }),
-      );
-    });
+    const link = screen.getByText("+ New Diagram");
+    expect(link.closest("a")).toHaveAttribute("href", "/blueprints");
   });
 
   it("deletes a diagram after confirmation", async () => {
