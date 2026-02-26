@@ -2,8 +2,8 @@ import {
   useCallback,
   useEffect,
   useRef,
-  DragEvent,
-  KeyboardEvent,
+  type DragEvent,
+  type KeyboardEvent,
 } from "react";
 import {
   ReactFlow,

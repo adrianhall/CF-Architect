@@ -281,7 +281,9 @@ export const useDiagramStore = create<DiagramStore>((set, get) => ({
     get().pushHistory();
     set((state) => ({
       edges: state.edges.map((e) =>
-        e.id === edgeId ? { ...e, data: { ...e.data, ...data } } : e,
+        e.id === edgeId
+          ? { ...e, data: { ...e.data, ...data } as CFEdgeData }
+          : e,
       ),
       dirty: true,
     }));
