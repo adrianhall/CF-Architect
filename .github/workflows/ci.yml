@@ -39,7 +39,6 @@ jobs:
         run: npm run test:coverage
 
       - name: Coverage summary
-        if: always()
         run: |
           node -e "
           const fs = require('fs');
