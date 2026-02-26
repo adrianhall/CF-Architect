@@ -18,7 +18,7 @@ export default defineConfig({
       provider: "v8",
       include: ["src/**/*.ts"],
       exclude: ["src/env.d.ts", "src/**/*.astro"],
-      reporter: ["text", "text-summary"],
+      reporter: ["text", "text-summary", "json-summary"],
     },
   },
 });

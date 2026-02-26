@@ -46,6 +46,15 @@ export default tseslint.config(
   },
 
   {
+    files: ["scripts/**"],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
+
+  {
     files: ["**/*.config.ts"],
     ...tseslint.configs.disableTypeChecked,
   },
