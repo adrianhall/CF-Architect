@@ -12,6 +12,6 @@
     },
     "types": ["@cloudflare/workers-types/2023-07-01"]
   },
-  "include": ["src/**/*", "src/env.d.ts"],
+  "include": ["src/**/*", "src/env.d.ts", "tests/**/*"],
   "exclude": ["node_modules", "dist"]
 }
