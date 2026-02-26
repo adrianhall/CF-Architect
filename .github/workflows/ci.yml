@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Build
+        run: npm run build
+
+      - name: Test with coverage
+        run: npm run test:coverage
+
+      - name: Coverage summary
+        if: always()
+        run: |
+          node -e "
+          const fs = require('fs');
+          const path = 'coverage/coverage-summary.json';
+          if (!fs.existsSync(path)) { console.log('No coverage report found'); process.exit(0); }
+          const data = JSON.parse(fs.readFileSync(path, 'utf8'));
+          const total = data.total;
+          const pct = (v) => v.pct.toFixed(1) + '%';
+          let md = '## Coverage Summary\n\n';
+          md += '| Category | Coverage |\n';
+          md += '| --- | --- |\n';
+          md += '| Statements | ' + pct(total.statements) + ' |\n';
+          md += '| Branches | ' + pct(total.branches) + ' |\n';
+          md += '| Functions | ' + pct(total.functions) + ' |\n';
+          md += '| Lines | ' + pct(total.lines) + ' |\n';
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, md);
+          "
