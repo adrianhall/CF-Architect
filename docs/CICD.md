@@ -46,4 +46,4 @@ The **Deploy** workflow (`.github/workflows/deploy.yml`) runs automatically when
 
 3. **(Optional) Create a `production` environment.** Go to **Settings > Environments**, create an environment named `production`, and optionally add required reviewers for an approval gate before deploys.
 
-5. **Cut a release.** Go to **Releases > Draft a new release**, create a tag (e.g., `v0.1.0`), and publish. The deploy workflow will trigger automatically.
+4. **Cut a release.** Go to **Releases > Draft a new release**, create a tag (e.g., `v0.1.0`), and publish. The deploy workflow will trigger automatically.

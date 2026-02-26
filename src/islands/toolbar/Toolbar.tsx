@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useReactFlow } from "@xyflow/react";
 import { useDiagramStore } from "../store/diagramStore";
 import type { CFNodeData } from "../types";
@@ -172,15 +172,38 @@ export function Toolbar() {
 
 /**
  * Internal component that POSTs to the share API, displays a modal with the
- * share URL and copy-to-clipboard.
+ * share URL, inline copy icon, open-in-tab/window dropdown, and auto-copy
+ * with toast feedback.
  */
 function ShareButton() {
   const { diagramId } = useDiagramStore();
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [copying, setCopying] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
 
-  /** POSTs to the share API and opens the modal with the share URL. */
+  const triggerToast = useCallback(() => {
+    clearTimeout(toastTimer.current);
+    setShowToast(true);
+    toastTimer.current = setTimeout(() => setShowToast(false), 2000);
+  }, []);
+
+  const copyToClipboard = useCallback(
+    async (url: string) => {
+      try {
+        await navigator.clipboard.writeText(url);
+        triggerToast();
+      } catch {
+        /* clipboard may be unavailable in insecure contexts */
+      }
+    },
+    [triggerToast],
+  );
+
   const handleShare = async () => {
     if (!diagramId) return;
     try {
@@ -196,18 +219,35 @@ function ShareButton() {
       if (result.ok) {
         setShareUrl(result.data.url);
         setShowModal(true);
+        void copyToClipboard(result.data.url);
       }
     } catch (err) {
       console.error("Share failed:", err);
     }
   };
 
-  /** Copies the share URL to the clipboard and shows "Copied!" feedback. */
-  const copyToClipboard = async () => {
-    if (!shareUrl) return;
-    await navigator.clipboard.writeText(shareUrl);
-    setCopying(true);
-    setTimeout(() => setCopying(false), 2000);
+  useEffect(() => {
+    if (!showDropdown) return;
+    const handleClick = (e: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showDropdown]);
+
+  const openInNewTab = () => {
+    if (shareUrl) window.open(shareUrl, "_blank");
+    setShowDropdown(false);
+  };
+
+  const openInNewWindow = () => {
+    if (shareUrl) window.open(shareUrl, "_blank", "width=1024,height=768");
+    setShowDropdown(false);
   };
 
   return (
@@ -215,18 +255,55 @@ function ShareButton() {
       <button
         onClick={() => void handleShare()}
         className="toolbar-btn toolbar-btn-primary"
+        title="Share"
       >
-        Share
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="18" cy="5" r="3" />
+          <circle cx="6" cy="12" r="3" />
+          <circle cx="18" cy="19" r="3" />
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+        </svg>
       </button>
+
+      {showToast && <div className="toast">URL Copied!</div>}
 
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <button
+              className="modal-close-x"
+              onClick={() => setShowModal(false)}
+              title="Close"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
             <h3 className="modal-title">Share Diagram</h3>
             <p className="modal-text">
               Anyone with this link can view your diagram (read-only):
             </p>
-            <div className="share-url-row">
+            <div className="share-url-field">
               <input
                 type="text"
                 value={shareUrl ?? ""}
@@ -234,15 +311,61 @@ function ShareButton() {
                 className="share-url-input"
               />
               <button
-                onClick={() => void copyToClipboard()}
-                className="toolbar-btn toolbar-btn-primary"
+                className="share-copy-btn"
+                onClick={() => void copyToClipboard(shareUrl ?? "")}
+                title="Copy URL"
               >
-                {copying ? "Copied!" : "Copy"}
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
               </button>
             </div>
-            <button onClick={() => setShowModal(false)} className="modal-close">
-              Close
-            </button>
+            <div className="share-open-group" ref={dropdownRef}>
+              <button className="share-open-btn" onClick={openInNewTab}>
+                Open
+              </button>
+              <button
+                className="share-open-chevron"
+                onClick={() => setShowDropdown((prev) => !prev)}
+                title="Open options"
+              >
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+              {showDropdown && (
+                <div className="share-open-dropdown">
+                  <button className="share-open-option" onClick={openInNewTab}>
+                    Open in new tab
+                  </button>
+                  <button
+                    className="share-open-option"
+                    onClick={openInNewWindow}
+                  >
+                    Open in new window
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

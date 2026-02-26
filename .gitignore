@@ -1,5 +1,6 @@
 node_modules/
 dist/
+coverage/
 .astro/
 .wrangler/
 .wrangler.deploy.toml
