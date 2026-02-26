@@ -15,6 +15,13 @@ export const mockGetZoom = vi.fn().mockReturnValue(1);
 export const mockScreenToFlowPosition = vi
   .fn()
   .mockImplementation((pos: { x: number; y: number }) => pos);
+export const mockGetNodes = vi.fn().mockReturnValue([]);
+export const mockGetNodesBounds = vi
+  .fn()
+  .mockReturnValue({ x: 0, y: 0, width: 400, height: 300 });
+export const mockGetViewportForBounds = vi
+  .fn()
+  .mockReturnValue({ x: 0, y: 0, zoom: 1 });
 
 export function createXyflowMock() {
   return {
@@ -99,8 +106,12 @@ export function createXyflowMock() {
       zoomIn: mockZoomIn,
       zoomOut: mockZoomOut,
       getZoom: mockGetZoom,
+      getNodes: mockGetNodes,
       screenToFlowPosition: mockScreenToFlowPosition,
     }),
+
+    getNodesBounds: mockGetNodesBounds,
+    getViewportForBounds: mockGetViewportForBounds,
 
     // Enums
     Position: { Top: "top", Bottom: "bottom", Left: "left", Right: "right" },

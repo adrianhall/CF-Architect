@@ -15,6 +15,10 @@ vi.mock("@lib/validation", () => ({
   },
   ShareResponseSchema: {},
 }));
+vi.mock("html-to-image", () => ({
+  toPng: vi.fn(),
+  toSvg: vi.fn(),
+}));
 
 import React from "react";
 import {
@@ -132,7 +136,7 @@ describe("DiagramCanvas", () => {
   });
 
   describe("read-only mode", () => {
-    it("hides Toolbar in read-only mode", () => {
+    it("renders simplified Toolbar in read-only mode (no editing controls)", () => {
       render(
         <DiagramCanvas
           diagramId="diag-1"
@@ -140,7 +144,10 @@ describe("DiagramCanvas", () => {
           initialData={sampleInitialData}
         />,
       );
-      expect(screen.queryByTitle("Back to Dashboard")).toBeNull();
+      expect(screen.getByTitle("Back to Dashboard")).toBeInTheDocument();
+      expect(screen.getByTitle("Export")).toBeInTheDocument();
+      expect(screen.queryByTitle("Undo (Ctrl+Z)")).toBeNull();
+      expect(screen.queryByTitle("Share")).toBeNull();
     });
 
     it("hides ServicePalette in read-only mode", () => {
