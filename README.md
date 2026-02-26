@@ -73,6 +73,7 @@ Navigate to http://localhost:4321. You'll be redirected to the dashboard where y
 | `npm run format`           | `prettier --write .`                                          | Auto-format all files with Prettier                     |
 | `npm run typecheck`        | `tsc --noEmit`                                                | TypeScript type checking                                |
 | `npm run test`             | `vitest run`                                                  | Run unit and integration tests                          |
+| `npm run test:coverage`    | `vitest run --coverage`                                       | Run tests and report code coverage                      |
 
 ## Linting & Formatting
 
