@@ -56,7 +56,11 @@ export async function POST({ request, locals }: APIContext) {
   if (blueprintId) {
     const bp = BLUEPRINT_MAP.get(blueprintId);
     if (!bp) {
-      const err = apiError("NOT_FOUND", `Blueprint "${blueprintId}" not found`, 404);
+      const err = apiError(
+        "NOT_FOUND",
+        `Blueprint "${blueprintId}" not found`,
+        404,
+      );
       return jsonResponse(err.body, err.status);
     }
     graphData = bp.graphData;

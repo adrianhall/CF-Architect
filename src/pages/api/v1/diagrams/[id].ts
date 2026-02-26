@@ -69,10 +69,7 @@ export async function PATCH({ request, params, locals }: APIContext) {
   if (parsed.data.description !== undefined)
     updates.description = parsed.data.description;
 
-  await db
-    .update(diagrams)
-    .set(updates)
-    .where(eq(diagrams.id, params.id!));
+  await db.update(diagrams).set(updates).where(eq(diagrams.id, params.id!));
 
   const updated = await db
     .select()

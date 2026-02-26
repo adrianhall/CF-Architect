@@ -7,20 +7,22 @@
  */
 import { nanoid } from "nanoid";
 import { eq } from "drizzle-orm";
-import { createDb, type Database } from "./db/client";
+import { z } from "zod";
+import { type Database } from "./db/client";
 import { shareLinks } from "./db/schema";
 import { generateId, nowISO } from "./helpers";
 
 /** Number of characters in a generated share token (nanoid URL-safe alphabet). */
 const SHARE_TOKEN_LENGTH = 12;
 
+/** Zod schema for metadata stored in KV alongside the share token. */
+const ShareMetaSchema = z.object({
+  diagramId: z.string(),
+  expiresAt: z.string().nullable(),
+});
+
 /** Metadata stored in KV alongside the share token for fast resolution. */
-interface ShareMeta {
-  /** The diagram ID this token grants access to. */
-  diagramId: string;
-  /** ISO 8601 expiration timestamp, or null for no expiry. */
-  expiresAt: string | null;
-}
+type ShareMeta = z.infer<typeof ShareMetaSchema>;
 
 /**
  * Create a new share link for a diagram.
@@ -90,7 +92,7 @@ export async function resolveShareToken(
 ): Promise<ShareMeta | null> {
   const kvVal = await kv.get(`share:${token}`);
   if (kvVal) {
-    const meta: ShareMeta = JSON.parse(kvVal);
+    const meta = ShareMetaSchema.parse(JSON.parse(kvVal) as unknown);
     if (meta.expiresAt && new Date(meta.expiresAt) < new Date()) {
       return null;
     }

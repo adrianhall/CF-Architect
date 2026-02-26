@@ -6,7 +6,9 @@
   border-radius: 8px;
   overflow: hidden;
   font-size: 13px;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 
 .cf-node:hover {
@@ -331,7 +333,9 @@
   color: var(--color-text-primary);
   font-size: 13px;
   cursor: pointer;
-  transition: background 0.1s, border-color 0.1s;
+  transition:
+    background 0.1s,
+    border-color 0.1s;
   white-space: nowrap;
 }
 
@@ -382,7 +386,7 @@
 }
 
 .status-error {
-  color: #EF4444;
+  color: #ef4444;
 }
 
 .status-dirty {
@@ -515,7 +519,9 @@
   border: 1px solid var(--color-border);
   border-radius: 12px;
   overflow: hidden;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 
 .diagram-card:hover {
@@ -573,12 +579,12 @@
 }
 
 .btn-danger {
-  color: #EF4444;
-  border-color: #EF444444;
+  color: #ef4444;
+  border-color: #ef444444;
 }
 
 .btn-danger:hover {
-  background: #EF44440D;
+  background: #ef44440d;
 }
 
 .empty-state {

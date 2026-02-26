@@ -83,7 +83,7 @@ export function PropertiesPanel() {
           <label className="property-label">Accent Color</label>
           <input
             type="color"
-            value={data.style?.accentColor ?? typeDef ? "#" : "#6B7280"}
+            value={(data.style?.accentColor ?? typeDef) ? "#" : "#6B7280"}
             onChange={(e) =>
               updateNodeData(selectedNode.id, {
                 style: { ...data.style, accentColor: e.target.value },

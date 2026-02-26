@@ -29,7 +29,10 @@ function CFNodeComponent({ data, selected }: NodeProps) {
         boxShadow: selected ? `0 0 0 2px ${accentColor}44` : "none",
       }}
     >
-      <div className="cf-node-header" style={{ backgroundColor: `${accentColor}14` }}>
+      <div
+        className="cf-node-header"
+        style={{ backgroundColor: `${accentColor}14` }}
+      >
         <img
           src={typeDef?.iconPath ?? "/icons/worker.svg"}
           alt=""

@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, DragEvent, KeyboardEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  type DragEvent,
+  type KeyboardEvent,
+} from "react";
 import {
   ReactFlow,
   Background,
@@ -6,6 +12,7 @@ import {
   Controls,
   BackgroundVariant,
   type Node,
+  type Edge,
   useReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -19,6 +26,11 @@ import { ServicePalette } from "./panels/ServicePalette";
 import { PropertiesPanel } from "./panels/PropertiesPanel";
 import { Toolbar } from "./toolbar/Toolbar";
 import { StatusBar } from "./toolbar/StatusBar";
+import {
+  fetchApi,
+  DiagramResponseSchema,
+  GraphDataSchema,
+} from "../lib/validation";
 
 /**
  * Props for the DiagramCanvas component.
@@ -67,8 +79,6 @@ export default function DiagramCanvas({
     undo,
     redo,
     dirty,
-    saving,
-    lastSavedAt,
     markSaving,
     markSaved,
     markSaveError,
@@ -77,69 +87,74 @@ export default function DiagramCanvas({
 
   useEffect(() => {
     if (initialData) {
-      const parsed = JSON.parse(initialData.graphData || "{}");
+      const parsed = GraphDataSchema.parse(
+        JSON.parse(initialData.graphData || "{}") as unknown,
+      );
       setDiagram(
         diagramId,
         initialData.title,
         initialData.description ?? "",
-        parsed.nodes ?? [],
-        parsed.edges ?? [],
-        parsed.viewport ?? { x: 0, y: 0, zoom: 1 },
+        parsed.nodes as Node<CFNodeData>[],
+        parsed.edges as Edge<CFEdgeData>[],
+        parsed.viewport,
       );
       return;
     }
 
-    fetch(`/api/v1/diagrams/${diagramId}`)
-      .then((r) => r.json())
+    fetchApi(`/api/v1/diagrams/${diagramId}`, DiagramResponseSchema)
       .then((res) => {
         if (res.ok) {
           const d = res.data;
-          const parsed = JSON.parse(d.graphData || "{}");
+          const parsed = GraphDataSchema.parse(
+            JSON.parse(d.graphData || "{}") as unknown,
+          );
           setDiagram(
             diagramId,
             d.title,
             d.description ?? "",
-            parsed.nodes ?? [],
-            parsed.edges ?? [],
-            parsed.viewport ?? { x: 0, y: 0, zoom: 1 },
+            parsed.nodes as Node<CFNodeData>[],
+            parsed.edges as Edge<CFEdgeData>[],
+            parsed.viewport,
           );
         }
       })
       .catch(console.error);
-  }, [diagramId]);
+  }, [diagramId, initialData, setDiagram]);
 
   // Autosave
   useEffect(() => {
     if (readOnly || !dirty) return;
 
-    const timer = setTimeout(async () => {
-      markSaving();
-      try {
-        const state = useDiagramStore.getState();
-        const graphData = JSON.stringify({
-          nodes: state.nodes,
-          edges: state.edges,
-          viewport: state.viewport,
-        });
+    const timer = setTimeout(() => {
+      void (async () => {
+        markSaving();
+        try {
+          const state = useDiagramStore.getState();
+          const graphData = JSON.stringify({
+            nodes: state.nodes,
+            edges: state.edges,
+            viewport: state.viewport,
+          });
 
-        const res = await fetch(`/api/v1/diagrams/${diagramId}/graph`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ graphData }),
-        });
+          const res = await fetch(`/api/v1/diagrams/${diagramId}/graph`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ graphData }),
+          });
 
-        if (res.ok) {
-          markSaved();
-        } else {
-          markSaveError("Failed to save");
+          if (res.ok) {
+            markSaved();
+          } else {
+            markSaveError("Failed to save");
+          }
+        } catch {
+          markSaveError("Network error");
         }
-      } catch {
-        markSaveError("Network error");
-      }
+      })();
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [dirty, readOnly, diagramId]);
+  }, [dirty, readOnly, diagramId, markSaving, markSaved, markSaveError]);
 
   // Beforeunload guard
   useEffect(() => {
@@ -155,8 +170,8 @@ export default function DiagramCanvas({
   // Save title changes
   useEffect(() => {
     if (readOnly || !useDiagramStore.getState().diagramId) return;
-    const timer = setTimeout(async () => {
-      await fetch(`/api/v1/diagrams/${diagramId}`, {
+    const timer = setTimeout(() => {
+      void fetch(`/api/v1/diagrams/${diagramId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title }),
@@ -278,7 +293,9 @@ export default function DiagramCanvas({
               nodeColor={(node) => {
                 const data = node.data as CFNodeData;
                 const typeDef = NODE_TYPE_MAP.get(data?.typeId);
-                return CATEGORY_COLORS[typeDef?.category ?? "external"] ?? "#6B7280";
+                return (
+                  CATEGORY_COLORS[typeDef?.category ?? "external"] ?? "#6B7280"
+                );
               }}
               style={{ backgroundColor: "var(--color-surface-alt)" }}
             />

@@ -78,7 +78,7 @@ export async function DELETE({ request, params, locals }: APIContext) {
       and(
         eq(shareLinks.token, token),
         eq(shareLinks.diagramId, params.id!),
-        eq(shareLinks.createdBy , locals.user.id),
+        eq(shareLinks.createdBy, locals.user.id),
       ),
     )
     .get();

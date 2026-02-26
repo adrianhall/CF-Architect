@@ -23,7 +23,7 @@ const seedUser: AppUser = {
  * regardless of the request contents or environment.
  */
 export const bypassAuth: AuthStrategy = {
-  async resolveUser() {
-    return seedUser;
+  resolveUser() {
+    return Promise.resolve(seedUser);
   },
 };

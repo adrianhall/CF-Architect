@@ -132,6 +132,24 @@ export const DiagramListResponseSchema = apiResponseSchema(
 /** Response schema for single-diagram endpoints (GET, POST, PATCH). */
 export const DiagramResponseSchema = apiResponseSchema(DiagramSchema);
 
+/** Zod schema for the parsed contents of a diagram's `graphData` JSON string. */
+export const GraphDataSchema = z.object({
+  nodes: z.array(z.record(z.unknown())).default([]),
+  edges: z.array(z.record(z.unknown())).default([]),
+  viewport: z
+    .object({ x: z.number(), y: z.number(), zoom: z.number() })
+    .default({ x: 0, y: 0, zoom: 1 }),
+});
+
+/** Response schema for `POST /api/v1/diagrams/:id/share`. */
+export const ShareResponseSchema = apiResponseSchema(
+  z.object({
+    token: z.string(),
+    expiresAt: z.string().nullable(),
+    url: z.string(),
+  }),
+);
+
 /**
  * Discriminated union representing any API response.
  *

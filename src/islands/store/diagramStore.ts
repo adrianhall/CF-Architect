@@ -252,7 +252,7 @@ export const useDiagramStore = create<DiagramStore>((set, get) => ({
           data: { edgeType: "data-flow" as const },
         },
         state.edges,
-      ) as Edge<CFEdgeData>[],
+      ),
       dirty: true,
     }));
   },
@@ -281,7 +281,9 @@ export const useDiagramStore = create<DiagramStore>((set, get) => ({
     get().pushHistory();
     set((state) => ({
       edges: state.edges.map((e) =>
-        e.id === edgeId ? { ...e, data: { ...e.data, ...data } as CFEdgeData } : e,
+        e.id === edgeId
+          ? { ...e, data: { ...e.data, ...data } as CFEdgeData }
+          : e,
       ),
       dirty: true,
     }));
@@ -309,7 +311,12 @@ export const useDiagramStore = create<DiagramStore>((set, get) => ({
 
   markSaving: () => set({ saving: true, saveError: null }),
   markSaved: () =>
-    set({ saving: false, dirty: false, lastSavedAt: Date.now(), saveError: null }),
+    set({
+      saving: false,
+      dirty: false,
+      lastSavedAt: Date.now(),
+      saveError: null,
+    }),
   markSaveError: (error) => set({ saving: false, saveError: error }),
   markDirty: () => set({ dirty: true }),
 
@@ -317,7 +324,10 @@ export const useDiagramStore = create<DiagramStore>((set, get) => ({
     set((state) => ({
       undoStack: [
         ...state.undoStack.slice(-(MAX_HISTORY - 1)),
-        { nodes: structuredClone(state.nodes), edges: structuredClone(state.edges) },
+        {
+          nodes: structuredClone(state.nodes),
+          edges: structuredClone(state.edges),
+        },
       ],
       redoStack: [],
     })),
@@ -330,7 +340,10 @@ export const useDiagramStore = create<DiagramStore>((set, get) => ({
         undoStack: state.undoStack.slice(0, -1),
         redoStack: [
           ...state.redoStack,
-          { nodes: structuredClone(state.nodes), edges: structuredClone(state.edges) },
+          {
+            nodes: structuredClone(state.nodes),
+            edges: structuredClone(state.edges),
+          },
         ],
         nodes: prev.nodes,
         edges: prev.edges,
@@ -346,7 +359,10 @@ export const useDiagramStore = create<DiagramStore>((set, get) => ({
         redoStack: state.redoStack.slice(0, -1),
         undoStack: [
           ...state.undoStack,
-          { nodes: structuredClone(state.nodes), edges: structuredClone(state.edges) },
+          {
+            nodes: structuredClone(state.nodes),
+            edges: structuredClone(state.edges),
+          },
         ],
         nodes: next.nodes,
         edges: next.edges,

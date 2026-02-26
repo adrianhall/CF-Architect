@@ -3,6 +3,7 @@ import { useReactFlow } from "@xyflow/react";
 import { useDiagramStore } from "../store/diagramStore";
 import type { CFNodeData } from "../types";
 import { NODE_TYPE_MAP } from "../../lib/catalog";
+import { fetchApi, ShareResponseSchema } from "../../lib/validation";
 
 /**
  * Top toolbar with diagram title input, undo/redo buttons, zoom controls,
@@ -43,9 +44,8 @@ export function Toolbar() {
           width: nodeWidth,
           height: nodeHeight,
           ports: (
-            NODE_TYPE_MAP.get(
-              (node.data as unknown as CFNodeData).typeId,
-            )?.defaultHandles ?? []
+            NODE_TYPE_MAP.get((node.data as unknown as CFNodeData).typeId)
+              ?.defaultHandles ?? []
           ).map((h) => ({
             id: `${node.id}-${h.id}`,
             properties: {
@@ -77,7 +77,7 @@ export function Toolbar() {
         useDiagramStore.getState().setNodes(newNodes);
       }
 
-      setTimeout(() => fitView({ duration: 300 }), 50);
+      setTimeout(() => void fitView({ duration: 300 }), 50);
     } catch (err) {
       console.error("Auto-layout failed:", err);
     } finally {
@@ -131,14 +131,22 @@ export function Toolbar() {
           ↷
         </button>
         <div className="toolbar-separator" />
-        <button onClick={() => zoomIn()} className="toolbar-btn" title="Zoom In">
+        <button
+          onClick={() => void zoomIn()}
+          className="toolbar-btn"
+          title="Zoom In"
+        >
           +
         </button>
-        <button onClick={() => zoomOut()} className="toolbar-btn" title="Zoom Out">
+        <button
+          onClick={() => void zoomOut()}
+          className="toolbar-btn"
+          title="Zoom Out"
+        >
           −
         </button>
         <button
-          onClick={() => fitView({ duration: 300 })}
+          onClick={() => void fitView({ duration: 300 })}
           className="toolbar-btn"
           title="Fit View"
         >
@@ -146,7 +154,7 @@ export function Toolbar() {
         </button>
         <div className="toolbar-separator" />
         <button
-          onClick={applyAutoLayout}
+          onClick={() => void applyAutoLayout()}
           disabled={layouting}
           className="toolbar-btn"
           title="Auto Layout (ELK)"
@@ -176,14 +184,17 @@ function ShareButton() {
   const handleShare = async () => {
     if (!diagramId) return;
     try {
-      const res = await fetch(`/api/v1/diagrams/${diagramId}/share`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      });
-      const data = await res.json();
-      if (data.ok) {
-        setShareUrl(data.data.url);
+      const result = await fetchApi(
+        `/api/v1/diagrams/${diagramId}/share`,
+        ShareResponseSchema,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        },
+      );
+      if (result.ok) {
+        setShareUrl(result.data.url);
         setShowModal(true);
       }
     } catch (err) {
@@ -201,7 +212,10 @@ function ShareButton() {
 
   return (
     <>
-      <button onClick={handleShare} className="toolbar-btn toolbar-btn-primary">
+      <button
+        onClick={() => void handleShare()}
+        className="toolbar-btn toolbar-btn-primary"
+      >
         Share
       </button>
 
@@ -219,14 +233,14 @@ function ShareButton() {
                 readOnly
                 className="share-url-input"
               />
-              <button onClick={copyToClipboard} className="toolbar-btn toolbar-btn-primary">
+              <button
+                onClick={() => void copyToClipboard()}
+                className="toolbar-btn toolbar-btn-primary"
+              >
                 {copying ? "Copied!" : "Copy"}
               </button>
             </div>
-            <button
-              onClick={() => setShowModal(false)}
-              className="modal-close"
-            >
+            <button onClick={() => setShowModal(false)} className="modal-close">
               Close
             </button>
           </div>

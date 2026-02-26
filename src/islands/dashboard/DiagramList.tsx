@@ -31,21 +31,17 @@ export default function DiagramList() {
   };
 
   useEffect(() => {
-    fetchDiagrams();
+    void fetchDiagrams();
   }, []);
 
   /** Creates a new diagram and navigates to its editor. */
   const createDiagram = async () => {
     try {
-      const result = await fetchApi(
-        "/api/v1/diagrams",
-        DiagramResponseSchema,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({}),
-        },
-      );
+      const result = await fetchApi("/api/v1/diagrams", DiagramResponseSchema, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
       if (result.ok) {
         window.location.href = `/diagram/${result.data.id}`;
       }
@@ -84,7 +80,7 @@ export default function DiagramList() {
         body: JSON.stringify({ graphData: origResult.data.graphData }),
       });
 
-      fetchDiagrams();
+      await fetchDiagrams();
     } catch (err) {
       console.error("Failed to duplicate:", err);
     }
@@ -135,7 +131,7 @@ export default function DiagramList() {
       <div className="dashboard-header">
         <h1 className="dashboard-title">My Diagrams</h1>
         {diagrams.length > 0 && (
-          <button onClick={createDiagram} className="btn-create">
+          <button onClick={() => void createDiagram()} className="btn-create">
             + New Diagram
           </button>
         )}
@@ -144,9 +140,11 @@ export default function DiagramList() {
       {diagrams.length === 0 ? (
         <div className="empty-state">
           <h3>No diagrams yet</h3>
-          <p>Create your first Cloudflare architecture diagram to get started.</p>
+          <p>
+            Create your first Cloudflare architecture diagram to get started.
+          </p>
           <button
-            onClick={createDiagram}
+            onClick={() => void createDiagram()}
             className="btn-create"
             style={{ marginTop: "16px" }}
           >
@@ -171,13 +169,13 @@ export default function DiagramList() {
               </a>
               <div className="diagram-card-actions">
                 <button
-                  onClick={() => duplicateDiagram(d)}
+                  onClick={() => void duplicateDiagram(d)}
                   className="btn-sm"
                 >
                   Duplicate
                 </button>
                 <button
-                  onClick={() => deleteDiagram(d.id)}
+                  onClick={() => void deleteDiagram(d.id)}
                   className="btn-sm btn-danger"
                 >
                   Delete
