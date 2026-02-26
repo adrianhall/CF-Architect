@@ -11,12 +11,13 @@ export default defineConfig({
     },
   },
   test: {
-    include: ["tests/**/*.test.ts"],
+    include: ["tests/**/*.test.{ts,tsx}"],
     environment: "node",
     globals: true,
+    setupFiles: ["tests/setup-dom.ts"],
     coverage: {
       provider: "v8",
-      include: ["src/**/*.ts"],
+      include: ["src/**/*.{ts,tsx}"],
       exclude: ["src/env.d.ts", "src/**/*.astro"],
       reporter: ["text", "text-summary", "json-summary"],
     },
