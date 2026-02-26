@@ -261,7 +261,7 @@ export default function DiagramCanvas({
 
   return (
     <div className="diagram-editor" onKeyDown={onKeyDown} tabIndex={0}>
-      {!readOnly && <Toolbar />}
+      <Toolbar readOnly={readOnly} />
       <div className="diagram-editor-body">
         {!readOnly && <ServicePalette />}
         <div className="diagram-canvas-wrapper" ref={reactFlowWrapper}>

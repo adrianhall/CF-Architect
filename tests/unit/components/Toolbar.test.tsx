@@ -12,6 +12,10 @@ vi.mock("@lib/validation", () => ({
   fetchApi: vi.fn(),
   ShareResponseSchema: {},
 }));
+vi.mock("html-to-image", () => ({
+  toPng: vi.fn(),
+  toSvg: vi.fn(),
+}));
 
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
@@ -142,6 +146,48 @@ describe("Toolbar", () => {
   it("renders auto-layout button", () => {
     render(<Toolbar />);
     expect(screen.getByTitle("Auto Layout (ELK)")).toBeInTheDocument();
+  });
+
+  it("renders the export button", () => {
+    render(<Toolbar />);
+    expect(screen.getByTitle("Export")).toBeInTheDocument();
+  });
+
+  describe("readOnly mode", () => {
+    it("shows title as text instead of input", () => {
+      useDiagramStore.setState({ title: "Read Only Title" });
+      render(<Toolbar readOnly />);
+      expect(screen.getByText("Read Only Title")).toBeInTheDocument();
+      expect(screen.queryByPlaceholderText("Untitled Diagram")).toBeNull();
+    });
+
+    it("hides undo, redo, zoom, and layout controls", () => {
+      render(<Toolbar readOnly />);
+      expect(screen.queryByTitle("Undo (Ctrl+Z)")).toBeNull();
+      expect(screen.queryByTitle("Redo (Ctrl+Shift+Z)")).toBeNull();
+      expect(screen.queryByTitle("Zoom In")).toBeNull();
+      expect(screen.queryByTitle("Zoom Out")).toBeNull();
+      expect(screen.queryByTitle("Fit View")).toBeNull();
+      expect(screen.queryByTitle("Auto Layout (ELK)")).toBeNull();
+    });
+
+    it("hides the share button", () => {
+      render(<Toolbar readOnly />);
+      expect(screen.queryByTitle("Share")).toBeNull();
+    });
+
+    it("still shows the export button", () => {
+      render(<Toolbar readOnly />);
+      expect(screen.getByTitle("Export")).toBeInTheDocument();
+    });
+
+    it("still shows the dashboard link", () => {
+      render(<Toolbar readOnly />);
+      expect(screen.getByTitle("Back to Dashboard")).toHaveAttribute(
+        "href",
+        "/dashboard",
+      );
+    });
   });
 
   describe("ShareButton", () => {

@@ -4,12 +4,14 @@ import { useDiagramStore } from "../store/diagramStore";
 import type { CFNodeData } from "../types";
 import { NODE_TYPE_MAP } from "../../lib/catalog";
 import { fetchApi, ShareResponseSchema } from "../../lib/validation";
+import { ExportButton } from "./ExportButton";
 
 /**
  * Top toolbar with diagram title input, undo/redo buttons, zoom controls,
- * auto-layout button (ELK), and share button.
+ * auto-layout button (ELK), export button, and share button.
+ * In read-only mode only the logo, title, and export button are shown.
  */
-export function Toolbar() {
+export function Toolbar({ readOnly = false }: { readOnly?: boolean }) {
   const { fitView, zoomIn, zoomOut } = useReactFlow();
   const { undo, redo, undoStack, redoStack, title, setTitle } =
     useDiagramStore();
@@ -104,67 +106,74 @@ export function Toolbar() {
             </text>
           </svg>
         </a>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="toolbar-title"
-          placeholder="Untitled Diagram"
-        />
+        {readOnly ? (
+          <span className="toolbar-title-readonly">{title}</span>
+        ) : (
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="toolbar-title"
+            placeholder="Untitled Diagram"
+          />
+        )}
       </div>
 
-      <div className="toolbar-center">
-        <button
-          onClick={undo}
-          disabled={undoStack.length === 0}
-          className="toolbar-btn"
-          title="Undo (Ctrl+Z)"
-        >
-          ↶
-        </button>
-        <button
-          onClick={redo}
-          disabled={redoStack.length === 0}
-          className="toolbar-btn"
-          title="Redo (Ctrl+Shift+Z)"
-        >
-          ↷
-        </button>
-        <div className="toolbar-separator" />
-        <button
-          onClick={() => void zoomIn()}
-          className="toolbar-btn"
-          title="Zoom In"
-        >
-          +
-        </button>
-        <button
-          onClick={() => void zoomOut()}
-          className="toolbar-btn"
-          title="Zoom Out"
-        >
-          −
-        </button>
-        <button
-          onClick={() => void fitView({ duration: 300 })}
-          className="toolbar-btn"
-          title="Fit View"
-        >
-          ⊞
-        </button>
-        <div className="toolbar-separator" />
-        <button
-          onClick={() => void applyAutoLayout()}
-          disabled={layouting}
-          className="toolbar-btn"
-          title="Auto Layout (ELK)"
-        >
-          {layouting ? "..." : "⚡ Layout"}
-        </button>
-      </div>
+      {!readOnly && (
+        <div className="toolbar-center">
+          <button
+            onClick={undo}
+            disabled={undoStack.length === 0}
+            className="toolbar-btn"
+            title="Undo (Ctrl+Z)"
+          >
+            ↶
+          </button>
+          <button
+            onClick={redo}
+            disabled={redoStack.length === 0}
+            className="toolbar-btn"
+            title="Redo (Ctrl+Shift+Z)"
+          >
+            ↷
+          </button>
+          <div className="toolbar-separator" />
+          <button
+            onClick={() => void zoomIn()}
+            className="toolbar-btn"
+            title="Zoom In"
+          >
+            +
+          </button>
+          <button
+            onClick={() => void zoomOut()}
+            className="toolbar-btn"
+            title="Zoom Out"
+          >
+            −
+          </button>
+          <button
+            onClick={() => void fitView({ duration: 300 })}
+            className="toolbar-btn"
+            title="Fit View"
+          >
+            ⊞
+          </button>
+          <div className="toolbar-separator" />
+          <button
+            onClick={() => void applyAutoLayout()}
+            disabled={layouting}
+            className="toolbar-btn"
+            title="Auto Layout (ELK)"
+          >
+            {layouting ? "..." : "⚡ Layout"}
+          </button>
+        </div>
+      )}
 
       <div className="toolbar-right">
-        <ShareButton />
+        <ExportButton />
+        {!readOnly && <ShareButton />}
       </div>
     </div>
   );
