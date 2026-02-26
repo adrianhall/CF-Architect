@@ -6,6 +6,7 @@ import { createMockContext } from "../../helpers/mock-context";
 import { makeDiagramRow, jsonBody } from "../../helpers/fixtures";
 import { diagrams } from "@lib/db/schema";
 import { SEED_USER_ID } from "@lib/auth/types";
+import { BLUEPRINT_MAP } from "@lib/blueprints";
 
 let mockDb: MockDatabase;
 let mockKv: MockKV;
@@ -143,5 +144,19 @@ describe("POST /api/v1/diagrams", () => {
     expect(res.status).toBe(400);
     expect(body.ok).toBe(false);
     expect(body.error.code).toBe("VALIDATION_ERROR");
+  });
+
+  it("creates a diagram from a valid blueprintId", async () => {
+    const res = await POST(
+      ctx({ method: "POST", body: { blueprintId: "api-gateway" } }),
+    );
+    const body = await jsonBody(res);
+
+    expect(res.status).toBe(201);
+    expect(body.ok).toBe(true);
+    expect(body.data.blueprintId).toBe("api-gateway");
+
+    const bp = BLUEPRINT_MAP.get("api-gateway")!;
+    expect(body.data.graphData).toBe(bp.graphData);
   });
 });

@@ -34,22 +34,6 @@ export default function DiagramList() {
     void fetchDiagrams();
   }, []);
 
-  /** Creates a new diagram and navigates to its editor. */
-  const createDiagram = async () => {
-    try {
-      const result = await fetchApi("/api/v1/diagrams", DiagramResponseSchema, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      });
-      if (result.ok) {
-        window.location.href = `/diagram/${result.data.id}`;
-      }
-    } catch (err) {
-      console.error("Failed to create diagram:", err);
-    }
-  };
-
   /**
    * Duplicates a diagram by fetching its data and creating a new diagram with the same graph.
    *
@@ -131,9 +115,9 @@ export default function DiagramList() {
       <div className="dashboard-header">
         <h1 className="dashboard-title">My Diagrams</h1>
         {diagrams.length > 0 && (
-          <button onClick={() => void createDiagram()} className="btn-create">
+          <a href="/blueprints" className="btn-create">
             + New Diagram
-          </button>
+          </a>
         )}
       </div>
 
@@ -143,13 +127,13 @@ export default function DiagramList() {
           <p>
             Create your first Cloudflare architecture diagram to get started.
           </p>
-          <button
-            onClick={() => void createDiagram()}
+          <a
+            href="/blueprints"
             className="btn-create"
-            style={{ marginTop: "16px" }}
+            style={{ marginTop: "16px", display: "inline-block" }}
           >
             + New Diagram
-          </button>
+          </a>
         </div>
       ) : (
         <div className="diagram-grid">
