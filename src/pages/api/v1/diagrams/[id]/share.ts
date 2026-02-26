@@ -40,6 +40,27 @@ export async function POST({ request, params, locals }: APIContext) {
     return jsonResponse(err.body, err.status);
   }
 
+  const existingLink = await db
+    .select({ token: shareLinks.token, expiresAt: shareLinks.expiresAt })
+    .from(shareLinks)
+    .where(eq(shareLinks.diagramId, params.id!))
+    .get();
+
+  if (
+    existingLink &&
+    (!existingLink.expiresAt || new Date(existingLink.expiresAt) > new Date())
+  ) {
+    const url = new URL(`/s/${existingLink.token}`, request.url).toString();
+    return jsonResponse(
+      apiSuccess({
+        token: existingLink.token,
+        expiresAt: existingLink.expiresAt,
+        url,
+      }),
+      200,
+    );
+  }
+
   const result = await createShareLink(
     db,
     locals.runtime.env.KV,

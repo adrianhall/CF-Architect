@@ -94,6 +94,35 @@ describe("POST /api/v1/diagrams/:id/share", () => {
     expect(body.data.expiresAt).toBeTruthy();
   });
 
+  it("returns existing share link on subsequent calls (idempotent)", async () => {
+    mockDb.seed(diagrams, [makeDiagramRow({ id: "d-share" })]);
+
+    const res1 = await POST(
+      ctx({
+        method: "POST",
+        url: "http://localhost:4321/api/v1/diagrams/d-share/share",
+        params: { id: "d-share" },
+        body: {},
+      }),
+    );
+    const body1 = await jsonBody(res1);
+    expect(res1.status).toBe(201);
+
+    const res2 = await POST(
+      ctx({
+        method: "POST",
+        url: "http://localhost:4321/api/v1/diagrams/d-share/share",
+        params: { id: "d-share" },
+        body: {},
+      }),
+    );
+    const body2 = await jsonBody(res2);
+
+    expect(res2.status).toBe(200);
+    expect(body2.data.token).toBe(body1.data.token);
+    expect(body2.data.url).toBe(body1.data.url);
+  });
+
   it("returns 404 for non-existent diagram", async () => {
     const res = await POST(
       ctx({
