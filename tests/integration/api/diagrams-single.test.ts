@@ -3,8 +3,12 @@ import type { APIContext } from "astro";
 import { MockDatabase } from "../../helpers/mock-db";
 import { MockKV } from "../../helpers/mock-kv";
 import { createMockContext } from "../../helpers/mock-context";
-import { makeDiagramRow, jsonBody } from "../../helpers/fixtures";
-import { diagrams } from "@lib/db/schema";
+import {
+  makeDiagramRow,
+  makeShareLinkRow,
+  jsonBody,
+} from "../../helpers/fixtures";
+import { diagrams, shareLinks } from "@lib/db/schema";
 
 let mockDb: MockDatabase;
 let mockKv: MockKV;
@@ -16,6 +20,7 @@ vi.mock("@lib/db/client", () => ({
 beforeEach(() => {
   mockDb = new MockDatabase();
   mockDb.registerTable(diagrams);
+  mockDb.registerTable(shareLinks);
   mockKv = new MockKV();
 });
 
@@ -177,5 +182,38 @@ describe("DELETE /api/v1/diagrams/:id", () => {
       ctx({ method: "DELETE", params: { id: "missing" } }),
     );
     expect(res.status).toBe(404);
+  });
+
+  it("deletes associated share links and KV entries when diagram has shares", async () => {
+    mockDb.seed(diagrams, [makeDiagramRow({ id: "d-del-cascade" })]);
+    mockDb.seed(shareLinks, [
+      makeShareLinkRow({
+        id: "sl-1",
+        diagramId: "d-del-cascade",
+        token: "tok-aaa",
+      }),
+      makeShareLinkRow({
+        id: "sl-2",
+        diagramId: "d-del-cascade",
+        token: "tok-bbb",
+      }),
+    ]);
+    await mockKv.put(
+      "share:tok-aaa",
+      JSON.stringify({ diagramId: "d-del-cascade", expiresAt: null }),
+    );
+    await mockKv.put(
+      "share:tok-bbb",
+      JSON.stringify({ diagramId: "d-del-cascade", expiresAt: null }),
+    );
+
+    const res = await DELETE(
+      ctx({ method: "DELETE", params: { id: "d-del-cascade" } }),
+    );
+
+    expect(res.status).toBe(204);
+    expect(mockDb.getRows(shareLinks)).toHaveLength(0);
+    expect(mockKv.has("share:tok-aaa")).toBe(false);
+    expect(mockKv.has("share:tok-bbb")).toBe(false);
   });
 });

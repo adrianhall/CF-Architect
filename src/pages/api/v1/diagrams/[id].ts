@@ -6,7 +6,7 @@
 import type { APIContext } from "astro";
 import { eq, and } from "drizzle-orm";
 import { createDb } from "@lib/db/client";
-import { diagrams } from "@lib/db/schema";
+import { diagrams, shareLinks } from "@lib/db/schema";
 import { UpdateDiagramSchema, apiSuccess, apiError } from "@lib/validation";
 import { nowISO, jsonResponse } from "@lib/helpers";
 
@@ -88,6 +88,7 @@ export async function PATCH({ request, params, locals }: APIContext) {
  */
 export async function DELETE({ params, locals }: APIContext) {
   const db = createDb(locals.runtime.env.DB);
+  const kv = locals.runtime.env.KV;
   const existing = await db
     .select()
     .from(diagrams)
@@ -101,6 +102,16 @@ export async function DELETE({ params, locals }: APIContext) {
     return jsonResponse(err.body, err.status);
   }
 
+  const links = await db
+    .select({ token: shareLinks.token })
+    .from(shareLinks)
+    .where(eq(shareLinks.diagramId, params.id!));
+
+  for (const link of links) {
+    await kv.delete(`share:${link.token}`);
+  }
+
+  await db.delete(shareLinks).where(eq(shareLinks.diagramId, params.id!));
   await db.delete(diagrams).where(eq(diagrams.id, params.id!));
 
   return new Response(null, { status: 204 });
