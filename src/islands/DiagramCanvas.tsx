@@ -11,6 +11,7 @@ import {
   MiniMap,
   Controls,
   BackgroundVariant,
+  getNodesBounds,
   type Node,
   type Edge,
   useReactFlow,
@@ -62,7 +63,7 @@ export default function DiagramCanvas({
   initialData,
 }: DiagramCanvasProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, fitView, getNodes } = useReactFlow();
 
   const {
     nodes,
@@ -83,6 +84,9 @@ export default function DiagramCanvas({
     markSaved,
     markSaveError,
     title,
+    description,
+    printMode,
+    setPrintMode,
   } = useDiagramStore();
 
   useEffect(() => {
@@ -180,6 +184,50 @@ export default function DiagramCanvas({
     return () => clearTimeout(timer);
   }, [title, readOnly, diagramId]);
 
+  // Print mode side effects: force light mode, set orientation, fit view, trigger print
+  useEffect(() => {
+    if (!printMode) return;
+
+    const wasDark = document.documentElement.classList.contains("dark");
+    document.documentElement.classList.remove("dark");
+    document.body.classList.add("cf-print-mode");
+
+    const flowNodes = getNodes();
+    let isLandscape = true;
+    if (flowNodes.length > 0) {
+      const bounds = getNodesBounds(flowNodes);
+      isLandscape = bounds.width > bounds.height;
+    }
+    const style = document.createElement("style");
+    style.id = "cf-print-orientation";
+    style.textContent = `@page { size: ${isLandscape ? "landscape" : "portrait"}; margin: 0.5in; }`;
+    document.head.appendChild(style);
+
+    const cleanup = () => {
+      if (wasDark) document.documentElement.classList.add("dark");
+      document.body.classList.remove("cf-print-mode");
+      document.getElementById("cf-print-orientation")?.remove();
+    };
+
+    const exitPrintMode = () => {
+      cleanup();
+      setPrintMode(false);
+    };
+
+    window.addEventListener("afterprint", exitPrintMode);
+
+    const rafId = requestAnimationFrame(() => {
+      void fitView({ duration: 0 });
+      setTimeout(() => window.print(), 300);
+    });
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener("afterprint", exitPrintMode);
+      cleanup();
+    };
+  }, [printMode, fitView, getNodes, setPrintMode]);
+
   /** Allows drop by preventing default and setting dropEffect to "move". */
   const onDragOver = useCallback((event: DragEvent) => {
     event.preventDefault();
@@ -260,11 +308,34 @@ export default function DiagramCanvas({
   );
 
   return (
-    <div className="diagram-editor" onKeyDown={onKeyDown} tabIndex={0}>
-      <Toolbar readOnly={readOnly} />
+    <div
+      className={`diagram-editor${printMode ? " print-mode" : ""}`}
+      onKeyDown={onKeyDown}
+      tabIndex={0}
+    >
+      {!printMode && <Toolbar readOnly={readOnly} />}
       <div className="diagram-editor-body">
-        {!readOnly && <ServicePalette />}
+        {!readOnly && !printMode && <ServicePalette />}
         <div className="diagram-canvas-wrapper" ref={reactFlowWrapper}>
+          {printMode && (
+            <div className="print-overlay">
+              <div className="print-title-box">
+                <h2 className="print-title">{title}</h2>
+                {description && (
+                  <p className="print-description">{description}</p>
+                )}
+              </div>
+            </div>
+          )}
+          {printMode && (
+            <button
+              className="print-exit-btn"
+              onClick={() => setPrintMode(false)}
+              title="Exit Print Mode"
+            >
+              ← Back
+            </button>
+          )}
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -288,23 +359,28 @@ export default function DiagramCanvas({
             deleteKeyCode={null}
             defaultEdgeOptions={{ type: "cf-edge" }}
           >
-            <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
-            <MiniMap
-              nodeColor={(node) => {
-                const data = node.data as CFNodeData;
-                const typeDef = NODE_TYPE_MAP.get(data?.typeId);
-                return (
-                  CATEGORY_COLORS[typeDef?.category ?? "external"] ?? "#6B7280"
-                );
-              }}
-              style={{ backgroundColor: "var(--color-surface-alt)" }}
-            />
-            <Controls showInteractive={!readOnly} />
+            {!printMode && (
+              <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
+            )}
+            {!printMode && (
+              <MiniMap
+                nodeColor={(node) => {
+                  const data = node.data as CFNodeData;
+                  const typeDef = NODE_TYPE_MAP.get(data?.typeId);
+                  return (
+                    CATEGORY_COLORS[typeDef?.category ?? "external"] ??
+                    "#6B7280"
+                  );
+                }}
+                style={{ backgroundColor: "var(--color-surface-alt)" }}
+              />
+            )}
+            {!printMode && <Controls showInteractive={!readOnly} />}
           </ReactFlow>
         </div>
-        {!readOnly && <PropertiesPanel />}
+        {!readOnly && !printMode && <PropertiesPanel />}
       </div>
-      <StatusBar readOnly={readOnly} />
+      {!printMode && <StatusBar readOnly={readOnly} />}
     </div>
   );
 }

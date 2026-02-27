@@ -63,6 +63,9 @@ interface DiagramState {
   undoStack: HistoryEntry[];
   /** Stack of undone states for redo. Most recent entry is at the end. */
   redoStack: HistoryEntry[];
+
+  /** Whether the diagram is currently in print-optimised view mode. */
+  printMode: boolean;
 }
 
 /** Mutation actions exposed by the diagram store. */
@@ -168,6 +171,9 @@ interface DiagramActions {
   redo: () => void;
   /** Push the current nodes/edges onto the undo stack and clear the redo stack. */
   pushHistory: () => void;
+
+  /** Enter or exit print-optimised view mode. */
+  setPrintMode: (mode: boolean) => void;
 }
 
 /** Maximum number of undo snapshots retained in memory. */
@@ -204,6 +210,7 @@ export const useDiagramStore = create<DiagramStore>((set, get) => ({
   saveError: null,
   undoStack: [],
   redoStack: [],
+  printMode: false,
 
   setDiagram: (id, title, description, nodes, edges, viewport) =>
     set({
@@ -319,6 +326,7 @@ export const useDiagramStore = create<DiagramStore>((set, get) => ({
     }),
   markSaveError: (error) => set({ saving: false, saveError: error }),
   markDirty: () => set({ dirty: true }),
+  setPrintMode: (printMode) => set({ printMode }),
 
   pushHistory: () =>
     set((state) => ({

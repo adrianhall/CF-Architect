@@ -72,6 +72,7 @@ beforeEach(() => {
     saveError: null,
     undoStack: [],
     redoStack: [],
+    printMode: false,
   });
 });
 
@@ -443,5 +444,26 @@ describe("onViewportChange", () => {
     const s = useDiagramStore.getState();
     expect(s.viewport).toEqual({ x: 100, y: 200, zoom: 3 });
     expect(s.dirty).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Print mode
+// ---------------------------------------------------------------------------
+
+describe("printMode", () => {
+  it("defaults to false", () => {
+    expect(useDiagramStore.getState().printMode).toBe(false);
+  });
+
+  it("setPrintMode(true) enables print mode", () => {
+    useDiagramStore.getState().setPrintMode(true);
+    expect(useDiagramStore.getState().printMode).toBe(true);
+  });
+
+  it("setPrintMode(false) disables print mode", () => {
+    useDiagramStore.setState({ printMode: true });
+    useDiagramStore.getState().setPrintMode(false);
+    expect(useDiagramStore.getState().printMode).toBe(false);
   });
 });
