@@ -19,6 +19,11 @@ function renderStatusBar(readOnly = false) {
 }
 
 describe("StatusBar", () => {
+  it("renders the Show JSON button", () => {
+    renderStatusBar();
+    expect(screen.getByTitle("Show JSON")).toBeInTheDocument();
+  });
+
   it("displays node and edge count", () => {
     useDiagramStore.setState({
       nodes: [

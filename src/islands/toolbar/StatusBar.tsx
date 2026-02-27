@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useReactFlow } from "@xyflow/react";
 import { useDiagramStore } from "../store/diagramStore";
+import { ShowJsonButton } from "./ShowJsonButton";
 
 /**
  * Converts a unix timestamp to a relative time string (e.g. "just now", "5s ago", "2m ago").
@@ -54,6 +55,7 @@ export function StatusBar({ readOnly }: { readOnly: boolean }) {
 
   return (
     <div className="status-bar">
+      <ShowJsonButton />
       <span className="status-item">
         {nodes.length} nodes, {edges.length} edges
       </span>
