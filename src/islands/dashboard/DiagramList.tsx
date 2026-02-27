@@ -5,6 +5,7 @@ import {
   DiagramResponseSchema,
   fetchApi,
 } from "../../lib/validation";
+import BlueprintPreview from "../blueprints/BlueprintPreview";
 
 /**
  * Dashboard page island. Fetches diagrams on mount, renders a responsive card grid.
@@ -143,7 +144,9 @@ export default function DiagramList() {
                 href={`/diagram/${d.id}`}
                 style={{ textDecoration: "none", color: "inherit" }}
               >
-                <div className="diagram-card-preview">Preview</div>
+                <div className="diagram-card-preview">
+                  <BlueprintPreview graphData={d.graphData} height={140} />
+                </div>
                 <div className="diagram-card-body">
                   <div className="diagram-card-title">{d.title}</div>
                   <div className="diagram-card-meta">
