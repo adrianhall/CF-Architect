@@ -101,9 +101,25 @@ describe("DiagramList", () => {
     expect(link.closest("a")).toHaveAttribute("href", "/blueprints");
   });
 
-  it("deletes a diagram after confirmation", async () => {
+  it("opens delete confirmation modal when Delete is clicked", async () => {
     mockFetchApi.mockResolvedValueOnce({ ok: true, data: DIAGRAMS });
-    vi.spyOn(globalThis, "confirm").mockReturnValue(true);
+    render(<DiagramList />);
+    await waitFor(() => {
+      expect(screen.getByText("First Diagram")).toBeInTheDocument();
+    });
+
+    const deleteButtons = screen.getAllByText("Delete");
+    fireEvent.click(deleteButtons[0]);
+
+    expect(screen.getByTestId("confirm-delete-modal")).toBeInTheDocument();
+    expect(screen.getByText("Delete Diagram")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Are you sure you want to delete/),
+    ).toBeInTheDocument();
+  });
+
+  it("deletes a diagram after confirming in the modal", async () => {
+    mockFetchApi.mockResolvedValueOnce({ ok: true, data: DIAGRAMS });
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
       .mockResolvedValue(new Response("{}"));
@@ -115,6 +131,12 @@ describe("DiagramList", () => {
 
     const deleteButtons = screen.getAllByText("Delete");
     fireEvent.click(deleteButtons[0]);
+
+    const modal = screen.getByTestId("confirm-delete-modal");
+    const confirmBtn = modal.querySelector(
+      ".toolbar-btn-danger",
+    ) as HTMLElement;
+    fireEvent.click(confirmBtn);
 
     await waitFor(() => {
       expect(fetchSpy).toHaveBeenCalledWith(
@@ -124,11 +146,13 @@ describe("DiagramList", () => {
     });
 
     expect(screen.queryByText("First Diagram")).toBeNull();
+    expect(
+      screen.queryByTestId("confirm-delete-modal"),
+    ).not.toBeInTheDocument();
   });
 
-  it("does not delete when confirmation is cancelled", async () => {
+  it("does not delete when Cancel is clicked in the modal", async () => {
     mockFetchApi.mockResolvedValueOnce({ ok: true, data: DIAGRAMS });
-    vi.spyOn(globalThis, "confirm").mockReturnValue(false);
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
       .mockResolvedValue(new Response("{}"));
@@ -141,10 +165,34 @@ describe("DiagramList", () => {
     const deleteButtons = screen.getAllByText("Delete");
     fireEvent.click(deleteButtons[0]);
 
+    fireEvent.click(screen.getByText("Cancel"));
+
     expect(fetchSpy).not.toHaveBeenCalledWith(
       "/api/v1/diagrams/d1",
       expect.objectContaining({ method: "DELETE" }),
     );
+    expect(screen.getByText("First Diagram")).toBeInTheDocument();
+    expect(
+      screen.queryByTestId("confirm-delete-modal"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("closes the modal when overlay is clicked", async () => {
+    mockFetchApi.mockResolvedValueOnce({ ok: true, data: DIAGRAMS });
+    render(<DiagramList />);
+    await waitFor(() => {
+      expect(screen.getByText("First Diagram")).toBeInTheDocument();
+    });
+
+    const deleteButtons = screen.getAllByText("Delete");
+    fireEvent.click(deleteButtons[0]);
+
+    const overlay = screen.getByTestId("confirm-delete-modal");
+    fireEvent.click(overlay);
+
+    expect(
+      screen.queryByTestId("confirm-delete-modal"),
+    ).not.toBeInTheDocument();
   });
 
   it("duplicates a diagram", async () => {

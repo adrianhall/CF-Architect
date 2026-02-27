@@ -6,6 +6,7 @@ import {
   fetchApi,
 } from "../../lib/validation";
 import BlueprintPreview from "../blueprints/BlueprintPreview";
+import ConfirmDeleteModal from "./ConfirmDeleteModal";
 
 /**
  * Dashboard page island. Fetches diagrams on mount, renders a responsive card grid.
@@ -13,6 +14,10 @@ import BlueprintPreview from "../blueprints/BlueprintPreview";
 export default function DiagramList() {
   const [diagrams, setDiagrams] = useState<Diagram[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
 
   /** Fetches the list of diagrams from the API. */
   const fetchDiagrams = async () => {
@@ -71,18 +76,15 @@ export default function DiagramList() {
     }
   };
 
-  /**
-   * Deletes a diagram after confirmation.
-   *
-   * @param id - The diagram ID to delete
-   */
-  const deleteDiagram = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this diagram?")) return;
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await fetch(`/api/v1/diagrams/${id}`, { method: "DELETE" });
-      setDiagrams((prev) => prev.filter((d) => d.id !== id));
+      await fetch(`/api/v1/diagrams/${deleteTarget.id}`, { method: "DELETE" });
+      setDiagrams((prev) => prev.filter((d) => d.id !== deleteTarget.id));
     } catch (err) {
       console.error("Failed to delete:", err);
+    } finally {
+      setDeleteTarget(null);
     }
   };
 
@@ -162,7 +164,7 @@ export default function DiagramList() {
                   Duplicate
                 </button>
                 <button
-                  onClick={() => void deleteDiagram(d.id)}
+                  onClick={() => setDeleteTarget({ id: d.id, title: d.title })}
                   className="btn-sm btn-danger"
                 >
                   Delete
@@ -172,6 +174,13 @@ export default function DiagramList() {
           ))}
         </div>
       )}
+
+      <ConfirmDeleteModal
+        open={deleteTarget !== null}
+        diagramTitle={deleteTarget?.title ?? ""}
+        onConfirm={() => void confirmDelete()}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </>
   );
 }
