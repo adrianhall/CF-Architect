@@ -153,6 +153,11 @@ describe("Toolbar", () => {
     expect(screen.getByTitle("Export")).toBeInTheDocument();
   });
 
+  it("renders the print button", () => {
+    render(<Toolbar />);
+    expect(screen.getByTitle("Print")).toBeInTheDocument();
+  });
+
   describe("readOnly mode", () => {
     it("shows title as text instead of input", () => {
       useDiagramStore.setState({ title: "Read Only Title" });
@@ -179,6 +184,11 @@ describe("Toolbar", () => {
     it("still shows the export button", () => {
       render(<Toolbar readOnly />);
       expect(screen.getByTitle("Export")).toBeInTheDocument();
+    });
+
+    it("still shows the print button", () => {
+      render(<Toolbar readOnly />);
+      expect(screen.getByTitle("Print")).toBeInTheDocument();
     });
 
     it("still shows the dashboard link", () => {

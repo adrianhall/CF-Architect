@@ -300,4 +300,87 @@ describe("DiagramCanvas", () => {
       expect(useDiagramStore.getState().undoStack).toHaveLength(1);
     });
   });
+
+  describe("print mode", () => {
+    beforeEach(() => {
+      window.print = vi.fn();
+      vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
+        cb(0);
+        return 0;
+      });
+    });
+
+    it("hides toolbar when printMode is true", () => {
+      useDiagramStore.setState({ printMode: true });
+      render(
+        <DiagramCanvas diagramId="diag-1" initialData={sampleInitialData} />,
+      );
+      expect(screen.queryByTitle("Back to Dashboard")).toBeNull();
+    });
+
+    it("hides status bar when printMode is true", () => {
+      useDiagramStore.setState({ printMode: true });
+      render(
+        <DiagramCanvas diagramId="diag-1" initialData={sampleInitialData} />,
+      );
+      expect(screen.queryByText(/nodes,/)).toBeNull();
+    });
+
+    it("hides service palette when printMode is true", () => {
+      useDiagramStore.setState({ printMode: true });
+      render(
+        <DiagramCanvas diagramId="diag-1" initialData={sampleInitialData} />,
+      );
+      expect(screen.queryByText("Services")).toBeNull();
+    });
+
+    it("shows print title overlay with diagram title", () => {
+      render(
+        <DiagramCanvas diagramId="diag-1" initialData={sampleInitialData} />,
+      );
+      act(() => {
+        useDiagramStore.setState({ printMode: true, title: "My Print Title" });
+      });
+      expect(screen.getByText("My Print Title")).toBeInTheDocument();
+    });
+
+    it("shows description in print overlay when present", () => {
+      render(
+        <DiagramCanvas diagramId="diag-1" initialData={sampleInitialData} />,
+      );
+      act(() => {
+        useDiagramStore.setState({
+          printMode: true,
+          title: "T",
+          description: "A test description",
+        });
+      });
+      expect(screen.getByText("A test description")).toBeInTheDocument();
+    });
+
+    it("renders exit print mode button", () => {
+      useDiagramStore.setState({ printMode: true });
+      render(
+        <DiagramCanvas diagramId="diag-1" initialData={sampleInitialData} />,
+      );
+      expect(screen.getByTitle("Exit Print Mode")).toBeInTheDocument();
+    });
+
+    it("clicking exit button sets printMode to false", () => {
+      useDiagramStore.setState({ printMode: true });
+      render(
+        <DiagramCanvas diagramId="diag-1" initialData={sampleInitialData} />,
+      );
+      fireEvent.click(screen.getByTitle("Exit Print Mode"));
+      expect(useDiagramStore.getState().printMode).toBe(false);
+    });
+
+    it("adds print-mode class to editor container", () => {
+      useDiagramStore.setState({ printMode: true });
+      render(
+        <DiagramCanvas diagramId="diag-1" initialData={sampleInitialData} />,
+      );
+      expect(document.querySelector(".print-mode")).not.toBeNull();
+    });
+  });
 });

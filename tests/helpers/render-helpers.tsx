@@ -34,6 +34,7 @@ export function resetStore() {
     saveError: null,
     undoStack: [],
     redoStack: [],
+    printMode: false,
   });
 }
 

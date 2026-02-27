@@ -5,6 +5,7 @@ import type { CFNodeData } from "../types";
 import { NODE_TYPE_MAP } from "../../lib/catalog";
 import { fetchApi, ShareResponseSchema } from "../../lib/validation";
 import { ExportButton } from "./ExportButton";
+import { PrintButton } from "./PrintButton";
 
 /**
  * Top toolbar with diagram title input, undo/redo buttons, zoom controls,
@@ -173,6 +174,7 @@ export function Toolbar({ readOnly = false }: { readOnly?: boolean }) {
 
       <div className="toolbar-right">
         <ExportButton />
+        <PrintButton />
         {!readOnly && <ShareButton />}
       </div>
     </div>
