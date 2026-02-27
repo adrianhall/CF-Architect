@@ -68,15 +68,17 @@ describe("DiagramList", () => {
     expect(screen.getByText("Second Diagram")).toBeInTheDocument();
   });
 
-  it("renders formatted dates on cards", async () => {
+  it("renders clock icon with date tooltip on cards", async () => {
     mockFetchApi.mockResolvedValueOnce({ ok: true, data: DIAGRAMS });
     render(<DiagramList />);
 
     await waitFor(() => {
       expect(screen.getByText("First Diagram")).toBeInTheDocument();
     });
-    const dateElements = screen.getAllByText(/Updated/);
-    expect(dateElements.length).toBe(2);
+    const tooltips = document.querySelectorAll(".diagram-card-clock-tooltip");
+    expect(tooltips).toHaveLength(2);
+    expect(tooltips[0].textContent).toMatch(/Created:/);
+    expect(tooltips[0].textContent).toMatch(/Updated:/);
   });
 
   it("shows '+ New Diagram' link in header when diagrams exist", async () => {
@@ -101,15 +103,18 @@ describe("DiagramList", () => {
     expect(link.closest("a")).toHaveAttribute("href", "/blueprints");
   });
 
-  it("opens delete confirmation modal when Delete is clicked", async () => {
+  it("opens delete confirmation modal when Delete is clicked via menu", async () => {
     mockFetchApi.mockResolvedValueOnce({ ok: true, data: DIAGRAMS });
     render(<DiagramList />);
     await waitFor(() => {
       expect(screen.getByText("First Diagram")).toBeInTheDocument();
     });
 
-    const deleteButtons = screen.getAllByText("Delete");
-    fireEvent.click(deleteButtons[0]);
+    const menuBtns = screen.getAllByTestId("card-menu-btn");
+    fireEvent.click(menuBtns[0]);
+
+    const deleteBtn = screen.getAllByText("Delete")[0];
+    fireEvent.click(deleteBtn);
 
     expect(screen.getByTestId("confirm-delete-modal")).toBeInTheDocument();
     expect(screen.getByText("Delete Diagram")).toBeInTheDocument();
@@ -129,8 +134,11 @@ describe("DiagramList", () => {
       expect(screen.getByText("First Diagram")).toBeInTheDocument();
     });
 
-    const deleteButtons = screen.getAllByText("Delete");
-    fireEvent.click(deleteButtons[0]);
+    const menuBtns = screen.getAllByTestId("card-menu-btn");
+    fireEvent.click(menuBtns[0]);
+
+    const deleteBtn = screen.getAllByText("Delete")[0];
+    fireEvent.click(deleteBtn);
 
     const modal = screen.getByTestId("confirm-delete-modal");
     const confirmBtn = modal.querySelector(
@@ -162,8 +170,11 @@ describe("DiagramList", () => {
       expect(screen.getByText("First Diagram")).toBeInTheDocument();
     });
 
-    const deleteButtons = screen.getAllByText("Delete");
-    fireEvent.click(deleteButtons[0]);
+    const menuBtns = screen.getAllByTestId("card-menu-btn");
+    fireEvent.click(menuBtns[0]);
+
+    const deleteBtn = screen.getAllByText("Delete")[0];
+    fireEvent.click(deleteBtn);
 
     fireEvent.click(screen.getByText("Cancel"));
 
@@ -184,8 +195,11 @@ describe("DiagramList", () => {
       expect(screen.getByText("First Diagram")).toBeInTheDocument();
     });
 
-    const deleteButtons = screen.getAllByText("Delete");
-    fireEvent.click(deleteButtons[0]);
+    const menuBtns = screen.getAllByTestId("card-menu-btn");
+    fireEvent.click(menuBtns[0]);
+
+    const deleteBtn = screen.getAllByText("Delete")[0];
+    fireEvent.click(deleteBtn);
 
     const overlay = screen.getByTestId("confirm-delete-modal");
     fireEvent.click(overlay);
@@ -195,7 +209,7 @@ describe("DiagramList", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("duplicates a diagram", async () => {
+  it("duplicates a diagram via menu", async () => {
     mockFetchApi.mockResolvedValueOnce({ ok: true, data: DIAGRAMS });
 
     render(<DiagramList />);
@@ -214,8 +228,11 @@ describe("DiagramList", () => {
       })
       .mockResolvedValueOnce({ ok: true, data: DIAGRAMS });
 
-    const duplicateButtons = screen.getAllByText("Duplicate");
-    fireEvent.click(duplicateButtons[0]);
+    const menuBtns = screen.getAllByTestId("card-menu-btn");
+    fireEvent.click(menuBtns[0]);
+
+    const duplicateBtn = screen.getAllByText("Duplicate")[0];
+    fireEvent.click(duplicateBtn);
 
     await waitFor(() => {
       expect(mockFetchApi).toHaveBeenCalledWith(
@@ -245,7 +262,40 @@ describe("DiagramList", () => {
       expect(screen.getByText("First Diagram")).toBeInTheDocument();
     });
 
-    const link = screen.getByText("First Diagram").closest("a");
-    expect(link).toHaveAttribute("href", "/diagram/d1");
+    const card = screen.getByText("First Diagram").closest("a");
+    expect(card).toHaveAttribute("href", "/diagram/d1");
+    expect(card).toHaveClass("diagram-card");
+  });
+
+  it("opens and closes kebab menu", async () => {
+    mockFetchApi.mockResolvedValueOnce({ ok: true, data: DIAGRAMS });
+    render(<DiagramList />);
+    await waitFor(() => {
+      expect(screen.getByText("First Diagram")).toBeInTheDocument();
+    });
+
+    const menuBtns = screen.getAllByTestId("card-menu-btn");
+    fireEvent.click(menuBtns[0]);
+    expect(screen.getByTestId("card-dropdown")).toBeInTheDocument();
+    expect(screen.getByText("Open")).toBeInTheDocument();
+    expect(screen.getByText("Duplicate")).toBeInTheDocument();
+
+    fireEvent.mouseDown(document.body);
+    expect(screen.queryByTestId("card-dropdown")).not.toBeInTheDocument();
+  });
+
+  it("closes kebab menu on Escape key", async () => {
+    mockFetchApi.mockResolvedValueOnce({ ok: true, data: DIAGRAMS });
+    render(<DiagramList />);
+    await waitFor(() => {
+      expect(screen.getByText("First Diagram")).toBeInTheDocument();
+    });
+
+    const menuBtns = screen.getAllByTestId("card-menu-btn");
+    fireEvent.click(menuBtns[0]);
+    expect(screen.getByTestId("card-dropdown")).toBeInTheDocument();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByTestId("card-dropdown")).not.toBeInTheDocument();
   });
 });

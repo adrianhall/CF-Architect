@@ -765,10 +765,13 @@
 }
 
 .diagram-card {
+  display: block;
   background: var(--color-surface-raised);
   border: 1px solid var(--color-border);
   border-radius: 12px;
   overflow: hidden;
+  text-decoration: none;
+  color: inherit;
   transition:
     border-color 0.15s,
     box-shadow 0.15s;
@@ -777,6 +780,57 @@
 .diagram-card:hover {
   border-color: var(--color-cf-orange);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.diagram-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+}
+
+.diagram-card-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.diagram-card-clock {
+  position: relative;
+  display: flex;
+  align-items: center;
+  color: var(--color-text-secondary);
+  cursor: default;
+  flex-shrink: 0;
+}
+
+.diagram-card-clock-tooltip {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: -8px;
+  white-space: nowrap;
+  padding: 6px 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-text-primary);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 20;
+}
+
+.diagram-card-clock:hover .diagram-card-clock-tooltip {
+  opacity: 1;
+  transition-delay: 0.15s;
 }
 
 .diagram-card-preview {
@@ -789,51 +843,86 @@
   font-size: 13px;
 }
 
-.diagram-card-body {
-  padding: 12px 16px;
+/* Kebab menu */
+
+.diagram-card-menu-wrapper {
+  position: relative;
+  flex-shrink: 0;
 }
 
-.diagram-card-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin-bottom: 4px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.diagram-card-meta {
-  font-size: 12px;
-  color: var(--color-text-secondary);
-}
-
-.diagram-card-actions {
+.diagram-card-menu-btn {
   display: flex;
-  gap: 8px;
-  padding: 8px 16px 12px;
-}
-
-.btn-sm {
-  padding: 4px 10px;
-  font-size: 12px;
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  background: var(--color-surface);
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
   color: var(--color-text-secondary);
   cursor: pointer;
+  transition: background 0.1s;
 }
 
-.btn-sm:hover {
+.diagram-card-menu-btn:hover {
+  background: var(--color-surface-alt);
+  color: var(--color-text-primary);
+}
+
+/* Card action dropdown */
+
+.diagram-card-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 160px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 20;
+  overflow: hidden;
+}
+
+.diagram-card-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 14px;
+  border: none;
+  background: none;
+  color: var(--color-text-primary);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.diagram-card-dropdown-item:hover {
   background: var(--color-surface-alt);
 }
 
-.btn-danger {
-  color: #ef4444;
-  border-color: #ef444444;
+.diagram-card-dropdown-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  flex-shrink: 0;
 }
 
-.btn-danger:hover {
+.diagram-card-dropdown-separator {
+  margin: 4px 0;
+  border: none;
+  border-top: 1px solid var(--color-border);
+}
+
+.diagram-card-dropdown-danger {
+  color: #ef4444;
+}
+
+.diagram-card-dropdown-danger:hover {
   background: #ef44440d;
 }
 
