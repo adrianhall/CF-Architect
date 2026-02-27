@@ -103,4 +103,42 @@ describe("CFNode", () => {
     const node = container.querySelector(".cf-node") as HTMLElement;
     expect(node.style.boxShadow).toBe("none");
   });
+
+  it("renders worker-hono with correct icon", () => {
+    const { container } = renderCFNode({
+      typeId: "worker-hono",
+      label: "Hono API",
+    });
+    expect(screen.getByText("Hono API")).toBeInTheDocument();
+    const img = container.querySelector("img.cf-node-icon");
+    expect(img).toHaveAttribute("src", "/icons/worker-hono.svg");
+  });
+
+  it("renders worker-astro with correct icon", () => {
+    const { container } = renderCFNode({
+      typeId: "worker-astro",
+      label: "Astro Web",
+    });
+    expect(screen.getByText("Astro Web")).toBeInTheDocument();
+    const img = container.querySelector("img.cf-node-icon");
+    expect(img).toHaveAttribute("src", "/icons/worker-astro.svg");
+  });
+
+  it("renders 4 handles for worker-hono", () => {
+    renderCFNode({ typeId: "worker-hono", label: "Hono" });
+    const typeDef = NODE_TYPE_MAP.get("worker-hono")!;
+    expect(typeDef.defaultHandles).toHaveLength(4);
+    for (const h of typeDef.defaultHandles) {
+      expect(screen.getByTestId(`handle-${h.id}`)).toBeInTheDocument();
+    }
+  });
+
+  it("renders 4 handles for worker-astro", () => {
+    renderCFNode({ typeId: "worker-astro", label: "Astro" });
+    const typeDef = NODE_TYPE_MAP.get("worker-astro")!;
+    expect(typeDef.defaultHandles).toHaveLength(4);
+    for (const h of typeDef.defaultHandles) {
+      expect(screen.getByTestId(`handle-${h.id}`)).toBeInTheDocument();
+    }
+  });
 });

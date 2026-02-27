@@ -42,6 +42,8 @@ export interface NodeTypeDef {
   defaultHandles: HandleDef[];
   /** Corresponding `wrangler.toml` binding type, used by the future scaffold generator. */
   wranglerBinding?: string;
+  /** Code template identifier for the scaffold generator (e.g. "vanilla", "hono", "astro"). */
+  scaffoldTemplate?: string;
 }
 
 /** Static definition of a connection edge type in the catalog. */
@@ -95,7 +97,7 @@ export const CATEGORY_LABELS: Record<NodeCategory, string> = {
   external: "External / Generic",
 };
 
-/** Complete list of all 30 Cloudflare product node types available on the canvas. */
+/** Complete list of all 32 Cloudflare product node types available on the canvas. */
 export const NODE_TYPES: NodeTypeDef[] = [
   // Compute
   {
@@ -106,6 +108,27 @@ export const NODE_TYPES: NodeTypeDef[] = [
     description: "Cloudflare Workers serverless compute",
     defaultHandles,
     wranglerBinding: "worker",
+    scaffoldTemplate: "vanilla",
+  },
+  {
+    typeId: "worker-hono",
+    label: "Workers (Hono)",
+    category: "compute",
+    iconPath: "/icons/worker-hono.svg",
+    description: "API Worker powered by the Hono routing framework",
+    defaultHandles,
+    wranglerBinding: "worker",
+    scaffoldTemplate: "hono",
+  },
+  {
+    typeId: "worker-astro",
+    label: "Workers (Astro)",
+    category: "compute",
+    iconPath: "/icons/worker-astro.svg",
+    description: "Web application with Astro SSR on Cloudflare Workers",
+    defaultHandles,
+    wranglerBinding: "worker",
+    scaffoldTemplate: "astro",
   },
   {
     typeId: "pages",
