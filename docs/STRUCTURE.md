@@ -102,23 +102,23 @@ All client-side editor state lives in a single Zustand store defined in `src/isl
 
 ### State Properties
 
-| Property | Type | Description |
-| --- | --- | --- |
-| `diagramId` | `string \| null` | UUID of the loaded diagram, or `null` before initial fetch |
-| `title` | `string` | User-editable diagram title |
-| `description` | `string` | User-editable diagram description |
-| `nodes` | `Node<CFNodeData>[]` | React Flow node array |
-| `edges` | `Edge<CFEdgeData>[]` | React Flow edge array |
-| `viewport` | `Viewport` | Canvas pan (`x`, `y`) and `zoom` level |
-| `selectedNodeId` | `string \| null` | Currently selected node ID |
-| `selectedEdgeId` | `string \| null` | Currently selected edge ID |
-| `dirty` | `boolean` | Whether there are unsaved changes |
-| `saving` | `boolean` | Whether an autosave request is in flight |
-| `lastSavedAt` | `number \| null` | Unix timestamp (ms) of last successful save |
-| `saveError` | `string \| null` | Error message from the most recent failed save |
-| `undoStack` | `HistoryEntry[]` | Undo snapshots (max 50) |
-| `redoStack` | `HistoryEntry[]` | Redo snapshots |
-| `printMode` | `boolean` | Whether print-optimised view is active |
+| Property         | Type                 | Description                                                |
+| ---------------- | -------------------- | ---------------------------------------------------------- |
+| `diagramId`      | `string \| null`     | UUID of the loaded diagram, or `null` before initial fetch |
+| `title`          | `string`             | User-editable diagram title                                |
+| `description`    | `string`             | User-editable diagram description                          |
+| `nodes`          | `Node<CFNodeData>[]` | React Flow node array                                      |
+| `edges`          | `Edge<CFEdgeData>[]` | React Flow edge array                                      |
+| `viewport`       | `Viewport`           | Canvas pan (`x`, `y`) and `zoom` level                     |
+| `selectedNodeId` | `string \| null`     | Currently selected node ID                                 |
+| `selectedEdgeId` | `string \| null`     | Currently selected edge ID                                 |
+| `dirty`          | `boolean`            | Whether there are unsaved changes                          |
+| `saving`         | `boolean`            | Whether an autosave request is in flight                   |
+| `lastSavedAt`    | `number \| null`     | Unix timestamp (ms) of last successful save                |
+| `saveError`      | `string \| null`     | Error message from the most recent failed save             |
+| `undoStack`      | `HistoryEntry[]`     | Undo snapshots (max 50)                                    |
+| `redoStack`      | `HistoryEntry[]`     | Redo snapshots                                             |
+| `printMode`      | `boolean`            | Whether print-optimised view is active                     |
 
 The `HistoryEntry` type is a snapshot of the node and edge arrays:
 
@@ -131,31 +131,31 @@ interface HistoryEntry {
 
 ### Actions
 
-| Action | Signature | Description |
-| --- | --- | --- |
-| `setDiagram` | `(id, title, description, nodes, edges, viewport) => void` | Initialise store with a loaded diagram |
-| `onNodesChange` | `OnNodesChange` | React Flow node change handler; pushes history on add/remove |
-| `onEdgesChange` | `OnEdgesChange` | React Flow edge change handler; pushes history on add/remove |
-| `onConnect` | `OnConnect` | Creates a new `data-flow` edge on connection; pushes history |
-| `onViewportChange` | `(viewport: Viewport) => void` | Update viewport (does not mark dirty) |
-| `addNode` | `(node: Node<CFNodeData>) => void` | Add a node; pushes history |
-| `updateNodeData` | `(nodeId: string, data: Partial<CFNodeData>) => void` | Merge partial data into a node |
-| `updateEdgeData` | `(edgeId: string, data: Partial<CFEdgeData>) => void` | Merge partial data into an edge |
-| `removeSelected` | `() => void` | Remove all selected nodes and edges; pushes history |
-| `setSelectedNode` | `(id: string \| null) => void` | Select a node (clears edge selection) |
-| `setSelectedEdge` | `(id: string \| null) => void` | Select an edge (clears node selection) |
-| `setTitle` | `(title: string) => void` | Update title; marks dirty |
-| `setDescription` | `(description: string) => void` | Update description; marks dirty |
-| `setNodes` | `(nodes: Node<CFNodeData>[]) => void` | Replace the entire nodes array (used by auto-layout) |
-| `setEdges` | `(edges: Edge<CFEdgeData>[]) => void` | Replace the entire edges array |
-| `markSaving` | `() => void` | Set `saving` to true, clear previous error |
-| `markSaved` | `() => void` | Clear `dirty`, record `lastSavedAt`, clear error |
-| `markSaveError` | `(error: string) => void` | Record a save failure |
-| `markDirty` | `() => void` | Manually set the dirty flag |
-| `undo` | `() => void` | Revert to the most recent undo snapshot |
-| `redo` | `() => void` | Re-apply the most recently undone snapshot |
-| `pushHistory` | `() => void` | Push current nodes/edges onto the undo stack; clears redo |
-| `setPrintMode` | `(mode: boolean) => void` | Enter or exit print-optimised view |
+| Action             | Signature                                                  | Description                                                  |
+| ------------------ | ---------------------------------------------------------- | ------------------------------------------------------------ |
+| `setDiagram`       | `(id, title, description, nodes, edges, viewport) => void` | Initialise store with a loaded diagram                       |
+| `onNodesChange`    | `OnNodesChange`                                            | React Flow node change handler; pushes history on add/remove |
+| `onEdgesChange`    | `OnEdgesChange`                                            | React Flow edge change handler; pushes history on add/remove |
+| `onConnect`        | `OnConnect`                                                | Creates a new `data-flow` edge on connection; pushes history |
+| `onViewportChange` | `(viewport: Viewport) => void`                             | Update viewport (does not mark dirty)                        |
+| `addNode`          | `(node: Node<CFNodeData>) => void`                         | Add a node; pushes history                                   |
+| `updateNodeData`   | `(nodeId: string, data: Partial<CFNodeData>) => void`      | Merge partial data into a node                               |
+| `updateEdgeData`   | `(edgeId: string, data: Partial<CFEdgeData>) => void`      | Merge partial data into an edge                              |
+| `removeSelected`   | `() => void`                                               | Remove all selected nodes and edges; pushes history          |
+| `setSelectedNode`  | `(id: string \| null) => void`                             | Select a node (clears edge selection)                        |
+| `setSelectedEdge`  | `(id: string \| null) => void`                             | Select an edge (clears node selection)                       |
+| `setTitle`         | `(title: string) => void`                                  | Update title; marks dirty                                    |
+| `setDescription`   | `(description: string) => void`                            | Update description; marks dirty                              |
+| `setNodes`         | `(nodes: Node<CFNodeData>[]) => void`                      | Replace the entire nodes array (used by auto-layout)         |
+| `setEdges`         | `(edges: Edge<CFEdgeData>[]) => void`                      | Replace the entire edges array                               |
+| `markSaving`       | `() => void`                                               | Set `saving` to true, clear previous error                   |
+| `markSaved`        | `() => void`                                               | Clear `dirty`, record `lastSavedAt`, clear error             |
+| `markSaveError`    | `(error: string) => void`                                  | Record a save failure                                        |
+| `markDirty`        | `() => void`                                               | Manually set the dirty flag                                  |
+| `undo`             | `() => void`                                               | Revert to the most recent undo snapshot                      |
+| `redo`             | `() => void`                                               | Re-apply the most recently undone snapshot                   |
+| `pushHistory`      | `() => void`                                               | Push current nodes/edges onto the undo stack; clears redo    |
+| `setPrintMode`     | `(mode: boolean) => void`                                  | Enter or exit print-optimised view                           |
 
 ### Usage
 
@@ -179,16 +179,16 @@ const title = useDiagramStore((s) => s.title);
 
 ### Store Consumers
 
-| Component | Selectors / Actions Used |
-| --- | --- |
-| DiagramCanvas | `nodes`, `edges`, all `on*Change` handlers, `setDiagram`, `addNode`, `removeSelected`, `setSelectedNode`, `setSelectedEdge`, `undo`, `redo`, `dirty`, `markSaving`, `markSaved`, `markSaveError`, `title`, `description`, `printMode`, `setPrintMode`; `getState()` for autosave and beforeunload |
-| Toolbar | `undo`, `redo`, `undoStack`, `redoStack`, `title`, `setTitle`; `getState()` for auto-layout (`pushHistory`, `setNodes`) |
-| Toolbar > ShareButton | `diagramId` |
-| ExportButton | `title`, `nodes`, `edges` |
-| PrintButton | `setPrintMode` |
-| ShowJsonButton | `nodes`, `edges`, `viewport` |
-| StatusBar | `saving`, `dirty`, `lastSavedAt`, `saveError`, `nodes`, `edges` |
-| PropertiesPanel | `nodes`, `edges`, `selectedNodeId`, `selectedEdgeId`, `updateNodeData`, `updateEdgeData` |
+| Component             | Selectors / Actions Used                                                                                                                                                                                                                                                                          |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DiagramCanvas         | `nodes`, `edges`, all `on*Change` handlers, `setDiagram`, `addNode`, `removeSelected`, `setSelectedNode`, `setSelectedEdge`, `undo`, `redo`, `dirty`, `markSaving`, `markSaved`, `markSaveError`, `title`, `description`, `printMode`, `setPrintMode`; `getState()` for autosave and beforeunload |
+| Toolbar               | `undo`, `redo`, `undoStack`, `redoStack`, `title`, `setTitle`; `getState()` for auto-layout (`pushHistory`, `setNodes`)                                                                                                                                                                           |
+| Toolbar > ShareButton | `diagramId`                                                                                                                                                                                                                                                                                       |
+| ExportButton          | `title`, `nodes`, `edges`                                                                                                                                                                                                                                                                         |
+| PrintButton           | `setPrintMode`                                                                                                                                                                                                                                                                                    |
+| ShowJsonButton        | `nodes`, `edges`, `viewport`                                                                                                                                                                                                                                                                      |
+| StatusBar             | `saving`, `dirty`, `lastSavedAt`, `saveError`, `nodes`, `edges`                                                                                                                                                                                                                                   |
+| PropertiesPanel       | `nodes`, `edges`, `selectedNodeId`, `selectedEdgeId`, `updateNodeData`, `updateEdgeData`                                                                                                                                                                                                          |
 
 ---
 
@@ -226,12 +226,12 @@ BlueprintGallery                  (blueprints.astro)
 
 Islands are hydrated from Astro pages using Astro's `client:` directives:
 
-| Page | Island | Directive |
-| --- | --- | --- |
-| `diagram/[id].astro` | `DiagramCanvasWrapper` | `client:only="react"` |
-| `s/[token].astro` | `DiagramCanvasWrapper` (read-only) | `client:only="react"` |
-| `dashboard.astro` | `DiagramList` | `client:load` |
-| `blueprints.astro` | `BlueprintGallery` | `client:load` |
+| Page                 | Island                             | Directive             |
+| -------------------- | ---------------------------------- | --------------------- |
+| `diagram/[id].astro` | `DiagramCanvasWrapper`             | `client:only="react"` |
+| `s/[token].astro`    | `DiagramCanvasWrapper` (read-only) | `client:only="react"` |
+| `dashboard.astro`    | `DiagramList`                      | `client:load`         |
+| `blueprints.astro`   | `BlueprintGallery`                 | `client:load`         |
 
 ### Component Reference
 
@@ -241,10 +241,10 @@ Islands are hydrated from Astro pages using Astro's `client:` directives:
 
 Wraps `DiagramCanvas` with `ReactFlowProvider` so that React Flow hooks (`useReactFlow`, etc.) are available to all child components.
 
-| Prop | Type | Description |
-| --- | --- | --- |
-| `diagramId` | `string` | Diagram UUID |
-| `readOnly` | `boolean?` | Hides editing UI when `true` |
+| Prop          | Type                                 | Description                       |
+| ------------- | ------------------------------------ | --------------------------------- |
+| `diagramId`   | `string`                             | Diagram UUID                      |
+| `readOnly`    | `boolean?`                           | Hides editing UI when `true`      |
 | `initialData` | `{ title, description, graphData }?` | Pre-loaded data to skip API fetch |
 
 **DiagramCanvas** (`src/islands/DiagramCanvas.tsx`)
@@ -281,8 +281,8 @@ Right sidebar that displays editable properties for the currently selected node 
 
 **Toolbar** (`src/islands/toolbar/Toolbar.tsx`)
 
-| Prop | Type | Description |
-| --- | --- | --- |
+| Prop       | Type       | Description                        |
+| ---------- | ---------- | ---------------------------------- |
 | `readOnly` | `boolean?` | Hides editing controls when `true` |
 
 Top bar containing: logo link back to dashboard, diagram title input, undo/redo, zoom in/out/fit, ELK auto-layout, `ExportButton`, `PrintButton`, and an internal `ShareButton`. In read-only mode only the logo, title, and export are shown.
@@ -301,8 +301,8 @@ Icon button (rendered in `StatusBar`) that opens a modal displaying the current 
 
 **StatusBar** (`src/islands/toolbar/StatusBar.tsx`)
 
-| Prop | Type | Description |
-| --- | --- | --- |
+| Prop       | Type      | Description                                 |
+| ---------- | --------- | ------------------------------------------- |
 | `readOnly` | `boolean` | Displays "Read-only" instead of save status |
 
 Bottom bar showing: `ShowJsonButton`, node/edge count, zoom percentage, and save status (Saving / Unsaved changes / Saved _n_ ago / Error).
@@ -315,12 +315,12 @@ Fetches all diagrams on mount and renders a responsive card grid. Each card show
 
 **ConfirmDeleteModal** (`src/islands/dashboard/ConfirmDeleteModal.tsx`)
 
-| Prop | Type | Description |
-| --- | --- | --- |
-| `open` | `boolean` | Controls visibility |
-| `diagramTitle` | `string` | Shown in the confirmation message |
-| `onConfirm` | `() => void` | Called when delete is confirmed |
-| `onCancel` | `() => void` | Called when cancelled or overlay clicked |
+| Prop           | Type         | Description                              |
+| -------------- | ------------ | ---------------------------------------- |
+| `open`         | `boolean`    | Controls visibility                      |
+| `diagramTitle` | `string`     | Shown in the confirmation message        |
+| `onConfirm`    | `() => void` | Called when delete is confirmed          |
+| `onCancel`     | `() => void` | Called when cancelled or overlay clicked |
 
 #### Blueprints
 
@@ -330,19 +330,19 @@ Reads the `BLUEPRINTS` array from `src/lib/blueprints.ts` and renders a filterab
 
 **BlueprintPreview** (`src/islands/blueprints/BlueprintPreview.tsx`)
 
-| Prop | Type | Description |
-| --- | --- | --- |
-| `graphData` | `string` | Serialised JSON (`{ nodes, edges, viewport }`) |
-| `height` | `number?` | Container height in pixels (default `200`) |
+| Prop        | Type      | Description                                    |
+| ----------- | --------- | ---------------------------------------------- |
+| `graphData` | `string`  | Serialised JSON (`{ nodes, edges, viewport }`) |
+| `height`    | `number?` | Container height in pixels (default `200`)     |
 
 Read-only React Flow mini-canvas that parses `graphData` and renders a non-interactive preview. Used in dashboard cards, blueprint cards, and the create-diagram modal.
 
 **CreateDiagramModal** (`src/islands/blueprints/CreateDiagramModal.tsx`)
 
-| Prop | Type | Description |
-| --- | --- | --- |
-| `open` | `boolean` | Controls visibility |
-| `onClose` | `() => void` | Called on cancel or overlay click |
+| Prop        | Type                | Description                                    |
+| ----------- | ------------------- | ---------------------------------------------- |
+| `open`      | `boolean`           | Controls visibility                            |
+| `onClose`   | `() => void`        | Called on cancel or overlay click              |
 | `blueprint` | `Blueprint \| null` | Selected blueprint, or `null` for blank canvas |
 
 Title/description form with a live `BlueprintPreview`. On submit, `POST /api/v1/diagrams` is called and the browser redirects to `/diagram/:id`.
@@ -353,13 +353,13 @@ Title/description form with a live `BlueprintPreview`. On submit, `POST /api/v1/
 
 Key type definitions and where they live:
 
-| File | Types | Description |
-| --- | --- | --- |
-| `src/islands/types.ts` | `CFNodeData`, `CFEdgeData` | Data payloads attached to React Flow nodes and edges |
-| `src/islands/store/diagramStore.ts` | `DiagramState`, `DiagramActions`, `DiagramStore`, `HistoryEntry` | Store state, actions, and snapshot types |
-| `src/lib/catalog.ts` | `NodeCategory`, `NodeTypeDef`, `EdgeTypeDef`, `HandleDef` | Product catalog definitions and category taxonomy |
-| `src/lib/validation.ts` | `Diagram`, `CreateDiagramInput`, `UpdateDiagramInput`, `SaveGraphInput`, `CreateShareInput`, `ApiResult` | Zod-inferred request/response types |
-| `src/lib/blueprints.ts` | `Blueprint` | Blueprint template shape |
-| `src/lib/scaffold.ts` | `ScaffoldInput`, `ScaffoldNode`, `ScaffoldEdge` | Project scaffold generator input types |
-| `src/lib/auth/types.ts` | `AuthStrategy`, `AppUser` | Authentication strategy interface |
-| `src/env.d.ts` | `Env`, `App.Locals` | Cloudflare bindings (D1, KV, R2) and Astro locals |
+| File                                | Types                                                                                                    | Description                                          |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| `src/islands/types.ts`              | `CFNodeData`, `CFEdgeData`                                                                               | Data payloads attached to React Flow nodes and edges |
+| `src/islands/store/diagramStore.ts` | `DiagramState`, `DiagramActions`, `DiagramStore`, `HistoryEntry`                                         | Store state, actions, and snapshot types             |
+| `src/lib/catalog.ts`                | `NodeCategory`, `NodeTypeDef`, `EdgeTypeDef`, `HandleDef`                                                | Product catalog definitions and category taxonomy    |
+| `src/lib/validation.ts`             | `Diagram`, `CreateDiagramInput`, `UpdateDiagramInput`, `SaveGraphInput`, `CreateShareInput`, `ApiResult` | Zod-inferred request/response types                  |
+| `src/lib/blueprints.ts`             | `Blueprint`                                                                                              | Blueprint template shape                             |
+| `src/lib/scaffold.ts`               | `ScaffoldInput`, `ScaffoldNode`, `ScaffoldEdge`                                                          | Project scaffold generator input types               |
+| `src/lib/auth/types.ts`             | `AuthStrategy`, `AppUser`                                                                                | Authentication strategy interface                    |
+| `src/env.d.ts`                      | `Env`, `App.Locals`                                                                                      | Cloudflare bindings (D1, KV, R2) and Astro locals    |
