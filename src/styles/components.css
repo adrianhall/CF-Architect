@@ -360,6 +360,17 @@
   border-color: var(--color-cf-orange-dark);
 }
 
+.toolbar-btn-danger {
+  background: #ef4444;
+  color: white;
+  border-color: #ef4444;
+}
+
+.toolbar-btn-danger:hover:not(:disabled) {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
 .toolbar-separator {
   width: 1px;
   height: 20px;
@@ -503,6 +514,13 @@
 .modal-close-x:hover {
   background: var(--color-surface-alt);
   color: var(--color-text-primary);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
 }
 
 .share-url-field {

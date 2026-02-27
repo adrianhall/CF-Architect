@@ -1,0 +1,21 @@
+---
+description: "/issue slash command - analyze a GitHub issue and create an implementation plan"
+alwaysApply: true
+---
+
+# Slash Commands
+
+## /issue <number>
+
+When the user types `/issue <number>`:
+
+1. Run `gh issue view <number> --json title,body,labels,assignees,comments,milestone` to fetch the issue.
+2. Checkout or create a branch named `issues/<number>` from `main`.
+3. Analyze the issue requirements against the codebase.
+4. Produce a plan including:
+   - Issue summary and acceptance criteria
+   - Implementation steps with specific file paths
+   - Test plan with concrete test cases (80%+ coverage target)
+   - Open questions or ambiguities
+5. Present the plan using the CreatePlan tool and WAIT for user confirmation before making any changes.
+6. After confirmation, implement following the Quality Gate rules.
