@@ -1,5 +1,8 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { createXyflowMock } from "../../helpers/mock-xyflow";
+
+vi.mock("@xyflow/react", () => createXyflowMock());
 
 vi.mock("@lib/validation", () => ({
   fetchApi: vi.fn(),
@@ -172,6 +175,18 @@ describe("DiagramList", () => {
         expect.anything(),
       );
     });
+  });
+
+  it("renders a visual preview for each diagram card", async () => {
+    mockFetchApi.mockResolvedValueOnce({ ok: true, data: DIAGRAMS });
+    render(<DiagramList />);
+
+    await waitFor(() => {
+      expect(screen.getByText("First Diagram")).toBeInTheDocument();
+    });
+
+    const previews = screen.getAllByTestId("blueprint-preview");
+    expect(previews).toHaveLength(DIAGRAMS.length);
   });
 
   it("renders diagram card links to editor", async () => {

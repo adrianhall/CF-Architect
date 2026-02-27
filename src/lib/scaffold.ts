@@ -280,7 +280,9 @@ function generatePackageJson(
 // ---------------------------------------------------------------------------
 
 function generateReadme(projectName: string, hasD1: boolean): string {
-  let readme = readmeTemplate.replace(/\{\{PROJECT_NAME\}\}/g, projectName);
+  let readme = readmeTemplate
+    .replace(/\r\n/g, "\n")
+    .replace(/\{\{PROJECT_NAME\}\}/g, projectName);
 
   if (hasD1) {
     readme = readme
