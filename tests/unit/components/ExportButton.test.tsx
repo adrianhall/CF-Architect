@@ -7,6 +7,17 @@ const { mockToPng, mockToSvg, mockTriggerDownload } = vi.hoisted(() => ({
   mockTriggerDownload: vi.fn(),
 }));
 
+const { mockZipSync, mockStrToU8 } = vi.hoisted(() => ({
+  mockZipSync: vi.fn().mockReturnValue(new Uint8Array([80, 75])),
+  mockStrToU8: vi
+    .fn()
+    .mockImplementation((s: string) => new TextEncoder().encode(s)),
+}));
+
+const { mockGenerateScaffold } = vi.hoisted(() => ({
+  mockGenerateScaffold: vi.fn().mockReturnValue(new Map()),
+}));
+
 import {
   createXyflowMock,
   mockGetNodes,
@@ -29,6 +40,15 @@ vi.mock("@lib/export", async (importOriginal) => {
   };
 });
 
+vi.mock("fflate", () => ({
+  zipSync: mockZipSync,
+  strToU8: mockStrToU8,
+}));
+
+vi.mock("@lib/scaffold", () => ({
+  generateScaffold: mockGenerateScaffold,
+}));
+
 import React from "react";
 import {
   render,
@@ -46,6 +66,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockToPng.mockResolvedValue("data:image/png;base64,abc");
   mockToSvg.mockResolvedValue("data:image/svg+xml,<svg/>");
+  mockGenerateScaffold.mockReturnValue(new Map());
   document.body.innerHTML = "";
 });
 
@@ -60,6 +81,7 @@ describe("ExportButton", () => {
     fireEvent.click(screen.getByTitle("Export"));
     expect(screen.getByText("Export as PNG")).toBeInTheDocument();
     expect(screen.getByText("Export as SVG")).toBeInTheDocument();
+    expect(screen.getByText("Export as Project")).toBeInTheDocument();
   });
 
   it("closes dropdown on second click (toggle)", () => {
@@ -263,5 +285,94 @@ describe("ExportButton", () => {
         0.25,
       );
     });
+  });
+});
+
+describe("ExportButton — Export as Project", () => {
+  it("disables 'Export as Project' when no Cloudflare nodes exist", () => {
+    useDiagramStore.setState({ nodes: [], edges: [] });
+    render(<ExportButton />);
+    fireEvent.click(screen.getByTitle("Export"));
+
+    const projectBtn = screen.getByText("Export as Project");
+    expect(projectBtn).toBeDisabled();
+    expect(projectBtn.title).toBe(
+      "Add Cloudflare services to export a project",
+    );
+  });
+
+  it("enables 'Export as Project' when Cloudflare nodes exist", () => {
+    useDiagramStore.setState({
+      nodes: [
+        {
+          id: "n1",
+          position: { x: 0, y: 0 },
+          data: { typeId: "worker", label: "My Worker" },
+        },
+      ] as any,
+      edges: [],
+    });
+    render(<ExportButton />);
+    fireEvent.click(screen.getByTitle("Export"));
+
+    const projectBtn = screen.getByText("Export as Project");
+    expect(projectBtn).not.toBeDisabled();
+  });
+
+  it("generates a ZIP and triggers download for project export", () => {
+    const fakeFiles = new Map([
+      ["wrangler.toml", 'name = "test"'],
+      ["src/index.ts", "export default {}"],
+    ]);
+    mockGenerateScaffold.mockReturnValue(fakeFiles);
+
+    useDiagramStore.setState({
+      title: "My Project",
+      nodes: [
+        {
+          id: "n1",
+          position: { x: 0, y: 0 },
+          data: { typeId: "worker", label: "My Worker" },
+        },
+      ] as any,
+      edges: [],
+    });
+
+    render(<ExportButton />);
+    fireEvent.click(screen.getByTitle("Export"));
+    fireEvent.click(screen.getByText("Export as Project"));
+
+    expect(mockGenerateScaffold).toHaveBeenCalledWith({
+      title: "My Project",
+      nodes: [{ typeId: "worker", label: "My Worker" }],
+      edges: [],
+    });
+    expect(mockZipSync).toHaveBeenCalled();
+    expect(mockTriggerDownload).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.stringMatching(/^My_Project_.*\.zip$/),
+    );
+  });
+
+  it("does not download when scaffold returns empty map", () => {
+    mockGenerateScaffold.mockReturnValue(new Map());
+
+    useDiagramStore.setState({
+      nodes: [
+        {
+          id: "n1",
+          position: { x: 0, y: 0 },
+          data: { typeId: "worker", label: "My Worker" },
+        },
+      ] as any,
+      edges: [],
+    });
+
+    render(<ExportButton />);
+    fireEvent.click(screen.getByTitle("Export"));
+    fireEvent.click(screen.getByText("Export as Project"));
+
+    expect(mockZipSync).not.toHaveBeenCalled();
+    expect(mockTriggerDownload).not.toHaveBeenCalled();
   });
 });

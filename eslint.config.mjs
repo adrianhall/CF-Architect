@@ -7,7 +7,13 @@ import globals from "globals";
 
 export default tseslint.config(
   {
-    ignores: ["dist/", ".wrangler/", ".astro/", "migrations/"],
+    ignores: [
+      "dist/",
+      ".wrangler/",
+      ".astro/",
+      "migrations/",
+      "src/lib/scaffold-templates/",
+    ],
   },
 
   eslint.configs.recommended,

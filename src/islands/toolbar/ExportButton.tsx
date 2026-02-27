@@ -5,27 +5,35 @@ import {
   getViewportForBounds,
 } from "@xyflow/react";
 import { toPng, toSvg } from "html-to-image";
+import { zipSync, strToU8 } from "fflate";
 import { useDiagramStore } from "../store/diagramStore";
-import {
-  generateExportFilename,
-  triggerDownload,
-  type ExportFormat,
-} from "../../lib/export";
+import { generateExportFilename, triggerDownload } from "../../lib/export";
+import { generateScaffold } from "../../lib/scaffold";
+import { NODE_TYPE_MAP } from "../../lib/catalog";
+import type { CFNodeData } from "../types";
 
 const IMAGE_PADDING = 50;
 const MIN_DIMENSION = 400;
 
 /**
- * Toolbar button with a two-option dropdown (PNG / SVG).
- * Captures the React Flow viewport via html-to-image,
- * fitting all nodes into the exported image.
+ * Toolbar button with a three-option dropdown (PNG / SVG / Project).
+ * PNG and SVG capture the React Flow viewport via html-to-image.
+ * Project generates a scaffold ZIP via fflate.
  */
 export function ExportButton() {
   const { getNodes } = useReactFlow();
   const title = useDiagramStore((s) => s.title);
+  const nodes = useDiagramStore((s) => s.nodes);
+  const edges = useDiagramStore((s) => s.edges);
   const [open, setOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+
+  const hasCloudflareNodes = nodes.some((n) => {
+    const data = n.data as unknown as CFNodeData;
+    const def = NODE_TYPE_MAP.get(data.typeId);
+    return def?.wranglerBinding != null;
+  });
 
   useEffect(() => {
     if (!open) return;
@@ -41,15 +49,15 @@ export function ExportButton() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
-  const handleExport = useCallback(
-    async (format: ExportFormat) => {
+  const handleImageExport = useCallback(
+    async (format: "png" | "svg") => {
       setOpen(false);
-      const nodes = getNodes();
-      if (nodes.length === 0) return;
+      const flowNodes = getNodes();
+      if (flowNodes.length === 0) return;
 
       setExporting(true);
       try {
-        const bounds = getNodesBounds(nodes);
+        const bounds = getNodesBounds(flowNodes);
         const width = Math.max(bounds.width + IMAGE_PADDING * 2, MIN_DIMENSION);
         const height = Math.max(
           bounds.height + IMAGE_PADDING * 2,
@@ -91,6 +99,51 @@ export function ExportButton() {
     [getNodes, title],
   );
 
+  const handleProjectExport = useCallback(() => {
+    setOpen(false);
+    setExporting(true);
+    try {
+      const scaffoldNodes = nodes.map((n) => {
+        const data = n.data as unknown as CFNodeData;
+        return { typeId: data.typeId, label: data.label };
+      });
+
+      const scaffoldEdges = edges.map((e) => ({
+        source: e.source,
+        target: e.target,
+        edgeType: (e.data as Record<string, unknown> | undefined)?.edgeType as
+          | string
+          | undefined,
+      }));
+
+      const files = generateScaffold({
+        title,
+        nodes: scaffoldNodes,
+        edges: scaffoldEdges,
+      });
+
+      if (files.size === 0) return;
+
+      const zipData: Record<string, Uint8Array> = {};
+      for (const [path, content] of files) {
+        zipData[path] = strToU8(content);
+      }
+
+      const zipped = zipSync(zipData);
+
+      const blob = new Blob([zipped.buffer as ArrayBuffer], {
+        type: "application/zip",
+      });
+      const url = URL.createObjectURL(blob);
+      triggerDownload(url, generateExportFilename(title, "zip"));
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Export failed:", err);
+    } finally {
+      setExporting(false);
+    }
+  }, [nodes, edges, title]);
+
   return (
     <div className="export-btn-wrapper" ref={wrapperRef}>
       <button
@@ -123,15 +176,27 @@ export function ExportButton() {
         <div className="export-dropdown">
           <button
             className="export-dropdown-option"
-            onClick={() => void handleExport("png")}
+            onClick={() => void handleImageExport("png")}
           >
             Export as PNG
           </button>
           <button
             className="export-dropdown-option"
-            onClick={() => void handleExport("svg")}
+            onClick={() => void handleImageExport("svg")}
           >
             Export as SVG
+          </button>
+          <button
+            className="export-dropdown-option"
+            disabled={!hasCloudflareNodes}
+            title={
+              hasCloudflareNodes
+                ? undefined
+                : "Add Cloudflare services to export a project"
+            }
+            onClick={handleProjectExport}
+          >
+            Export as Project
           </button>
         </div>
       )}
