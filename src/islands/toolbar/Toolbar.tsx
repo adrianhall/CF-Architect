@@ -7,6 +7,8 @@ import { fetchApi, ShareResponseSchema } from "../../lib/validation";
 import { ExportButton } from "./ExportButton";
 import { PrintButton } from "./PrintButton";
 
+type LayoutDirection = "DOWN" | "RIGHT";
+
 /**
  * Top toolbar with diagram title input, undo/redo buttons, zoom controls,
  * auto-layout button (ELK), export button, and share button.
@@ -17,76 +19,97 @@ export function Toolbar({ readOnly = false }: { readOnly?: boolean }) {
   const { undo, redo, undoStack, redoStack, title, setTitle } =
     useDiagramStore();
   const [layouting, setLayouting] = useState(false);
+  const [layoutDirection, setLayoutDirection] =
+    useState<LayoutDirection>("DOWN");
+  const [layoutDropdownOpen, setLayoutDropdownOpen] = useState(false);
+  const layoutGroupRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!layoutDropdownOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (
+        layoutGroupRef.current &&
+        !layoutGroupRef.current.contains(e.target as Node)
+      ) {
+        setLayoutDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [layoutDropdownOpen]);
 
   /**
    * Dynamically imports ELK, builds a layered graph description from current
    * nodes/edges, runs layout, applies computed positions, and fits the viewport.
    * Pushes history before applying.
    */
-  const applyAutoLayout = useCallback(async () => {
-    setLayouting(true);
-    try {
-      const ELK = (await import("elkjs/lib/elk.bundled.js")).default;
-      const elk = new ELK();
+  const applyAutoLayout = useCallback(
+    async (direction: LayoutDirection) => {
+      setLayouting(true);
+      try {
+        const ELK = (await import("elkjs/lib/elk.bundled.js")).default;
+        const elk = new ELK();
 
-      const state = useDiagramStore.getState();
-      const nodeWidth = 200;
-      const nodeHeight = 80;
+        const state = useDiagramStore.getState();
+        const nodeWidth = 200;
+        const nodeHeight = 80;
 
-      const graph = {
-        id: "root",
-        layoutOptions: {
-          "elk.algorithm": "layered",
-          "elk.direction": "DOWN",
-          "elk.spacing.nodeNode": "60",
-          "elk.layered.spacing.nodeNodeBetweenLayers": "80",
-          "elk.edgeRouting": "ORTHOGONAL",
-        },
-        children: state.nodes.map((node) => ({
-          id: node.id,
-          width: nodeWidth,
-          height: nodeHeight,
-          ports: (
-            NODE_TYPE_MAP.get((node.data as unknown as CFNodeData).typeId)
-              ?.defaultHandles ?? []
-          ).map((h) => ({
-            id: `${node.id}-${h.id}`,
-            properties: {
-              "port.side": h.position.toUpperCase(),
-            },
+        const graph = {
+          id: "root",
+          layoutOptions: {
+            "elk.algorithm": "layered",
+            "elk.direction": direction,
+            "elk.spacing.nodeNode": "60",
+            "elk.layered.spacing.nodeNodeBetweenLayers": "80",
+            "elk.edgeRouting": "ORTHOGONAL",
+          },
+          children: state.nodes.map((node) => ({
+            id: node.id,
+            width: nodeWidth,
+            height: nodeHeight,
+            ports: (
+              NODE_TYPE_MAP.get((node.data as unknown as CFNodeData).typeId)
+                ?.defaultHandles ?? []
+            ).map((h) => ({
+              id: `${node.id}-${h.id}`,
+              properties: {
+                "port.side": h.position.toUpperCase(),
+              },
+            })),
           })),
-        })),
-        edges: state.edges.map((edge) => ({
-          id: edge.id,
-          sources: [edge.source],
-          targets: [edge.target],
-        })),
-      };
+          edges: state.edges.map((edge) => ({
+            id: edge.id,
+            sources: [edge.source],
+            targets: [edge.target],
+          })),
+        };
 
-      const layout = await elk.layout(graph);
+        const layout = await elk.layout(graph);
 
-      if (layout.children) {
-        const newNodes = state.nodes.map((node) => {
-          const lNode = layout.children!.find((n) => n.id === node.id);
-          if (lNode) {
-            return {
-              ...node,
-              position: { x: lNode.x ?? 0, y: lNode.y ?? 0 },
-            };
-          }
-          return node;
-        });
-        useDiagramStore.getState().pushHistory();
-        useDiagramStore.getState().setNodes(newNodes);
+        if (layout.children) {
+          const newNodes = state.nodes.map((node) => {
+            const lNode = layout.children!.find((n) => n.id === node.id);
+            if (lNode) {
+              return {
+                ...node,
+                position: { x: lNode.x ?? 0, y: lNode.y ?? 0 },
+              };
+            }
+            return node;
+          });
+          useDiagramStore.getState().pushHistory();
+          useDiagramStore.getState().setNodes(newNodes);
+        }
+
+        setTimeout(() => void fitView({ duration: 300 }), 50);
+      } catch (err) {
+        console.error("Auto-layout failed:", err);
+      } finally {
+        setLayouting(false);
       }
-
-      setTimeout(() => void fitView({ duration: 300 }), 50);
-    } catch (err) {
-      console.error("Auto-layout failed:", err);
-    } finally {
-      setLayouting(false);
-    }
-  }, [fitView]);
+    },
+    [fitView],
+  );
 
   return (
     <div className="toolbar">
@@ -161,14 +184,61 @@ export function Toolbar({ readOnly = false }: { readOnly?: boolean }) {
             ⊞
           </button>
           <div className="toolbar-separator" />
-          <button
-            onClick={() => void applyAutoLayout()}
-            disabled={layouting}
-            className="toolbar-btn"
-            title="Auto Layout (ELK)"
-          >
-            {layouting ? "..." : "⚡ Layout"}
-          </button>
+          <div className="layout-btn-group" ref={layoutGroupRef}>
+            <button
+              onClick={() => void applyAutoLayout(layoutDirection)}
+              disabled={layouting}
+              className="layout-btn-main"
+              title={`Auto Layout (${layoutDirection === "DOWN" ? "Top to Bottom" : "Left to Right"})`}
+            >
+              {layouting
+                ? "..."
+                : `⚡ Layout ${layoutDirection === "DOWN" ? "↓" : "→"}`}
+            </button>
+            <button
+              className="layout-btn-chevron"
+              disabled={layouting}
+              onClick={() => setLayoutDropdownOpen((prev) => !prev)}
+              title="Layout direction"
+            >
+              <svg
+                width="10"
+                height="10"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+            {layoutDropdownOpen && (
+              <div className="layout-dropdown">
+                <button
+                  className="layout-dropdown-option"
+                  onClick={() => {
+                    setLayoutDirection("DOWN");
+                    setLayoutDropdownOpen(false);
+                    void applyAutoLayout("DOWN");
+                  }}
+                >
+                  ↓ Top to Bottom
+                </button>
+                <button
+                  className="layout-dropdown-option"
+                  onClick={() => {
+                    setLayoutDirection("RIGHT");
+                    setLayoutDropdownOpen(false);
+                    void applyAutoLayout("RIGHT");
+                  }}
+                >
+                  → Left to Right
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

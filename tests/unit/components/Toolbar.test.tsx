@@ -143,9 +143,46 @@ describe("Toolbar", () => {
     expect(screen.getByTitle("Share")).toBeInTheDocument();
   });
 
-  it("renders auto-layout button", () => {
+  it("renders auto-layout button with default TB direction", () => {
     render(<Toolbar />);
-    expect(screen.getByTitle("Auto Layout (ELK)")).toBeInTheDocument();
+    expect(
+      screen.getByTitle("Auto Layout (Top to Bottom)"),
+    ).toBeInTheDocument();
+    expect(screen.getByTitle("Layout direction")).toBeInTheDocument();
+  });
+
+  it("shows layout direction dropdown on chevron click", () => {
+    render(<Toolbar />);
+    fireEvent.click(screen.getByTitle("Layout direction"));
+    expect(screen.getByText("↓ Top to Bottom")).toBeInTheDocument();
+    expect(screen.getByText("→ Left to Right")).toBeInTheDocument();
+  });
+
+  it("switches to LR direction when Left to Right is selected", async () => {
+    render(<Toolbar />);
+    fireEvent.click(screen.getByTitle("Layout direction"));
+    fireEvent.click(screen.getByText("→ Left to Right"));
+    await waitFor(() => {
+      expect(
+        screen.getByTitle("Auto Layout (Left to Right)"),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("switches back to TB direction when Top to Bottom is selected", async () => {
+    render(<Toolbar />);
+    fireEvent.click(screen.getByTitle("Layout direction"));
+    fireEvent.click(screen.getByText("→ Left to Right"));
+    await waitFor(() => {
+      expect(screen.getByTitle("Layout direction")).not.toBeDisabled();
+    });
+    fireEvent.click(screen.getByTitle("Layout direction"));
+    fireEvent.click(screen.getByText("↓ Top to Bottom"));
+    await waitFor(() => {
+      expect(
+        screen.getByTitle("Auto Layout (Top to Bottom)"),
+      ).toBeInTheDocument();
+    });
   });
 
   it("renders the export button", () => {
@@ -173,7 +210,8 @@ describe("Toolbar", () => {
       expect(screen.queryByTitle("Zoom In")).toBeNull();
       expect(screen.queryByTitle("Zoom Out")).toBeNull();
       expect(screen.queryByTitle("Fit View")).toBeNull();
-      expect(screen.queryByTitle("Auto Layout (ELK)")).toBeNull();
+      expect(screen.queryByTitle("Auto Layout (Top to Bottom)")).toBeNull();
+      expect(screen.queryByTitle("Layout direction")).toBeNull();
     });
 
     it("hides the share button", () => {
