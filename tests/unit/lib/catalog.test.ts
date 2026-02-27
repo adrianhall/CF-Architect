@@ -24,8 +24,8 @@ const VALID_CATEGORIES: NodeCategory[] = [
 // ---------------------------------------------------------------------------
 
 describe("NODE_TYPES", () => {
-  it("has exactly 30 entries", () => {
-    expect(NODE_TYPES).toHaveLength(30);
+  it("has exactly 32 entries", () => {
+    expect(NODE_TYPES).toHaveLength(32);
   });
 
   it("has unique typeId values", () => {
@@ -101,8 +101,61 @@ describe("NODE_TYPE_MAP", () => {
     expect(d1!.label).toBe("D1 Database");
   });
 
+  it("returns correct definition for worker-hono", () => {
+    const hono = NODE_TYPE_MAP.get("worker-hono");
+    expect(hono).toBeDefined();
+    expect(hono!.label).toBe("Workers (Hono)");
+    expect(hono!.category).toBe("compute");
+    expect(hono!.wranglerBinding).toBe("worker");
+    expect(hono!.iconPath).toBe("/icons/worker-hono.svg");
+  });
+
+  it("returns correct definition for worker-astro", () => {
+    const astro = NODE_TYPE_MAP.get("worker-astro");
+    expect(astro).toBeDefined();
+    expect(astro!.label).toBe("Workers (Astro)");
+    expect(astro!.category).toBe("compute");
+    expect(astro!.wranglerBinding).toBe("worker");
+    expect(astro!.iconPath).toBe("/icons/worker-astro.svg");
+  });
+
   it("returns undefined for unknown typeId", () => {
     expect(NODE_TYPE_MAP.get("nonexistent")).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// scaffoldTemplate
+// ---------------------------------------------------------------------------
+
+describe("scaffoldTemplate", () => {
+  const workerFamily = ["worker", "worker-hono", "worker-astro"] as const;
+
+  it("all worker-family nodes have scaffoldTemplate set", () => {
+    for (const id of workerFamily) {
+      const def = NODE_TYPE_MAP.get(id);
+      expect(def).toBeDefined();
+      expect(def!.scaffoldTemplate).toBeTruthy();
+    }
+  });
+
+  it("worker has scaffoldTemplate 'vanilla'", () => {
+    expect(NODE_TYPE_MAP.get("worker")!.scaffoldTemplate).toBe("vanilla");
+  });
+
+  it("worker-hono has scaffoldTemplate 'hono'", () => {
+    expect(NODE_TYPE_MAP.get("worker-hono")!.scaffoldTemplate).toBe("hono");
+  });
+
+  it("worker-astro has scaffoldTemplate 'astro'", () => {
+    expect(NODE_TYPE_MAP.get("worker-astro")!.scaffoldTemplate).toBe("astro");
+  });
+
+  it("scaffoldTemplate values are unique across worker-family nodes", () => {
+    const templates = workerFamily.map(
+      (id) => NODE_TYPE_MAP.get(id)!.scaffoldTemplate,
+    );
+    expect(new Set(templates).size).toBe(templates.length);
   });
 });
 
@@ -140,13 +193,13 @@ describe("getNodesByCategory", () => {
     expect(Object.keys(grouped).sort()).toEqual([...VALID_CATEGORIES].sort());
   });
 
-  it("total count across all categories equals 30", () => {
+  it("total count across all categories equals 32", () => {
     const grouped = getNodesByCategory();
     const total = Object.values(grouped).reduce(
       (sum, arr) => sum + arr.length,
       0,
     );
-    expect(total).toBe(30);
+    expect(total).toBe(32);
   });
 });
 
