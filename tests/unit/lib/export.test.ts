@@ -17,6 +17,12 @@ describe("generateExportFilename", () => {
     );
   });
 
+  it("uses json extension for json format", () => {
+    expect(generateExportFilename("My Diagram", "json", fixed)).toBe(
+      "My_Diagram_2026-02-26_1405.json",
+    );
+  });
+
   it("replaces special characters with underscores", () => {
     expect(generateExportFilename("Dia/gram: v2!", "png", fixed)).toBe(
       "Dia_gram_v2_2026-02-26_1405.png",
