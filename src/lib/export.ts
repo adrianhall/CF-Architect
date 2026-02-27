@@ -1,4 +1,4 @@
-export type ExportFormat = "png" | "svg";
+export type ExportFormat = "png" | "svg" | "zip";
 
 /**
  * Builds an export filename from the diagram title and current timestamp.
