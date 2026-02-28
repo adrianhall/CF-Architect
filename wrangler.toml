@@ -18,7 +18,3 @@ id = "local"
 [[kv_namespaces]]
 binding = "SESSION"
 id = "local-session"
-
-[[r2_buckets]]
-binding = "R2"
-bucket_name = "cf-architect-assets"

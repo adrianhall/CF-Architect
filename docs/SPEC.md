@@ -10,7 +10,7 @@
 
 CF Architect is a web application for designing, building, and sharing architecture diagrams for the Cloudflare Developer Platform. Users drag and drop Cloudflare service nodes onto an interactive canvas, connect them to represent data flow and service bindings, and share finished diagrams via a read-only link with customers or stakeholders. Future versions will add blueprint templates, AI-assisted generation, and project scaffolding (see §2 Post-MVP Goals).
 
-The application runs entirely on the Cloudflare Developer Platform — deployed as an Astro 6 site with server-side rendering on Cloudflare Workers, using D1 for persistence, R2 for asset storage, and KV for session/sharing metadata.
+The application runs entirely on the Cloudflare Developer Platform — deployed as an Astro 6 site with server-side rendering on Cloudflare Workers, using D1 for persistence and KV for session/sharing metadata.
 
 ---
 
@@ -63,7 +63,6 @@ The application runs entirely on the Cloudflare Developer Platform — deployed 
 | **Auth (MVP)**          | Bypassed — single implicit user, no login required                               | Allows focus on the core diagram editor. Auth boundary is designed in but not enforced.                                                                                                               |
 | **Auth (Post-MVP)**     | OIDC via Auth0, implemented with Oslo (`@oslojs/oauth2`, `@oslojs/jwt`) + Arctic | Auth0 as the single OIDC provider; upstream IdPs (GitHub, Google, SAML) configured in Auth0. Oslo/Arctic chosen over official Auth0 SDK because it is runtime-agnostic and works natively in Workers. |
 | **Database**            | Cloudflare D1 (SQLite)                                                           | Relational storage for diagrams, users, and share links. Edge-local reads.                                                                                                                            |
-| **Blob Storage**        | Cloudflare R2                                                                    | PNG/SVG exports, blueprint thumbnail images, and future uploaded assets.                                                                                                                              |
 | **Session / Cache**     | Cloudflare Workers KV                                                            | Share-link metadata and short-lived caches. Post-MVP: session tokens for OIDC.                                                                                                                        |
 | **ORM / Query Builder** | Drizzle ORM                                                                      | Type-safe, lightweight, excellent D1 support.                                                                                                                                                         |
 | **Schema Validation**   | Zod                                                                              | Runtime validation for API payloads and diagram JSON.                                                                                                                                                 |
@@ -101,10 +100,10 @@ The application runs entirely on the Cloudflare Developer Platform — deployed 
 │  └─────┬──────┘  └───────────┘  └────┬─────┘  └────┬─────┘  │
 │        │                             │             │        │
 │        ▼                             ▼             ▼        │
-│  ┌──────────┐                 ┌──────────┐  ┌──────────┐    │
-│  │    D1    │                 │    KV    │  │    R2    │    │
-│  │ (SQLite) │                 │ (cache)  │  │ (blobs)  │    │
-│  └──────────┘                 └──────────┘  └──────────┘    │
+│  ┌──────────┐                 ┌──────────┐                  │
+│  │    D1    │                 │    KV    │                  │
+│  │ (SQLite) │                 │ (cache)  │                  │
+│  └──────────┘                 └──────────┘                  │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -141,7 +140,7 @@ The application runs entirely on the Cloudflare Developer Platform — deployed 
 | `title`         | `TEXT NOT NULL`    | Default: "Untitled Diagram"                                                                                                           |
 | `description`   | `TEXT`             | Optional summary                                                                                                                      |
 | `graph_data`    | `TEXT NOT NULL`    | JSON blob — React Flow serialized state (nodes, edges, viewport)                                                                      |
-| `thumbnail_key` | `TEXT`             | R2 object key for preview image                                                                                                       |
+| `thumbnail_key` | `TEXT`             | Object key for preview image (post-MVP)                                                                                               |
 | `blueprint_id`  | `TEXT`             | Slug of the blueprint used to create this diagram (references `Blueprint.id` in `src/lib/blueprints.ts`). Null if started from blank. |
 | `created_at`    | `TEXT NOT NULL`    | ISO 8601                                                                                                                              |
 | `updated_at`    | `TEXT NOT NULL`    | ISO 8601                                                                                                                              |
@@ -344,8 +343,8 @@ All API routes live under `/api/v1/` and are implemented as Astro API routes (se
 ### 9.4 Export
 
 | Method | Path                          | Auth (MVP) | Auth (Post-MVP) | Description                                         |
-| ------ | ----------------------------- | ---------- | --------------- | --------------------------------------------------- | ---------------------------------- |
-| `POST` | `/api/v1/diagrams/:id/export` | None       | Owner           | Request PNG or SVG export. Accepts `{ format: "png" | "svg" }`. Returns a signed R2 URL. |
+| ------ | ----------------------------- | ---------- | --------------- | --------------------------------------------------- | ---------------------------------------- |
+| `POST` | `/api/v1/diagrams/:id/export` | None       | Owner           | Request PNG or SVG export. Accepts `{ format: "png" | "svg" }`. Returns a signed download URL. |
 
 ### 9.5 Response Envelope
 
@@ -469,7 +468,7 @@ These features are explicitly out of scope for MVP but inform architectural deci
 
 - Walk the diagram graph, resolve each node to a wrangler primitive (worker, D1 binding name, KV namespace, R2 bucket, etc.).
 - Use code templates (Handlebars or simple string interpolation) to emit files.
-- Package via a Worker-side ZIP library (e.g., `fflate`) and stream the response or upload to R2 for download.
+- Package via a Worker-side ZIP library (e.g., `fflate`) and stream the response.
 
 **Architectural prep (MVP):**
 
@@ -548,7 +547,7 @@ These features are explicitly out of scope for MVP but inform architectural deci
 ```
 cf-architect/
 ├── astro.config.mjs           # Astro + Cloudflare adapter config
-├── wrangler.toml              # D1, KV, R2 bindings
+├── wrangler.toml              # D1, KV bindings
 ├── drizzle.config.ts          # Drizzle ORM config for D1
 ├── package.json
 ├── tsconfig.json
@@ -657,10 +656,6 @@ database_id = "<generated>"
 binding = "KV"
 id = "<generated>"
 
-[[r2_buckets]]
-binding = "R2"
-bucket_name = "cf-architect-assets"
-
 # Environment variables (set via `wrangler secret put`)
 # Post-MVP (OIDC / Auth0) — not needed for MVP bypass mode:
 # OIDC_DOMAIN        — Auth0 tenant domain, e.g. cf-architect.us.auth0.com
@@ -689,9 +684,8 @@ bucket_name = "cf-architect-assets"
 
 1. User clicks "Export as PNG" or "Export as SVG".
 2. Client-side: React Flow's `toObject()` serializes the viewport. For PNG, the canvas is rendered to a `<canvas>` element via `html-to-image` (or React Flow's built-in export utilities) and converted to a Blob. For SVG, the React Flow SVG DOM is serialized.
-3. The Blob is uploaded to `/api/v1/diagrams/:id/export` which stores it in R2 and returns a time-limited signed URL.
-4. The browser triggers a download from the signed URL.
-5. The R2 key is saved to `diagrams.thumbnail_key` so the dashboard can show previews.
+3. The Blob is uploaded to `/api/v1/diagrams/:id/export` which returns the file as a download.
+4. A key is saved to `diagrams.thumbnail_key` so the dashboard can show previews.
 
 ---
 
@@ -718,7 +712,6 @@ bucket_name = "cf-architect-assets"
 | Data leakage           | All diagrams belong to the seed user. No multi-tenant concern.                                                                    | Diagrams scoped to `owner_id`. All D1 queries include `WHERE owner_id = ?`.                           |
 | Share link enumeration | Tokens are 12-character nanoid (URL-safe alphabet, ~71 bits of entropy).                                                          | Same, plus rate limiting on `/s/:token` via Workers.                                                  |
 | Secrets                | No OAuth secrets in MVP.                                                                                                          | OAuth credentials and session secrets stored via `wrangler secret`, never in code or `wrangler.toml`. |
-| R2 access              | R2 objects are not publicly accessible. Signed URLs expire after 5 minutes for exports.                                           | Same.                                                                                                 |
 
 ---
 
@@ -737,15 +730,15 @@ bucket_name = "cf-architect-assets"
 
 ### 20.1 NPM Scripts
 
-| Script              | Command                                                       | Description                                                                                                                                                                                    |
-| ------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm start`         | `wrangler dev`                                                | Starts the local Cloudflare Workers emulator (`workerd`) with full access to D1, KV, and R2 bindings via Miniflare. Astro 6 runs inside the same `workerd` runtime, so dev matches production. |
-| `npm run build`     | `astro build`                                                 | Builds the Astro site for production deployment.                                                                                                                                               |
-| `npm run deploy`    | `wrangler d1 migrations apply DB --remote && wrangler deploy` | Applies pending D1 migrations to the production database, then deploys the built site to Cloudflare Workers.                                                                                   |
-| `npm run lint`      | `eslint . && prettier --check .`                              | Lints and format-checks the codebase.                                                                                                                                                          |
-| `npm run typecheck` | `tsc --noEmit`                                                | Type-checks without emitting output.                                                                                                                                                           |
-| `npm run test`      | `vitest run`                                                  | Runs unit and integration tests via Vitest.                                                                                                                                                    |
-| `npm run test:e2e`  | `playwright test`                                             | Runs end-to-end tests against a local `wrangler dev` instance.                                                                                                                                 |
+| Script              | Command                                                       | Description                                                                                                                                                                               |
+| ------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm start`         | `wrangler dev`                                                | Starts the local Cloudflare Workers emulator (`workerd`) with full access to D1 and KV bindings via Miniflare. Astro 6 runs inside the same `workerd` runtime, so dev matches production. |
+| `npm run build`     | `astro build`                                                 | Builds the Astro site for production deployment.                                                                                                                                          |
+| `npm run deploy`    | `wrangler d1 migrations apply DB --remote && wrangler deploy` | Applies pending D1 migrations to the production database, then deploys the built site to Cloudflare Workers.                                                                              |
+| `npm run lint`      | `eslint . && prettier --check .`                              | Lints and format-checks the codebase.                                                                                                                                                     |
+| `npm run typecheck` | `tsc --noEmit`                                                | Type-checks without emitting output.                                                                                                                                                      |
+| `npm run test`      | `vitest run`                                                  | Runs unit and integration tests via Vitest.                                                                                                                                               |
+| `npm run test:e2e`  | `playwright test`                                             | Runs end-to-end tests against a local `wrangler dev` instance.                                                                                                                            |
 
 ### 20.2 CI Pipeline (Post-MVP — GitHub Actions)
 
@@ -762,7 +755,7 @@ When implemented, the pipeline will:
 
 ### 20.3 Environments
 
-- **Local (MVP)** — `npm start` runs the full stack locally via `wrangler dev` with local D1/KV/R2 emulation. `npm run deploy` deploys manually to production.
+- **Local (MVP)** — `npm start` runs the full stack locally via `wrangler dev` with local D1/KV emulation. `npm run deploy` deploys manually to production.
 - **Preview (Post-MVP)** — auto-deployed on PR via CI. Uses a separate D1 database and KV namespace.
 - **Production** — MVP: deployed manually via `npm run deploy`. Post-MVP: deployed on merge to `main` via CI.
 

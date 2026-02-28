@@ -34,7 +34,6 @@ The **Deploy** workflow (`.github/workflows/deploy.yml`) runs automatically when
 1. **Create a Cloudflare API token.** Go to the [Cloudflare dashboard API Tokens page](https://dash.cloudflare.com/profile/api-tokens) and create a token with the following permissions:
    - **Account / Cloudflare Workers Scripts** -- Edit
    - **Account / Cloudflare D1** -- Edit
-   - **Account / Cloudflare R2** -- Edit (if using R2 assets)
    - **Account / Account Settings** -- Read
 
 2. **Add repository secrets.** In your GitHub repository, go to **Settings > Secrets and variables > Actions** and add:

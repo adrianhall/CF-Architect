@@ -10,7 +10,6 @@
 | Styling        | Tailwind CSS 4                      |
 | State          | Zustand                             |
 | Database       | Cloudflare D1 (SQLite)              |
-| Blob Storage   | Cloudflare R2                       |
 | Cache          | Cloudflare Workers KV               |
 | ORM            | Drizzle ORM                         |
 | Validation     | Zod                                 |
@@ -25,7 +24,7 @@ cf-architect/
 ├── eslint.config.mjs         # ESLint 9 flat config
 ├── .prettierrc.mjs           # Prettier config (Astro plugin)
 ├── vitest.config.ts          # Vitest test runner config
-├── wrangler.toml             # D1, KV, R2 bindings
+├── wrangler.toml             # D1, KV bindings
 ├── drizzle.config.ts         # Drizzle ORM config
 ├── package.json
 ├── tsconfig.json
@@ -362,4 +361,4 @@ Key type definitions and where they live:
 | `src/lib/blueprints.ts`             | `Blueprint`                                                                                              | Blueprint template shape                             |
 | `src/lib/scaffold.ts`               | `ScaffoldInput`, `ScaffoldNode`, `ScaffoldEdge`                                                          | Project scaffold generator input types               |
 | `src/lib/auth/types.ts`             | `AuthStrategy`, `AppUser`                                                                                | Authentication strategy interface                    |
-| `src/env.d.ts`                      | `Env`, `App.Locals`                                                                                      | Cloudflare bindings (D1, KV, R2) and Astro locals    |
+| `src/env.d.ts`                      | `Env`, `App.Locals`                                                                                      | Cloudflare bindings (D1, KV) and Astro locals        |

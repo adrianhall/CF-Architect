@@ -2,7 +2,7 @@
  * TypeScript ambient declarations for the Astro + Cloudflare environment.
  *
  * Extends Astro's built-in types with the Cloudflare Workers runtime bindings
- * (D1, KV, R2) and the application-specific `locals` properties injected by
+ * (D1, KV) and the application-specific `locals` properties injected by
  * the middleware.
  */
 
@@ -17,8 +17,6 @@ interface Env {
   DB: D1Database;
   /** KV namespace for share-token fast lookups and short-lived caches. */
   KV: KVNamespace;
-  /** R2 bucket for asset storage (thumbnails, exports). */
-  R2: R2Bucket;
 }
 
 declare namespace App {

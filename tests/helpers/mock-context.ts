@@ -65,7 +65,6 @@ export function createMockContext(options: MockContextOptions = {}) {
         env: {
           DB: db as unknown as D1Database,
           KV: kv as unknown as KVNamespace,
-          R2: {} as unknown as R2Bucket,
         },
       },
     },

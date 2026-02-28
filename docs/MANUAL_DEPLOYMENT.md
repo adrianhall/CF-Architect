@@ -14,7 +14,7 @@ npx wrangler login
 npx wrangler d1 create cf-architect-db
 ```
 
-Copy the `database_id` from the output -- you'll need it in step 5.
+Copy the `database_id` from the output -- you'll need it in step 4.
 
 ### 3. Create the KV namespaces
 
@@ -23,17 +23,9 @@ npx wrangler kv namespace create KV
 npx wrangler kv namespace create SESSION
 ```
 
-Copy each `id` from the output -- you'll need them in step 5.
+Copy each `id` from the output -- you'll need them in step 4.
 
-### 4. Create the R2 bucket
-
-```bash
-npx wrangler r2 bucket create cf-architect-assets
-```
-
-No ID needed -- R2 bindings use the bucket name.
-
-### 5. Configure environment variables
+### 4. Configure environment variables
 
 Copy the example file and fill in the IDs from the previous steps:
 
@@ -49,7 +41,7 @@ SESSION_NAMESPACE_ID=<your-session-kv-id>
 
 The `.env` file is gitignored, so your IDs will never be committed.
 
-### 6. Build and deploy
+### 5. Build and deploy
 
 ```bash
 npm run deploy
