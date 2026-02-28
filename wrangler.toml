@@ -1,5 +1,6 @@
 name = "cf-architect"
-compatibility_date = "2025-02-25"
+main = "dist/_worker.js/index.js"
+compatibility_date = "2025-02-28"
 compatibility_flags = ["nodejs_compat"]
 
 [observability]
