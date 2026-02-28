@@ -53,7 +53,7 @@ export const diagrams = sqliteTable("diagrams", {
   description: text("description"),
   /** JSON-serialised React Flow state (nodes, edges, viewport). */
   graphData: text("graph_data").notNull().default("{}"),
-  /** R2 object key for a generated thumbnail image (post-MVP). */
+  /** Object key for a generated thumbnail image (post-MVP). */
   thumbnailKey: text("thumbnail_key"),
   /** Slug of the blueprint template used to seed this diagram, if any. */
   blueprintId: text("blueprint_id"),

@@ -24,7 +24,7 @@ This creates the `users`, `diagrams`, and `share_links` tables and seeds a defau
 npm run dev
 ```
 
-This starts the Astro dev server with the Cloudflare platform proxy enabled, giving you local emulation of D1, KV, and R2 bindings via Miniflare. The app is available at **http://localhost:4321**.
+This starts the Astro dev server with the Cloudflare platform proxy enabled, giving you local emulation of D1 and KV bindings via Miniflare. The app is available at **http://localhost:4321**.
 
 > Alternatively, `npm start` runs `wrangler dev` which uses the full `workerd` runtime for a closer-to-production experience, but `npm run dev` has faster HMR during active development.
 
