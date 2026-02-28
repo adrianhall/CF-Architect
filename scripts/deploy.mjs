@@ -51,15 +51,10 @@ if (missing.length) {
 let config = readFileSync(WRANGLER_SRC, "utf-8");
 
 // Order matters: replace "local-session" before "local" to avoid partial match
-config = config.replace(
-  'database_id = "local"',
-  `database_id = "${vars.D1_DATABASE_ID}"`,
-);
-config = config.replace(
-  'id = "local-session"',
-  `id = "${vars.SESSION_NAMESPACE_ID}"`,
-);
-config = config.replace('id = "local"', `id = "${vars.KV_NAMESPACE_ID}"`);
+config = config
+  .replace('database_id = "local"', `database_id = "${vars.D1_DATABASE_ID}"`,)
+  .replace('id = "local-session"', `id = "${vars.SESSION_NAMESPACE_ID}"`)
+  .replace('id = "local"', `id = "${vars.KV_NAMESPACE_ID}"`);
 
 writeFileSync(WRANGLER_TMP, config, "utf-8");
 
@@ -70,6 +65,11 @@ if (existsSync(ASSETSIGNORE_SRC)) {
   // If no .assetsignore exists, create an empty one to avoid Wrangler warnings
   writeFileSync(ASSETSIGNORE_TMP, "", "utf-8");
 }
+
+console.log(".wrangler.deploy.toml created with environment variables.");
+console.log("Contents:");
+console.log(config);
+console.log("\n");
 
 try {
   console.log("Applying D1 migrations...");
