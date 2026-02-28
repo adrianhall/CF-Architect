@@ -17,6 +17,11 @@ export default defineConfig({
     build: {
       chunkSizeWarningLimit: 1500,
     },
+    resolve: {
+      alias: import.meta.env.PROD && {
+        "react-dom/server": "react-dom/server.edge",
+      },
+    },
     ssr: {
       external: ["node:crypto"],
     },
