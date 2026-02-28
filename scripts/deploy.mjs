@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 
-import { readFileSync, writeFileSync, unlinkSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, unlinkSync, existsSync, copyFileSync  } from "node:fs";
 import { execSync } from "node:child_process";
 import { join } from "node:path";
 
 const ROOT = process.cwd();
 const ENV_FILE = join(ROOT, ".env");
+const DIST = join(ROOT, "dist");
 const WRANGLER_SRC = join(ROOT, "wrangler.toml");
 const WRANGLER_TMP = join(ROOT, ".wrangler.deploy.toml");
+const ASSETSIGNORE_SRC = join(ROOT, ".assetsignore");
+const ASSETSIGNORE_TMP = join(DIST, ".assetsignore");
 
 // Load .env file if present (values won't overwrite existing env vars)
 if (existsSync(ENV_FILE)) {
@@ -59,6 +62,14 @@ config = config.replace(
 config = config.replace('id = "local"', `id = "${vars.KV_NAMESPACE_ID}"`);
 
 writeFileSync(WRANGLER_TMP, config, "utf-8");
+
+// Copy .assetsignore to dist/ so Wrangler picks it up during deploy
+if (existsSync(ASSETSIGNORE_SRC)) {
+  copyFileSync(ASSETSIGNORE_SRC, ASSETSIGNORE_TMP);
+} else {
+  // If no .assetsignore exists, create an empty one to avoid Wrangler warnings
+  writeFileSync(ASSETSIGNORE_TMP, "", "utf-8");
+}
 
 try {
   console.log("Applying D1 migrations...");
