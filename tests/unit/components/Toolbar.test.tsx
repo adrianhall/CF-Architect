@@ -16,6 +16,9 @@ vi.mock("html-to-image", () => ({
   toPng: vi.fn(),
   toSvg: vi.fn(),
 }));
+vi.mock("@lib/preferences", () => ({
+  setTheme: vi.fn(),
+}));
 
 import React from "react";
 import {
@@ -29,6 +32,7 @@ import { Toolbar } from "@islands/toolbar/Toolbar";
 import { useDiagramStore } from "@islands/store/diagramStore";
 import { resetStore } from "../../helpers/render-helpers";
 import { fetchApi } from "@lib/validation";
+import { setTheme } from "@lib/preferences";
 
 beforeEach(() => {
   resetStore();
@@ -260,12 +264,14 @@ describe("Toolbar", () => {
       await Promise.resolve();
     });
     expect(document.documentElement.classList.contains("dark")).toBe(true);
+    expect(setTheme).toHaveBeenCalledWith("dark");
 
     await act(async () => {
       fireEvent.click(btn);
       await Promise.resolve();
     });
     expect(document.documentElement.classList.contains("dark")).toBe(false);
+    expect(setTheme).toHaveBeenCalledWith("light");
   });
 
   describe("ShareButton", () => {
