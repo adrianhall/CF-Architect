@@ -15,10 +15,18 @@ export default defineConfig({
     environment: "node",
     globals: true,
     setupFiles: ["tests/setup-dom.ts"],
+    // Node 25+ enables Web Storage API by default, which conflicts with happy-dom.
+    // Provide a valid temp path so the --localstorage-file flag doesn't warn.
+    // See: https://github.com/vitest-dev/vitest/issues/8757
+    execArgv: ["--no-experimental-webstorage"],
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],
-      exclude: ["src/env.d.ts", "src/**/*.astro"],
+      exclude: [
+        "src/env.d.ts",
+        "src/**/*.astro",
+        "src/lib/scaffold-templates/**",
+      ],
       reporter: ["text", "json", "lcov", "text-summary", "json-summary"],
       reportsDirectory: "coverage",
     },

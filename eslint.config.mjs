@@ -1,3 +1,4 @@
+import { defineConfig, globalIgnores } from "eslint/config";
 import eslint from "@eslint/js";
 import tseslint from "typescript-eslint";
 import eslintPluginAstro from "eslint-plugin-astro";
@@ -5,21 +6,19 @@ import reactHooks from "eslint-plugin-react-hooks";
 import eslintConfigPrettier from "eslint-config-prettier/flat";
 import globals from "globals";
 
-export default tseslint.config(
-  {
-    ignores: [
-      "dist/",
-      ".wrangler/",
-      ".astro/",
-      "coverage/",
-      "migrations/",
-      "src/lib/scaffold-templates/",
-    ],
-  },
+export default defineConfig([
+  globalIgnores([
+    "dist/",
+    ".wrangler/",
+    ".astro/",
+    "migrations/",
+    "coverage/",
+    "src/lib/scaffold-templates/",
+  ]),
 
   eslint.configs.recommended,
 
-  ...tseslint.configs.recommendedTypeChecked,
+  tseslint.configs.recommendedTypeChecked,
 
   {
     languageOptions: {
@@ -35,7 +34,7 @@ export default tseslint.config(
     },
   },
 
-  ...eslintPluginAstro.configs.recommended,
+  eslintPluginAstro.configs.recommended,
 
   {
     files: ["**/*.astro", "**/*.astro/*.ts"],
@@ -79,4 +78,4 @@ export default tseslint.config(
   },
 
   eslintConfigPrettier,
-);
+]);
