@@ -4,11 +4,9 @@
  */
 
 import type { APIContext } from "astro";
-import { eq, and } from "drizzle-orm";
-import { createDb } from "@lib/db/client";
-import { diagrams, shareLinks } from "@lib/db/schema";
+import { createRepositories } from "@lib/repository";
 import { UpdateDiagramSchema, apiSuccess, apiError } from "@lib/validation";
-import { nowISO, jsonResponse } from "@lib/helpers";
+import { jsonResponse } from "@lib/helpers";
 
 /**
  * Fetches a single diagram by ID scoped to the current user.
@@ -17,14 +15,8 @@ import { nowISO, jsonResponse } from "@lib/helpers";
  * @returns The diagram, or 404 if not found
  */
 export async function GET({ params, locals }: APIContext) {
-  const db = createDb(locals.runtime.env.DB);
-  const row = await db
-    .select()
-    .from(diagrams)
-    .where(
-      and(eq(diagrams.id, params.id!), eq(diagrams.ownerId, locals.user.id)),
-    )
-    .get();
+  const { diagrams } = createRepositories(locals.runtime.env);
+  const row = await diagrams.getByIdAndOwner(params.id!, locals.user.id);
 
   if (!row) {
     const err = apiError("NOT_FOUND", "Diagram not found", 404);
@@ -50,69 +42,37 @@ export async function PATCH({ request, params, locals }: APIContext) {
     return jsonResponse(err.body, err.status);
   }
 
-  const db = createDb(locals.runtime.env.DB);
-  const existing = await db
-    .select()
-    .from(diagrams)
-    .where(
-      and(eq(diagrams.id, params.id!), eq(diagrams.ownerId, locals.user.id)),
-    )
-    .get();
+  const { diagrams } = createRepositories(locals.runtime.env);
+  const updated = await diagrams.updateMetadata(
+    params.id!,
+    locals.user.id,
+    parsed.data,
+  );
 
-  if (!existing) {
+  if (!updated) {
     const err = apiError("NOT_FOUND", "Diagram not found", 404);
     return jsonResponse(err.body, err.status);
   }
-
-  const updates: Record<string, unknown> = { updatedAt: nowISO() };
-  if (parsed.data.title !== undefined) updates.title = parsed.data.title;
-  if (parsed.data.description !== undefined)
-    updates.description = parsed.data.description;
-
-  await db.update(diagrams).set(updates).where(eq(diagrams.id, params.id!));
-
-  const updated = await db
-    .select()
-    .from(diagrams)
-    .where(eq(diagrams.id, params.id!))
-    .get();
 
   return jsonResponse(apiSuccess(updated));
 }
 
 /**
- * Permanently removes a diagram.
+ * Permanently removes a diagram and cascades share link cleanup.
  *
  * @param context - Astro API context with params (id), locals (user, runtime.env)
  * @returns 204 on success, or 404 if not found
  */
 export async function DELETE({ params, locals }: APIContext) {
-  const db = createDb(locals.runtime.env.DB);
-  const kv = locals.runtime.env.KV;
-  const existing = await db
-    .select()
-    .from(diagrams)
-    .where(
-      and(eq(diagrams.id, params.id!), eq(diagrams.ownerId, locals.user.id)),
-    )
-    .get();
+  const { diagrams, shares } = createRepositories(locals.runtime.env);
 
-  if (!existing) {
+  await shares.revokeAllForDiagram(params.id!);
+  const removed = await diagrams.remove(params.id!, locals.user.id);
+
+  if (!removed) {
     const err = apiError("NOT_FOUND", "Diagram not found", 404);
     return jsonResponse(err.body, err.status);
   }
-
-  const links = await db
-    .select({ token: shareLinks.token })
-    .from(shareLinks)
-    .where(eq(shareLinks.diagramId, params.id!));
-
-  for (const link of links) {
-    await kv.delete(`share:${link.token}`);
-  }
-
-  await db.delete(shareLinks).where(eq(shareLinks.diagramId, params.id!));
-  await db.delete(diagrams).where(eq(diagrams.id, params.id!));
 
   return new Response(null, { status: 204 });
 }

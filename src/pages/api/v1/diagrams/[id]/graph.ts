@@ -3,11 +3,9 @@
  */
 
 import type { APIContext } from "astro";
-import { eq, and } from "drizzle-orm";
-import { createDb } from "@lib/db/client";
-import { diagrams } from "@lib/db/schema";
+import { createRepositories } from "@lib/repository";
 import { SaveGraphSchema, apiSuccess, apiError } from "@lib/validation";
-import { nowISO, jsonResponse } from "@lib/helpers";
+import { jsonResponse } from "@lib/helpers";
 
 /**
  * Idempotent full replacement of graph_data.
@@ -25,25 +23,17 @@ export async function PUT({ request, params, locals }: APIContext) {
     return jsonResponse(err.body, err.status);
   }
 
-  const db = createDb(locals.runtime.env.DB);
-  const existing = await db
-    .select({ id: diagrams.id })
-    .from(diagrams)
-    .where(
-      and(eq(diagrams.id, params.id!), eq(diagrams.ownerId, locals.user.id)),
-    )
-    .get();
+  const { diagrams } = createRepositories(locals.runtime.env);
+  const updatedAt = await diagrams.saveGraphData(
+    params.id!,
+    locals.user.id,
+    parsed.data.graphData,
+  );
 
-  if (!existing) {
+  if (!updatedAt) {
     const err = apiError("NOT_FOUND", "Diagram not found", 404);
     return jsonResponse(err.body, err.status);
   }
 
-  const now = nowISO();
-  await db
-    .update(diagrams)
-    .set({ graphData: parsed.data.graphData, updatedAt: now })
-    .where(eq(diagrams.id, params.id!));
-
-  return jsonResponse(apiSuccess({ updatedAt: now }));
+  return jsonResponse(apiSuccess({ updatedAt }));
 }
