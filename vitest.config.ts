@@ -19,7 +19,8 @@ export default defineConfig({
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],
       exclude: ["src/env.d.ts", "src/**/*.astro"],
-      reporter: ["text", "text-summary", "json-summary"],
+      reporter: ["text", "json", "lcov", "text-summary", "json-summary"],
+      reportsDirectory: "coverage",
     },
   },
 });
