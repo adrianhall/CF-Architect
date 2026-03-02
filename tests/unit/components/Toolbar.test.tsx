@@ -18,7 +18,13 @@ vi.mock("html-to-image", () => ({
 }));
 
 import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
 import { Toolbar } from "@islands/toolbar/Toolbar";
 import { useDiagramStore } from "@islands/store/diagramStore";
 import { resetStore } from "../../helpers/render-helpers";
@@ -243,16 +249,22 @@ describe("Toolbar", () => {
     expect(screen.getByTitle("Toggle dark mode")).toBeInTheDocument();
   });
 
-  it("toggles dark class on <html> when dark toggle is clicked", () => {
+  it("toggles dark class on <html> when dark toggle is clicked", async () => {
     document.documentElement.classList.remove("dark");
     render(<Toolbar />);
     const btn = screen.getByTitle("Toggle dark mode");
     expect(btn.textContent).toBe("☾");
 
-    fireEvent.click(btn);
+    await act(async () => {
+      fireEvent.click(btn);
+      await Promise.resolve();
+    });
     expect(document.documentElement.classList.contains("dark")).toBe(true);
 
-    fireEvent.click(btn);
+    await act(async () => {
+      fireEvent.click(btn);
+      await Promise.resolve();
+    });
     expect(document.documentElement.classList.contains("dark")).toBe(false);
   });
 
