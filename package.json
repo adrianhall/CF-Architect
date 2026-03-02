@@ -64,5 +64,13 @@
     "typescript-eslint": "8.56.1",
     "vitest": "4.0.18",
     "wrangler": "4.69.0"
+  },
+  "overrides": {
+    "@astrojs/cloudflare": {
+      "wrangler": "$wrangler"
+    },
+    "@esbuild-kit/core-utils": {
+      "esbuild": "^0.25.4"
+    }
   }
 }
