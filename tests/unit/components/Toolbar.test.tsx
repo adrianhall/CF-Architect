@@ -275,19 +275,23 @@ describe("Toolbar", () => {
   });
 
   describe("ShareButton", () => {
-    it("opens modal with share URL on successful share", async () => {
-      useDiagramStore.setState({ diagramId: "diag-1" });
-      const mockUrl = "https://example.com/s/abc123";
-      (fetchApi as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-        ok: true,
-        data: { url: mockUrl },
-      });
+    const shareUrl = "https://example.com/s/abc123";
 
+    function setupClipboard() {
       Object.defineProperty(navigator, "clipboard", {
         value: { writeText: vi.fn().mockResolvedValue(undefined) },
         writable: true,
         configurable: true,
       });
+    }
+
+    async function openShareModal() {
+      useDiagramStore.setState({ diagramId: "diag-1" });
+      (fetchApi as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        ok: true,
+        data: { url: shareUrl },
+      });
+      setupClipboard();
 
       render(<Toolbar />);
       fireEvent.click(screen.getByTitle("Share"));
@@ -295,17 +299,125 @@ describe("Toolbar", () => {
       await waitFor(() => {
         expect(screen.getByText("Share Diagram")).toBeInTheDocument();
       });
-      expect(screen.getByDisplayValue(mockUrl)).toBeInTheDocument();
+    }
+
+    it("opens modal with share URL on successful share", async () => {
+      await openShareModal();
+      expect(screen.getByDisplayValue(shareUrl)).toBeInTheDocument();
+    });
+
+    it("auto-copies URL to clipboard on share", async () => {
+      await openShareModal();
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(shareUrl);
     });
 
     it("closes modal when close button is clicked", async () => {
+      await openShareModal();
+      fireEvent.click(screen.getByTitle("Close"));
+      expect(screen.queryByText("Share Diagram")).toBeNull();
+    });
+
+    it("closes modal when overlay is clicked", async () => {
+      await openShareModal();
+      const overlay = document.querySelector(".modal-overlay")!;
+      fireEvent.click(overlay);
+      expect(screen.queryByText("Share Diagram")).toBeNull();
+    });
+
+    it("does not close modal when inner modal is clicked", async () => {
+      await openShareModal();
+      const modal = document.querySelector(".modal")!;
+      fireEvent.click(modal);
+      expect(screen.getByText("Share Diagram")).toBeInTheDocument();
+    });
+
+    it("shows toast after clipboard copy", async () => {
+      await openShareModal();
+      await waitFor(() => {
+        expect(screen.getByText("URL Copied!")).toBeInTheDocument();
+      });
+    });
+
+    it("copies URL when copy button is clicked", async () => {
+      await openShareModal();
+      const writeMock = vi.mocked(navigator.clipboard.writeText); // eslint-disable-line @typescript-eslint/unbound-method
+      writeMock.mockClear();
+      fireEvent.click(screen.getByTitle("Copy URL"));
+      await waitFor(() => {
+        expect(writeMock).toHaveBeenCalledWith(shareUrl);
+      });
+    });
+
+    it("opens share dropdown with open options", async () => {
+      await openShareModal();
+      fireEvent.click(screen.getByTitle("Open options"));
+      expect(screen.getByText("Open in new tab")).toBeInTheDocument();
+      expect(screen.getByText("Open in new window")).toBeInTheDocument();
+    });
+
+    it("Open button calls window.open in new tab", async () => {
+      const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+      await openShareModal();
+      fireEvent.click(screen.getByText("Open"));
+      expect(openSpy).toHaveBeenCalledWith(shareUrl, "_blank");
+      openSpy.mockRestore();
+    });
+
+    it("Open in new window calls window.open with dimensions", async () => {
+      const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+      await openShareModal();
+      fireEvent.click(screen.getByTitle("Open options"));
+      fireEvent.click(screen.getByText("Open in new window"));
+      expect(openSpy).toHaveBeenCalledWith(
+        shareUrl,
+        "_blank",
+        "width=1024,height=768",
+      );
+      openSpy.mockRestore();
+    });
+
+    it("does nothing when diagramId is null", async () => {
+      useDiagramStore.setState({ diagramId: null });
+      render(<Toolbar />);
+      fireEvent.click(screen.getByTitle("Share"));
+      await act(async () => {
+        await Promise.resolve();
+      });
+      expect(fetchApi).not.toHaveBeenCalled();
+    });
+
+    it("handles share API error gracefully", async () => {
+      useDiagramStore.setState({ diagramId: "diag-1" });
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      (fetchApi as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+        new Error("Network fail"),
+      );
+
+      render(<Toolbar />);
+      fireEvent.click(screen.getByTitle("Share"));
+
+      await waitFor(() => {
+        expect(consoleSpy).toHaveBeenCalledWith(
+          "Share failed:",
+          expect.any(Error),
+        );
+      });
+      consoleSpy.mockRestore();
+    });
+
+    it("handles clipboard failure gracefully", async () => {
       useDiagramStore.setState({ diagramId: "diag-1" });
       (fetchApi as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
         ok: true,
-        data: { url: "https://example.com/s/abc" },
+        data: { url: shareUrl },
       });
       Object.defineProperty(navigator, "clipboard", {
-        value: { writeText: vi.fn().mockResolvedValue(undefined) },
+        value: {
+          writeText: vi.fn().mockRejectedValue(new Error("No clipboard")),
+        },
         writable: true,
         configurable: true,
       });
@@ -316,8 +428,21 @@ describe("Toolbar", () => {
       await waitFor(() => {
         expect(screen.getByText("Share Diagram")).toBeInTheDocument();
       });
+    });
 
-      fireEvent.click(screen.getByTitle("Close"));
+    it("does not open modal when result is not ok", async () => {
+      useDiagramStore.setState({ diagramId: "diag-1" });
+      (fetchApi as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        ok: false,
+        error: "Bad request",
+      });
+
+      render(<Toolbar />);
+      fireEvent.click(screen.getByTitle("Share"));
+
+      await act(async () => {
+        await Promise.resolve();
+      });
       expect(screen.queryByText("Share Diagram")).toBeNull();
     });
   });

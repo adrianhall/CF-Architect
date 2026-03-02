@@ -56,15 +56,52 @@ export function createXyflowMock() {
     ],
 
     // Stub React components
-    ReactFlow: ({ children, nodes, edges, ...props }: any) => {
+    ReactFlow: ({
+      children,
+      nodes,
+      edges,
+      onNodeClick,
+      onEdgeClick,
+      onPaneClick,
+      onDragOver,
+      onDrop,
+      ...props
+    }: any) => {
       void nodes;
       void edges;
       const domSafe = ["className", "id", "style", "tabIndex", "role"];
-      const filtered: Record<string, any> = { "data-testid": "react-flow" };
+      const filtered: Record<string, any> = {
+        "data-testid": "react-flow",
+        onDragOver,
+        onDrop,
+      };
       for (const k of domSafe) {
         if (props[k] !== undefined) filtered[k] = props[k];
       }
-      return React.createElement("div", filtered, children);
+      return React.createElement(
+        "div",
+        filtered,
+        onNodeClick &&
+          React.createElement("button", {
+            "data-testid": "rf-node-click",
+            style: { display: "none" },
+            onClick: () =>
+              onNodeClick({} as any, { id: "test-node", data: {} }),
+          }),
+        onEdgeClick &&
+          React.createElement("button", {
+            "data-testid": "rf-edge-click",
+            style: { display: "none" },
+            onClick: () => onEdgeClick({} as any, { id: "test-edge" }),
+          }),
+        onPaneClick &&
+          React.createElement("button", {
+            "data-testid": "rf-pane-click",
+            style: { display: "none" },
+            onClick: () => onPaneClick(),
+          }),
+        children,
+      );
     },
 
     ReactFlowProvider: ({ children }: any) =>
@@ -72,7 +109,10 @@ export function createXyflowMock() {
 
     Background: () =>
       React.createElement("div", { "data-testid": "rf-background" }),
-    MiniMap: () => React.createElement("div", { "data-testid": "rf-minimap" }),
+    MiniMap: ({ nodeColor }: any) => {
+      if (nodeColor) nodeColor({ data: { typeId: "worker" } });
+      return React.createElement("div", { "data-testid": "rf-minimap" });
+    },
     Controls: () =>
       React.createElement("div", { "data-testid": "rf-controls" }),
 

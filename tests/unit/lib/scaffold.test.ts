@@ -298,3 +298,155 @@ describe("generateScaffold — multiple D1 databases", () => {
     expect(pkg.scripts["deploy:db"]).toContain("USERS_DB");
   });
 });
+
+// ---------------------------------------------------------------------------
+// generateScaffold — Queues binding
+// ---------------------------------------------------------------------------
+
+describe("generateScaffold — Queues binding", () => {
+  const files = generateScaffold(
+    makeInput({
+      nodes: [
+        { typeId: "worker", label: "Worker" },
+        { typeId: "queues", label: "Task Queue" },
+      ],
+    }),
+  );
+
+  it("generates queues.producers section in wrangler.toml", () => {
+    const toml = files.get("wrangler.toml")!;
+    expect(toml).toContain("[[queues.producers]]");
+    expect(toml).toContain('binding = "TASK_QUEUE"');
+    expect(toml).toContain('queue = "task-queue"');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// generateScaffold — Durable Objects binding
+// ---------------------------------------------------------------------------
+
+describe("generateScaffold — Durable Objects binding", () => {
+  const files = generateScaffold(
+    makeInput({
+      nodes: [
+        { typeId: "worker", label: "Worker" },
+        { typeId: "durable-object", label: "Chat Room" },
+      ],
+    }),
+  );
+
+  it("generates [durable_objects] section in wrangler.toml", () => {
+    const toml = files.get("wrangler.toml")!;
+    expect(toml).toContain("[durable_objects]");
+    expect(toml).toContain('binding = "CHAT_ROOM"');
+    expect(toml).toContain('class_name = "CHAT_ROOM"');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// generateScaffold — Vectorize binding
+// ---------------------------------------------------------------------------
+
+describe("generateScaffold — Vectorize binding", () => {
+  const files = generateScaffold(
+    makeInput({
+      nodes: [
+        { typeId: "worker", label: "Worker" },
+        { typeId: "vectorize", label: "Embeddings Index" },
+      ],
+    }),
+  );
+
+  it("generates [[vectorize]] section in wrangler.toml", () => {
+    const toml = files.get("wrangler.toml")!;
+    expect(toml).toContain("[[vectorize]]");
+    expect(toml).toContain('binding = "EMBEDDINGS_INDEX"');
+    expect(toml).toContain('index_name = "embeddings-index"');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// generateScaffold — Hyperdrive binding
+// ---------------------------------------------------------------------------
+
+describe("generateScaffold — Hyperdrive binding", () => {
+  const files = generateScaffold(
+    makeInput({
+      nodes: [
+        { typeId: "worker", label: "Worker" },
+        { typeId: "hyperdrive", label: "Postgres Cache" },
+      ],
+    }),
+  );
+
+  it("generates [[hyperdrive]] section in wrangler.toml", () => {
+    const toml = files.get("wrangler.toml")!;
+    expect(toml).toContain("[[hyperdrive]]");
+    expect(toml).toContain('binding = "POSTGRES_CACHE"');
+    expect(toml).toContain("<INSERT_HYPERDRIVE_ID>");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// generateScaffold — Analytics Engine binding
+// ---------------------------------------------------------------------------
+
+describe("generateScaffold — Analytics Engine binding", () => {
+  const files = generateScaffold(
+    makeInput({
+      nodes: [
+        { typeId: "worker", label: "Worker" },
+        { typeId: "analytics-engine", label: "Page Views" },
+      ],
+    }),
+  );
+
+  it("generates [[analytics_engine_datasets]] section in wrangler.toml", () => {
+    const toml = files.get("wrangler.toml")!;
+    expect(toml).toContain("[[analytics_engine_datasets]]");
+    expect(toml).toContain('binding = "PAGE_VIEWS"');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// generateScaffold — Browser Rendering binding
+// ---------------------------------------------------------------------------
+
+describe("generateScaffold — Browser Rendering binding", () => {
+  const files = generateScaffold(
+    makeInput({
+      nodes: [
+        { typeId: "worker", label: "Worker" },
+        { typeId: "browser-rendering", label: "Renderer" },
+      ],
+    }),
+  );
+
+  it("generates [browser] binding in wrangler.toml", () => {
+    const toml = files.get("wrangler.toml")!;
+    expect(toml).toContain("[browser]");
+    expect(toml).toContain('binding = "BROWSER"');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// generateScaffold — Dispatch Namespaces (Workers for Platforms) binding
+// ---------------------------------------------------------------------------
+
+describe("generateScaffold — Dispatch Namespaces binding", () => {
+  const files = generateScaffold(
+    makeInput({
+      nodes: [
+        { typeId: "worker", label: "Worker" },
+        { typeId: "workers-for-platforms", label: "Tenant Runtime" },
+      ],
+    }),
+  );
+
+  it("generates [[dispatch_namespaces]] section in wrangler.toml", () => {
+    const toml = files.get("wrangler.toml")!;
+    expect(toml).toContain("[[dispatch_namespaces]]");
+    expect(toml).toContain('binding = "TENANT_RUNTIME"');
+    expect(toml).toContain('namespace = "tenant-runtime"');
+  });
+});

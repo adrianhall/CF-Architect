@@ -176,5 +176,44 @@ describe("PropertiesPanel", () => {
       const textareas = document.querySelectorAll("textarea");
       expect(textareas.length).toBeGreaterThan(0);
     });
+
+    it("fires updateEdgeData when description changes", () => {
+      useDiagramStore.setState({
+        nodes: [makeNode("n1"), makeNode("n2")],
+        edges: [makeEdge("e1", "n1", "n2", { description: "Original desc" })],
+        selectedEdgeId: "e1",
+      });
+      render(<PropertiesPanel />);
+      const textarea = screen.getByDisplayValue("Original desc");
+      fireEvent.change(textarea, { target: { value: "Updated desc" } });
+      const edge = useDiagramStore.getState().edges.find((e) => e.id === "e1");
+      expect(edge?.data?.description).toBe("Updated desc");
+    });
+  });
+
+  describe("fallback states", () => {
+    it("shows empty state when selectedNodeId references a missing node", () => {
+      useDiagramStore.setState({
+        nodes: [],
+        edges: [],
+        selectedNodeId: "nonexistent",
+      });
+      render(<PropertiesPanel />);
+      expect(
+        screen.getByText("Select a node or edge to view its properties"),
+      ).toBeInTheDocument();
+    });
+
+    it("shows empty state when selectedEdgeId references a missing edge", () => {
+      useDiagramStore.setState({
+        nodes: [],
+        edges: [],
+        selectedEdgeId: "nonexistent",
+      });
+      render(<PropertiesPanel />);
+      expect(
+        screen.getByText("Select a node or edge to view its properties"),
+      ).toBeInTheDocument();
+    });
   });
 });
