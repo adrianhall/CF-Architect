@@ -11,6 +11,7 @@ export default tseslint.config(
       "dist/",
       ".wrangler/",
       ".astro/",
+      "coverage/",
       "migrations/",
       "src/lib/scaffold-templates/",
     ],

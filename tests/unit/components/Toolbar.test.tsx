@@ -16,6 +16,9 @@ vi.mock("html-to-image", () => ({
   toPng: vi.fn(),
   toSvg: vi.fn(),
 }));
+vi.mock("@lib/preferences", () => ({
+  setTheme: vi.fn(),
+}));
 
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
@@ -23,6 +26,7 @@ import { Toolbar } from "@islands/toolbar/Toolbar";
 import { useDiagramStore } from "@islands/store/diagramStore";
 import { resetStore } from "../../helpers/render-helpers";
 import { fetchApi } from "@lib/validation";
+import { setTheme } from "@lib/preferences";
 
 beforeEach(() => {
   resetStore();
@@ -243,7 +247,7 @@ describe("Toolbar", () => {
     expect(screen.getByTitle("Toggle dark mode")).toBeInTheDocument();
   });
 
-  it("toggles dark class on <html> when dark toggle is clicked", () => {
+  it("toggles dark class on <html> and persists via setTheme", () => {
     document.documentElement.classList.remove("dark");
     render(<Toolbar />);
     const btn = screen.getByTitle("Toggle dark mode");
@@ -251,9 +255,11 @@ describe("Toolbar", () => {
 
     fireEvent.click(btn);
     expect(document.documentElement.classList.contains("dark")).toBe(true);
+    expect(setTheme).toHaveBeenCalledWith("dark");
 
     fireEvent.click(btn);
     expect(document.documentElement.classList.contains("dark")).toBe(false);
+    expect(setTheme).toHaveBeenCalledWith("light");
   });
 
   describe("ShareButton", () => {

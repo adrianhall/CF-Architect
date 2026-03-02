@@ -21,6 +21,8 @@ const { title = "CF Architect", fullscreen = false } = Astro.props;
     />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
+    <!-- Key must stay in sync with THEME_KEY from src/lib/preferences.ts.
+         This script is `is:inline` (not bundled) so it cannot import modules. -->
     <script is:inline>
       if (
         localStorage.getItem("theme") === "dark" ||
