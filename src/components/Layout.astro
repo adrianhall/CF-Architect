@@ -5,13 +5,19 @@ import "../styles/components.css";
 interface Props {
   title?: string;
   fullscreen?: boolean;
+  /** When true, force .dark on <html> regardless of user preference. */
+  forceDark?: boolean;
 }
 
-const { title = "CF Architect", fullscreen = false } = Astro.props;
+const {
+  title = "CF Architect",
+  fullscreen = false,
+  forceDark = false,
+} = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" class={forceDark ? "dark" : ""}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -22,7 +28,9 @@ const { title = "CF Architect", fullscreen = false } = Astro.props;
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
     <!-- Key must stay in sync with THEME_KEY from src/lib/preferences.ts.
-         This script is `is:inline` (not bundled) so it cannot import modules. -->
+         This script is `is:inline` (not bundled) so it cannot import modules.
+         When forceDark is active the .dark class is already set server-side;
+         the script only ever adds it, so running it is harmless. -->
     <script is:inline>
       if (
         localStorage.getItem("theme") === "dark" ||
