@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useReactFlow } from "@xyflow/react";
+import { useReactFlow, type Node as FlowNode, type Edge } from "@xyflow/react";
 import { useDiagramStore } from "../store/diagramStore";
-import type { CFNodeData } from "../types";
+import type { CFNodeData, CFEdgeData } from "../types";
 import { NODE_TYPE_MAP } from "../../lib/catalog";
 import { fetchApi, ShareResponseSchema } from "../../lib/validation";
 import { ExportButton } from "./ExportButton";
@@ -9,6 +9,60 @@ import { PrintButton } from "./PrintButton";
 import { DarkToggle } from "./DarkToggle";
 
 type LayoutDirection = "DOWN" | "RIGHT";
+
+const DIRECTION_HANDLES: Record<
+  LayoutDirection,
+  { source: string; target: string }
+> = {
+  DOWN: { source: "source-bottom", target: "target-top" },
+  RIGHT: { source: "source-right", target: "target-left" },
+};
+
+/**
+ * Remap edge sourceHandle/targetHandle to match the layout direction.
+ * Only remaps when the preferred handle exists on the node type;
+ * otherwise the edge keeps its current handle.
+ */
+export function remapEdgeHandles(
+  edges: Edge<CFEdgeData>[],
+  nodes: FlowNode<CFNodeData>[],
+  direction: LayoutDirection,
+): Edge<CFEdgeData>[] {
+  const preferred = DIRECTION_HANDLES[direction];
+
+  const nodeTypeIdMap = new Map<string, string>();
+  for (const node of nodes) {
+    nodeTypeIdMap.set(node.id, (node.data as unknown as CFNodeData).typeId);
+  }
+
+  return edges.map((edge) => {
+    let { sourceHandle, targetHandle } = edge;
+
+    const sourceTypeId = nodeTypeIdMap.get(edge.source);
+    if (sourceTypeId) {
+      const handles = NODE_TYPE_MAP.get(sourceTypeId)?.defaultHandles ?? [];
+      if (handles.some((h) => h.id === preferred.source)) {
+        sourceHandle = preferred.source;
+      }
+    }
+
+    const targetTypeId = nodeTypeIdMap.get(edge.target);
+    if (targetTypeId) {
+      const handles = NODE_TYPE_MAP.get(targetTypeId)?.defaultHandles ?? [];
+      if (handles.some((h) => h.id === preferred.target)) {
+        targetHandle = preferred.target;
+      }
+    }
+
+    if (
+      sourceHandle === edge.sourceHandle &&
+      targetHandle === edge.targetHandle
+    ) {
+      return edge;
+    }
+    return { ...edge, sourceHandle, targetHandle };
+  });
+}
 
 /**
  * Top toolbar with diagram title input, undo/redo buttons, zoom controls,
@@ -98,8 +152,14 @@ export function Toolbar({ readOnly = false }: { readOnly?: boolean }) {
             }
             return node;
           });
+          const newEdges = remapEdgeHandles(
+            state.edges,
+            state.nodes,
+            direction,
+          );
           useDiagramStore.getState().pushHistory();
           useDiagramStore.getState().setNodes(newNodes);
+          useDiagramStore.getState().setEdges(newEdges);
         }
 
         setTimeout(() => void fitView({ duration: 300 }), 50);

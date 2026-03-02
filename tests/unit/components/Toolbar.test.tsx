@@ -28,11 +28,13 @@ import {
   waitFor,
   act,
 } from "@testing-library/react";
-import { Toolbar } from "@islands/toolbar/Toolbar";
+import { Toolbar, remapEdgeHandles } from "@islands/toolbar/Toolbar";
 import { useDiagramStore } from "@islands/store/diagramStore";
 import { resetStore } from "../../helpers/render-helpers";
 import { fetchApi } from "@lib/validation";
 import { setTheme } from "@lib/preferences";
+import type { Node, Edge } from "@xyflow/react";
+import type { CFNodeData, CFEdgeData } from "@islands/types";
 
 beforeEach(() => {
   resetStore();
@@ -444,6 +446,90 @@ describe("Toolbar", () => {
         await Promise.resolve();
       });
       expect(screen.queryByText("Share Diagram")).toBeNull();
+    });
+  });
+
+  describe("remapEdgeHandles", () => {
+    const workerNode = (id: string): Node<CFNodeData> => ({
+      id,
+      type: "cf-node",
+      position: { x: 0, y: 0 },
+      data: { typeId: "worker", label: "W" } as CFNodeData,
+    });
+
+    const cronNode = (id: string): Node<CFNodeData> => ({
+      id,
+      type: "cf-node",
+      position: { x: 0, y: 0 },
+      data: { typeId: "cron-trigger", label: "Cron" } as CFNodeData,
+    });
+
+    const makeEdge = (
+      source: string,
+      target: string,
+      sourceHandle: string,
+      targetHandle: string,
+    ): Edge<CFEdgeData> => ({
+      id: `${source}-${target}`,
+      source,
+      target,
+      sourceHandle,
+      targetHandle,
+      type: "cf-edge",
+      data: { edgeType: "data-flow" },
+    });
+
+    it("remaps TB handles to LR handles for RIGHT direction", () => {
+      const nodes = [workerNode("a"), workerNode("b")];
+      const edges = [makeEdge("a", "b", "source-bottom", "target-top")];
+      const result = remapEdgeHandles(edges, nodes, "RIGHT");
+      expect(result[0].sourceHandle).toBe("source-right");
+      expect(result[0].targetHandle).toBe("target-left");
+    });
+
+    it("remaps LR handles to TB handles for DOWN direction", () => {
+      const nodes = [workerNode("a"), workerNode("b")];
+      const edges = [makeEdge("a", "b", "source-right", "target-left")];
+      const result = remapEdgeHandles(edges, nodes, "DOWN");
+      expect(result[0].sourceHandle).toBe("source-bottom");
+      expect(result[0].targetHandle).toBe("target-top");
+    });
+
+    it("preserves target handle when node type lacks the preferred handle", () => {
+      const nodes = [cronNode("cron"), workerNode("w")];
+      const edges = [makeEdge("cron", "w", "source-bottom", "target-top")];
+      const result = remapEdgeHandles(edges, nodes, "RIGHT");
+      expect(result[0].sourceHandle).toBe("source-right");
+      expect(result[0].targetHandle).toBe("target-left");
+    });
+
+    it("preserves source handle when source node has no matching handle", () => {
+      const nodes = [workerNode("w"), cronNode("cron")];
+      const edges = [makeEdge("w", "cron", "source-bottom", "target-top")];
+      const result = remapEdgeHandles(edges, nodes, "RIGHT");
+      expect(result[0].sourceHandle).toBe("source-right");
+      // cron-trigger has no target handles, so targetHandle stays unchanged
+      expect(result[0].targetHandle).toBe("target-top");
+    });
+
+    it("returns same edge reference when no remapping is needed", () => {
+      const nodes = [workerNode("a"), workerNode("b")];
+      const edges = [makeEdge("a", "b", "source-bottom", "target-top")];
+      const result = remapEdgeHandles(edges, nodes, "DOWN");
+      expect(result[0]).toBe(edges[0]);
+    });
+
+    it("handles multiple edges correctly", () => {
+      const nodes = [workerNode("a"), workerNode("b"), workerNode("c")];
+      const edges = [
+        makeEdge("a", "b", "source-bottom", "target-top"),
+        makeEdge("b", "c", "source-bottom", "target-top"),
+      ];
+      const result = remapEdgeHandles(edges, nodes, "RIGHT");
+      expect(result[0].sourceHandle).toBe("source-right");
+      expect(result[0].targetHandle).toBe("target-left");
+      expect(result[1].sourceHandle).toBe("source-right");
+      expect(result[1].targetHandle).toBe("target-left");
     });
   });
 });
