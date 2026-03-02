@@ -269,6 +269,39 @@
   padding: 2px;
 }
 
+.properties-doc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.properties-doc-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--color-cf-orange);
+  text-decoration: none;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.properties-doc-link:hover {
+  background: var(--color-surface-alt);
+  text-decoration: underline;
+}
+
+.properties-doc-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
+}
+
 /* Toolbar */
 .toolbar {
   display: flex;

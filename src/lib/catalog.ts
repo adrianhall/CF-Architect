@@ -26,6 +26,19 @@ export interface HandleDef {
   position: "top" | "bottom" | "left" | "right";
 }
 
+/** Icon style for a documentation link: open-book or video. */
+export type DocLinkIcon = "doc" | "video";
+
+/** External documentation or tutorial link shown in the properties panel. */
+export interface DocLink {
+  /** Icon rendered next to the link. */
+  icon: DocLinkIcon;
+  /** Display text for the link. */
+  title: string;
+  /** Full URL opened in a new tab when clicked. */
+  url: string;
+}
+
 /** Static definition of a Cloudflare product node type in the catalog. */
 export interface NodeTypeDef {
   /** Machine-readable identifier (e.g. "worker", "d1"). Used as the key in React Flow `data.typeId`. */
@@ -44,6 +57,8 @@ export interface NodeTypeDef {
   wranglerBinding?: string;
   /** Code template identifier for the scaffold generator (e.g. "vanilla", "hono", "astro"). */
   scaffoldTemplate?: string;
+  /** Documentation and tutorial links shown in the properties panel. */
+  docLinks?: DocLink[];
 }
 
 /** Static definition of a connection edge type in the catalog. */
@@ -109,6 +124,13 @@ export const NODE_TYPES: NodeTypeDef[] = [
     defaultHandles,
     wranglerBinding: "worker",
     scaffoldTemplate: "vanilla",
+    docLinks: [
+      {
+        icon: "doc",
+        title: "Workers Docs",
+        url: "https://developers.cloudflare.com/workers/",
+      },
+    ],
   },
   {
     typeId: "worker-hono",
@@ -119,6 +141,14 @@ export const NODE_TYPES: NodeTypeDef[] = [
     defaultHandles,
     wranglerBinding: "worker",
     scaffoldTemplate: "hono",
+    docLinks: [
+      {
+        icon: "doc",
+        title: "Workers Docs",
+        url: "https://developers.cloudflare.com/workers/",
+      },
+      { icon: "doc", title: "Hono Docs", url: "https://hono.dev/docs/" },
+    ],
   },
   {
     typeId: "worker-astro",
@@ -129,6 +159,14 @@ export const NODE_TYPES: NodeTypeDef[] = [
     defaultHandles,
     wranglerBinding: "worker",
     scaffoldTemplate: "astro",
+    docLinks: [
+      {
+        icon: "doc",
+        title: "Workers Docs",
+        url: "https://developers.cloudflare.com/workers/",
+      },
+      { icon: "doc", title: "Astro Docs", url: "https://docs.astro.build/" },
+    ],
   },
   {
     typeId: "pages",
@@ -137,6 +175,13 @@ export const NODE_TYPES: NodeTypeDef[] = [
     iconPath: "/icons/pages.svg",
     description: "Cloudflare Pages for static sites and SSR",
     defaultHandles,
+    docLinks: [
+      {
+        icon: "doc",
+        title: "Pages Docs",
+        url: "https://developers.cloudflare.com/pages/",
+      },
+    ],
   },
   {
     typeId: "durable-object",
@@ -146,6 +191,13 @@ export const NODE_TYPES: NodeTypeDef[] = [
     description: "Stateful serverless objects with transactional storage",
     defaultHandles,
     wranglerBinding: "durable_objects",
+    docLinks: [
+      {
+        icon: "doc",
+        title: "Durable Objects Docs",
+        url: "https://developers.cloudflare.com/durable-objects/",
+      },
+    ],
   },
   {
     typeId: "workflow",
@@ -154,6 +206,13 @@ export const NODE_TYPES: NodeTypeDef[] = [
     iconPath: "/icons/workflow.svg",
     description: "Durable execution workflows",
     defaultHandles,
+    docLinks: [
+      {
+        icon: "doc",
+        title: "Workflows Docs",
+        url: "https://developers.cloudflare.com/workflows/",
+      },
+    ],
   },
   {
     typeId: "workers-for-platforms",
@@ -163,6 +222,13 @@ export const NODE_TYPES: NodeTypeDef[] = [
     description: "Multi-tenant Workers platform",
     defaultHandles,
     wranglerBinding: "dispatch_namespaces",
+    docLinks: [
+      {
+        icon: "doc",
+        title: "Workers for Platforms Docs",
+        url: "https://developers.cloudflare.com/cloudflare-for-platforms/workers-for-platforms/",
+      },
+    ],
   },
   {
     typeId: "cron-trigger",
@@ -173,6 +239,13 @@ export const NODE_TYPES: NodeTypeDef[] = [
     defaultHandles: [
       { id: "source-bottom", type: "source", position: "bottom" },
       { id: "source-right", type: "source", position: "right" },
+    ],
+    docLinks: [
+      {
+        icon: "doc",
+        title: "Cron Triggers Docs",
+        url: "https://developers.cloudflare.com/workers/configuration/cron-triggers/",
+      },
     ],
   },
 
@@ -185,6 +258,13 @@ export const NODE_TYPES: NodeTypeDef[] = [
     description: "Serverless SQLite database at the edge",
     defaultHandles,
     wranglerBinding: "d1_databases",
+    docLinks: [
+      {
+        icon: "doc",
+        title: "D1 Docs",
+        url: "https://developers.cloudflare.com/d1/",
+      },
+    ],
   },
   {
     typeId: "kv",
@@ -194,6 +274,13 @@ export const NODE_TYPES: NodeTypeDef[] = [
     description: "Global low-latency key-value store",
     defaultHandles,
     wranglerBinding: "kv_namespaces",
+    docLinks: [
+      {
+        icon: "doc",
+        title: "KV Docs",
+        url: "https://developers.cloudflare.com/kv/",
+      },
+    ],
   },
   {
     typeId: "r2",
@@ -203,6 +290,13 @@ export const NODE_TYPES: NodeTypeDef[] = [
     description: "S3-compatible object storage with zero egress fees",
     defaultHandles,
     wranglerBinding: "r2_buckets",
+    docLinks: [
+      {
+        icon: "doc",
+        title: "R2 Docs",
+        url: "https://developers.cloudflare.com/r2/",
+      },
+    ],
   },
   {
     typeId: "queues",
@@ -212,6 +306,13 @@ export const NODE_TYPES: NodeTypeDef[] = [
     description: "Message queues for async processing",
     defaultHandles,
     wranglerBinding: "queues",
+    docLinks: [
+      {
+        icon: "doc",
+        title: "Queues Docs",
+        url: "https://developers.cloudflare.com/queues/",
+      },
+    ],
   },
   {
     typeId: "hyperdrive",
@@ -221,6 +322,13 @@ export const NODE_TYPES: NodeTypeDef[] = [
     description: "Connection pooling and caching for external databases",
     defaultHandles,
     wranglerBinding: "hyperdrive",
+    docLinks: [
+      {
+        icon: "doc",
+        title: "Hyperdrive Docs",
+        url: "https://developers.cloudflare.com/hyperdrive/",
+      },
+    ],
   },
   {
     typeId: "analytics-engine",
@@ -230,6 +338,13 @@ export const NODE_TYPES: NodeTypeDef[] = [
     description: "High-cardinality time-series analytics",
     defaultHandles,
     wranglerBinding: "analytics_engine_datasets",
+    docLinks: [
+      {
+        icon: "doc",
+        title: "Analytics Engine Docs",
+        url: "https://developers.cloudflare.com/analytics/analytics-engine/",
+      },
+    ],
   },
   {
     typeId: "vectorize",
@@ -239,6 +354,13 @@ export const NODE_TYPES: NodeTypeDef[] = [
     description: "Vector database for AI embeddings",
     defaultHandles,
     wranglerBinding: "vectorize",
+    docLinks: [
+      {
+        icon: "doc",
+        title: "Vectorize Docs",
+        url: "https://developers.cloudflare.com/vectorize/",
+      },
+    ],
   },
 
   // AI
@@ -250,6 +372,13 @@ export const NODE_TYPES: NodeTypeDef[] = [
     description: "Run AI models on Cloudflare's GPU network",
     defaultHandles,
     wranglerBinding: "ai",
+    docLinks: [
+      {
+        icon: "doc",
+        title: "Workers AI Docs",
+        url: "https://developers.cloudflare.com/workers-ai/",
+      },
+    ],
   },
   {
     typeId: "ai-gateway",
@@ -258,6 +387,13 @@ export const NODE_TYPES: NodeTypeDef[] = [
     iconPath: "/icons/ai-gateway.svg",
     description: "Proxy, cache, and observe AI API calls",
     defaultHandles,
+    docLinks: [
+      {
+        icon: "doc",
+        title: "AI Gateway Docs",
+        url: "https://developers.cloudflare.com/ai-gateway/",
+      },
+    ],
   },
   {
     typeId: "autorag",
@@ -266,6 +402,13 @@ export const NODE_TYPES: NodeTypeDef[] = [
     iconPath: "/icons/autorag.svg",
     description: "Automated retrieval-augmented generation",
     defaultHandles,
+    docLinks: [
+      {
+        icon: "doc",
+        title: "AutoRAG Docs",
+        url: "https://developers.cloudflare.com/autorag/",
+      },
+    ],
   },
   {
     typeId: "browser-rendering",
@@ -275,6 +418,13 @@ export const NODE_TYPES: NodeTypeDef[] = [
     description: "Headless browser for rendering and scraping",
     defaultHandles,
     wranglerBinding: "browser",
+    docLinks: [
+      {
+        icon: "doc",
+        title: "Browser Rendering Docs",
+        url: "https://developers.cloudflare.com/browser-rendering/",
+      },
+    ],
   },
   {
     typeId: "agents",
@@ -283,6 +433,13 @@ export const NODE_TYPES: NodeTypeDef[] = [
     iconPath: "/icons/agents.svg",
     description: "Autonomous AI agents on Cloudflare",
     defaultHandles,
+    docLinks: [
+      {
+        icon: "doc",
+        title: "Agents Docs",
+        url: "https://developers.cloudflare.com/agents/",
+      },
+    ],
   },
 
   // Media
@@ -293,6 +450,13 @@ export const NODE_TYPES: NodeTypeDef[] = [
     iconPath: "/icons/images.svg",
     description: "On-the-fly image resizing and optimization",
     defaultHandles,
+    docLinks: [
+      {
+        icon: "doc",
+        title: "Images Docs",
+        url: "https://developers.cloudflare.com/images/",
+      },
+    ],
   },
   {
     typeId: "stream",
@@ -301,6 +465,13 @@ export const NODE_TYPES: NodeTypeDef[] = [
     iconPath: "/icons/stream.svg",
     description: "Video encoding, storage, and delivery",
     defaultHandles,
+    docLinks: [
+      {
+        icon: "doc",
+        title: "Stream Docs",
+        url: "https://developers.cloudflare.com/stream/",
+      },
+    ],
   },
 
   // Networking & Security
@@ -311,6 +482,13 @@ export const NODE_TYPES: NodeTypeDef[] = [
     iconPath: "/icons/dns.svg",
     description: "Cloudflare DNS management",
     defaultHandles,
+    docLinks: [
+      {
+        icon: "doc",
+        title: "DNS Docs",
+        url: "https://developers.cloudflare.com/dns/",
+      },
+    ],
   },
   {
     typeId: "cdn",
@@ -319,6 +497,13 @@ export const NODE_TYPES: NodeTypeDef[] = [
     iconPath: "/icons/cdn.svg",
     description: "Global content delivery and caching",
     defaultHandles,
+    docLinks: [
+      {
+        icon: "doc",
+        title: "Cache Docs",
+        url: "https://developers.cloudflare.com/cache/",
+      },
+    ],
   },
   {
     typeId: "email-routing",
@@ -327,6 +512,13 @@ export const NODE_TYPES: NodeTypeDef[] = [
     iconPath: "/icons/email-routing.svg",
     description: "Email forwarding and Worker-based processing",
     defaultHandles,
+    docLinks: [
+      {
+        icon: "doc",
+        title: "Email Routing Docs",
+        url: "https://developers.cloudflare.com/email-routing/",
+      },
+    ],
   },
   {
     typeId: "access",
@@ -335,6 +527,13 @@ export const NODE_TYPES: NodeTypeDef[] = [
     iconPath: "/icons/access.svg",
     description: "Zero Trust identity-aware proxy",
     defaultHandles,
+    docLinks: [
+      {
+        icon: "doc",
+        title: "Access Docs",
+        url: "https://developers.cloudflare.com/cloudflare-one/policies/access/",
+      },
+    ],
   },
   {
     typeId: "waf",
@@ -343,6 +542,13 @@ export const NODE_TYPES: NodeTypeDef[] = [
     iconPath: "/icons/waf.svg",
     description: "Web Application Firewall",
     defaultHandles,
+    docLinks: [
+      {
+        icon: "doc",
+        title: "WAF Docs",
+        url: "https://developers.cloudflare.com/waf/",
+      },
+    ],
   },
   {
     typeId: "load-balancer",
@@ -351,6 +557,13 @@ export const NODE_TYPES: NodeTypeDef[] = [
     iconPath: "/icons/load-balancer.svg",
     description: "Traffic distribution and health checks",
     defaultHandles,
+    docLinks: [
+      {
+        icon: "doc",
+        title: "Load Balancing Docs",
+        url: "https://developers.cloudflare.com/load-balancing/",
+      },
+    ],
   },
 
   // External / Generic

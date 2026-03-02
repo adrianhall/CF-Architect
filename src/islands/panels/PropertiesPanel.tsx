@@ -1,12 +1,50 @@
 import { useDiagramStore } from "../store/diagramStore";
 import { NODE_TYPE_MAP, EDGE_TYPES, CATEGORY_LABELS } from "../../lib/catalog";
+import type { DocLinkIcon } from "../../lib/catalog";
 import type { CFNodeData, CFEdgeData } from "../types";
+
+function BookIcon() {
+  return (
+    <svg
+      className="properties-doc-icon"
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M2 2.5A1.5 1.5 0 0 1 3.5 1h2A1.5 1.5 0 0 1 7 2.5V4h2V2.5A1.5 1.5 0 0 1 10.5 1h2A1.5 1.5 0 0 1 14 2.5v10a1.5 1.5 0 0 1-1.5 1.5h-2A1.5 1.5 0 0 1 9 12.5V11H7v1.5A1.5 1.5 0 0 1 5.5 14h-2A1.5 1.5 0 0 1 2 12.5v-10ZM5.5 2.5h-2v10h2v-10Zm5 0v10h2v-10h-2ZM7 5.5v4h2v-4H7Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+function VideoIcon() {
+  return (
+    <svg
+      className="properties-doc-icon"
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M3 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9.5l2.4 1.8A.75.75 0 0 0 14.6 11V5a.75.75 0 0 0-1.2-.6L11 6.2V5a2 2 0 0 0-2-2H3Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+const DOC_LINK_ICONS: Record<DocLinkIcon, () => React.ReactNode> = {
+  doc: BookIcon,
+  video: VideoIcon,
+};
 
 /**
  * Right sidebar that shows editable properties for the currently selected node
- * or edge. For nodes: type, category, label, description, accent colour. For
- * edges: edge type selector, label, protocol, description. Shows empty-state
- * message when nothing is selected.
+ * or edge. For nodes: type, category, label, description, accent colour,
+ * documentation links. For edges: edge type selector, label, protocol,
+ * description. Shows empty-state message when nothing is selected.
  */
 export function PropertiesPanel() {
   const {
@@ -92,6 +130,30 @@ export function PropertiesPanel() {
             className="property-color"
           />
         </div>
+
+        {typeDef?.docLinks && typeDef.docLinks.length > 0 && (
+          <div className="properties-section">
+            <label className="property-label">Documentation</label>
+            <ul className="properties-doc-list">
+              {typeDef.docLinks.map((link) => {
+                const Icon = DOC_LINK_ICONS[link.icon];
+                return (
+                  <li key={link.url}>
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="properties-doc-link"
+                    >
+                      <Icon />
+                      <span>{link.title}</span>
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
       </aside>
     );
   }

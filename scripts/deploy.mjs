@@ -1,6 +1,12 @@
 #!/usr/bin/env node
 
-import { readFileSync, writeFileSync, unlinkSync, existsSync, copyFileSync  } from "node:fs";
+import {
+  readFileSync,
+  writeFileSync,
+  unlinkSync,
+  existsSync,
+  copyFileSync,
+} from "node:fs";
 import { execSync } from "node:child_process";
 import { join } from "node:path";
 
@@ -52,7 +58,7 @@ let config = readFileSync(WRANGLER_SRC, "utf-8");
 
 // Order matters: replace "local-session" before "local" to avoid partial match
 config = config
-  .replace('database_id = "local"', `database_id = "${vars.D1_DATABASE_ID}"`,)
+  .replace('database_id = "local"', `database_id = "${vars.D1_DATABASE_ID}"`)
   .replace('id = "local-session"', `id = "${vars.SESSION_NAMESPACE_ID}"`)
   .replace('id = "local"', `id = "${vars.KV_NAMESPACE_ID}"`);
 
