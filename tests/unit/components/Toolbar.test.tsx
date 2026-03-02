@@ -238,6 +238,24 @@ describe("Toolbar", () => {
     });
   });
 
+  it("renders the dark mode toggle", () => {
+    render(<Toolbar />);
+    expect(screen.getByTitle("Toggle dark mode")).toBeInTheDocument();
+  });
+
+  it("toggles dark class on <html> when dark toggle is clicked", () => {
+    document.documentElement.classList.remove("dark");
+    render(<Toolbar />);
+    const btn = screen.getByTitle("Toggle dark mode");
+    expect(btn.textContent).toBe("☾");
+
+    fireEvent.click(btn);
+    expect(document.documentElement.classList.contains("dark")).toBe(true);
+
+    fireEvent.click(btn);
+    expect(document.documentElement.classList.contains("dark")).toBe(false);
+  });
+
   describe("ShareButton", () => {
     it("opens modal with share URL on successful share", async () => {
       useDiagramStore.setState({ diagramId: "diag-1" });

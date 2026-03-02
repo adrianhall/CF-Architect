@@ -6,6 +6,7 @@ import { NODE_TYPE_MAP } from "../../lib/catalog";
 import { fetchApi, ShareResponseSchema } from "../../lib/validation";
 import { ExportButton } from "./ExportButton";
 import { PrintButton } from "./PrintButton";
+import { DarkToggle } from "./DarkToggle";
 
 type LayoutDirection = "DOWN" | "RIGHT";
 
@@ -246,6 +247,7 @@ export function Toolbar({ readOnly = false }: { readOnly?: boolean }) {
         <ExportButton />
         <PrintButton />
         {!readOnly && <ShareButton />}
+        <DarkToggle />
       </div>
     </div>
   );
