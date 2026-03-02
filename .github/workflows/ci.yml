@@ -53,3 +53,17 @@ jobs:
           md += '| Lines | ' + pct(total.lines) + ' |\n';
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, md);
           "
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E tests
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
