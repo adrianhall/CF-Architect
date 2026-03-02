@@ -1393,3 +1393,325 @@ body.cf-print-mode .shared-banner {
     background: white !important;
   }
 }
+
+/* =========================================================================
+   Landing Page — Design C "Schematic"
+   Always rendered in forced-dark mode.
+   ========================================================================= */
+
+.landing-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 32px;
+  background: transparent;
+}
+
+.landing-nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: #f9fafb;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.landing-nav-signin {
+  padding: 8px 20px;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  color: #f9fafb;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+
+.landing-nav-signin:hover {
+  border-color: #f6821f;
+  background: rgba(246, 130, 31, 0.08);
+}
+
+/* Hero */
+
+.landing-hero {
+  padding: 48px 32px 64px;
+  background: radial-gradient(circle, #374151 1px, transparent 1px);
+  background-size: 20px 20px;
+  background-color: #111827;
+}
+
+.landing-hero-inner {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.landing-hero-text {
+  flex: 1 1 50%;
+  min-width: 0;
+}
+
+.landing-hero-heading {
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1.15;
+  color: #f9fafb;
+  margin: 0 0 16px;
+}
+
+.landing-hero-sub {
+  font-size: 17px;
+  line-height: 1.6;
+  color: #9ca3af;
+  margin: 0 0 32px;
+  max-width: 440px;
+}
+
+.landing-hero-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.landing-btn-primary {
+  display: inline-block;
+  padding: 12px 28px;
+  background: #f6821f;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.landing-btn-primary:hover {
+  background: #d46b10;
+}
+
+.landing-btn-ghost {
+  display: inline-block;
+  padding: 12px 28px;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  color: #f9fafb;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+
+.landing-btn-ghost:hover {
+  border-color: #6b7280;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.landing-hero-diagram {
+  flex: 1 1 45%;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.landing-schematic {
+  width: 100%;
+  max-width: 400px;
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid #374151;
+}
+
+/* Section dividers */
+
+.landing-divider {
+  border: none;
+  border-top: 3px double #374151;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* Content sections */
+
+.landing-section {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 56px 32px;
+}
+
+.landing-section-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #f9fafb;
+  margin: 0 0 32px;
+  text-align: center;
+}
+
+/* Use-case cards */
+
+.landing-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.landing-card {
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  padding: 24px;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.landing-card:hover {
+  border-color: #f6821f;
+  box-shadow: 0 0 0 1px #f6821f;
+}
+
+.landing-card-icon {
+  margin-bottom: 12px;
+}
+
+.landing-card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #f9fafb;
+  margin: 0 0 8px;
+}
+
+.landing-card-desc {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #9ca3af;
+  margin: 0;
+}
+
+/* Features 2x2 grid */
+
+.landing-features {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.landing-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.landing-feature-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(246, 130, 31, 0.1);
+  border-radius: 8px;
+}
+
+.landing-feature-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #f9fafb;
+  margin: 0 0 4px;
+}
+
+.landing-feature-desc {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #9ca3af;
+  margin: 0;
+}
+
+/* Footer */
+
+.landing-footer {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px;
+  text-align: center;
+}
+
+.landing-footer-text {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 8px;
+}
+
+.landing-footer-link {
+  font-size: 14px;
+  color: #f6821f;
+  text-decoration: none;
+}
+
+.landing-footer-link:hover {
+  text-decoration: underline;
+}
+
+/* Responsive — landing page */
+
+@media (max-width: 900px) {
+  .landing-hero-inner {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .landing-hero-text {
+    flex: none;
+  }
+
+  .landing-hero-sub {
+    max-width: none;
+  }
+
+  .landing-hero-actions {
+    justify-content: center;
+  }
+
+  .landing-hero-diagram {
+    flex: none;
+    width: 100%;
+  }
+
+  .landing-hero-heading {
+    font-size: 32px;
+  }
+}
+
+@media (max-width: 768px) {
+  .landing-nav {
+    padding: 12px 20px;
+  }
+
+  .landing-hero {
+    padding: 32px 20px 48px;
+  }
+
+  .landing-section {
+    padding: 40px 20px;
+  }
+
+  .landing-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-features {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-hero-heading {
+    font-size: 28px;
+  }
+}
