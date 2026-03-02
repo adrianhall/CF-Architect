@@ -36,6 +36,8 @@ const { showDarkToggle = true } = Astro.props;
 </nav>
 
 <script>
+  import { setTheme } from "@lib/preferences";
+
   const toggle = document.getElementById("dark-toggle");
   if (toggle) {
     const update = () => {
@@ -47,7 +49,7 @@ const { showDarkToggle = true } = Astro.props;
     toggle.addEventListener("click", () => {
       document.documentElement.classList.toggle("dark");
       const isDark = document.documentElement.classList.contains("dark");
-      localStorage.setItem("theme", isDark ? "dark" : "light");
+      setTheme(isDark ? "dark" : "light");
       update();
     });
   }

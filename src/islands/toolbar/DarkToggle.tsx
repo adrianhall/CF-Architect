@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { setTheme } from "@lib/preferences";
 
 function isDark() {
   return document.documentElement.classList.contains("dark");
@@ -6,7 +7,8 @@ function isDark() {
 
 /**
  * React version of the dark-mode toggle used in the Astro Navbar.
- * Toggles the `.dark` class on `<html>` and persists the choice to localStorage.
+ * Toggles the `.dark` class on `<html>` and persists the choice via the
+ * centralised preferences library.
  */
 export function DarkToggle() {
   const [dark, setDark] = useState(isDark);
@@ -23,11 +25,7 @@ export function DarkToggle() {
   const toggle = useCallback(() => {
     document.documentElement.classList.toggle("dark");
     const next = isDark();
-    try {
-      localStorage.setItem("theme", next ? "dark" : "light");
-    } catch {
-      /* SSR / restricted context */
-    }
+    setTheme(next ? "dark" : "light");
     setDark(next);
   }, []);
 
