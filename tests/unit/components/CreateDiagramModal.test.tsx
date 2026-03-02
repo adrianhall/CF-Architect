@@ -180,4 +180,63 @@ describe("CreateDiagramModal", () => {
       expect(screen.getByText("Creating...")).toBeInTheDocument();
     });
   });
+
+  it("recovers from non-ok API response", async () => {
+    mockFetchApi.mockResolvedValueOnce({
+      ok: false,
+      error: "Bad request",
+    });
+
+    render(
+      <CreateDiagramModal open={true} onClose={vi.fn()} blueprint={null} />,
+    );
+
+    fireEvent.click(screen.getByText("Create Diagram"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Create Diagram")).not.toBeDisabled();
+    });
+  });
+
+  it("recovers from network error", async () => {
+    mockFetchApi.mockRejectedValueOnce(new Error("Network error"));
+
+    render(
+      <CreateDiagramModal open={true} onClose={vi.fn()} blueprint={null} />,
+    );
+
+    fireEvent.click(screen.getByText("Create Diagram"));
+
+    await waitFor(() => {
+      expect(screen.getByText("Create Diagram")).not.toBeDisabled();
+    });
+  });
+
+  it("calls onClose when overlay is clicked", () => {
+    const onClose = vi.fn();
+    render(
+      <CreateDiagramModal open={true} onClose={onClose} blueprint={null} />,
+    );
+    const overlay = screen.getByTestId("create-diagram-modal");
+    fireEvent.click(overlay);
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it("does not call onClose when inner modal content is clicked", () => {
+    const onClose = vi.fn();
+    render(
+      <CreateDiagramModal open={true} onClose={onClose} blueprint={null} />,
+    );
+    fireEvent.click(screen.getByText("Create New Diagram"));
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("disables Create button when title is empty", () => {
+    render(
+      <CreateDiagramModal open={true} onClose={vi.fn()} blueprint={null} />,
+    );
+    const titleInput = screen.getByLabelText("Title");
+    fireEvent.change(titleInput, { target: { value: "   " } });
+    expect(screen.getByText("Create Diagram")).toBeDisabled();
+  });
 });

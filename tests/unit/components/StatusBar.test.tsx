@@ -1,11 +1,11 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { createXyflowMock } from "../../helpers/mock-xyflow";
+import { createXyflowMock, mockGetZoom } from "../../helpers/mock-xyflow";
 
 vi.mock("@xyflow/react", () => createXyflowMock());
 
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, act } from "@testing-library/react";
 import { StatusBar } from "@islands/toolbar/StatusBar";
 import { useDiagramStore } from "@islands/store/diagramStore";
 import { resetStore } from "../../helpers/render-helpers";
@@ -122,5 +122,31 @@ describe("StatusBar", () => {
     renderStatusBar();
     const el = screen.getByText("Unsaved changes");
     expect(el.className).toContain("status-dirty");
+  });
+
+  it("shows seconds ago for timestamps 5-59s in the past", () => {
+    useDiagramStore.setState({ lastSavedAt: Date.now() - 30_000 });
+    renderStatusBar();
+    expect(screen.getByText("Saved 30s ago")).toBeInTheDocument();
+  });
+
+  it("shows minutes ago for timestamps >= 60s in the past", () => {
+    useDiagramStore.setState({ lastSavedAt: Date.now() - 120_000 });
+    renderStatusBar();
+    expect(screen.getByText("Saved 2m ago")).toBeInTheDocument();
+  });
+
+  it("updates zoom display on interval tick", () => {
+    vi.useFakeTimers();
+    renderStatusBar();
+    expect(screen.getByText("Zoom: 100%")).toBeInTheDocument();
+
+    mockGetZoom.mockReturnValue(1.5);
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(screen.getByText("Zoom: 150%")).toBeInTheDocument();
+
+    vi.useRealTimers();
   });
 });
