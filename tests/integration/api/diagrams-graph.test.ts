@@ -9,12 +9,20 @@ import {
   jsonBody,
 } from "../../helpers/fixtures";
 import { diagrams } from "@lib/db/schema";
+import { DiagramRepository } from "@lib/repository/diagram-repository";
+import { ShareRepository } from "@lib/repository/share-repository";
 
 let mockDb: MockDatabase;
 let mockKv: MockKV;
 
-vi.mock("@lib/db/client", () => ({
-  createDb: () => mockDb,
+vi.mock("@lib/repository", () => ({
+  createRepositories: () => ({
+    diagrams: new DiagramRepository(mockDb as any),
+    shares: new ShareRepository(
+      mockDb as any,
+      mockKv as unknown as KVNamespace,
+    ),
+  }),
 }));
 
 beforeEach(() => {

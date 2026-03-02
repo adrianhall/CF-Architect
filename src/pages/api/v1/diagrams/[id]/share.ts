@@ -3,19 +3,16 @@
  */
 
 import type { APIContext } from "astro";
-import { eq, and } from "drizzle-orm";
-import { createDb } from "@lib/db/client";
-import { diagrams, shareLinks } from "@lib/db/schema";
+import { createRepositories } from "@lib/repository";
 import { CreateShareSchema, apiSuccess, apiError } from "@lib/validation";
 import { jsonResponse } from "@lib/helpers";
-import { createShareLink, revokeShareLink } from "@lib/share";
 
 /**
  * Creates a new share link.
- * Generates a token and writes to D1 + KV.
+ * If an active (non-expired) share link already exists, returns it instead.
  *
  * @param context - Astro API context with request, params (id), locals (user, runtime.env)
- * @returns 201 with token and URL, or 404 if diagram not found
+ * @returns 201 with token and URL, or 200 if reusing existing link, or 404 if diagram not found
  */
 export async function POST({ request, params, locals }: APIContext) {
   const body = await request.json().catch(() => ({}));
@@ -26,51 +23,27 @@ export async function POST({ request, params, locals }: APIContext) {
     return jsonResponse(err.body, err.status);
   }
 
-  const db = createDb(locals.runtime.env.DB);
-  const existing = await db
-    .select({ id: diagrams.id })
-    .from(diagrams)
-    .where(
-      and(eq(diagrams.id, params.id!), eq(diagrams.ownerId, locals.user.id)),
-    )
-    .get();
+  const { diagrams, shares } = createRepositories(locals.runtime.env);
 
+  const existing = await diagrams.getByIdAndOwner(params.id!, locals.user.id);
   if (!existing) {
     const err = apiError("NOT_FOUND", "Diagram not found", 404);
     return jsonResponse(err.body, err.status);
   }
 
-  const existingLink = await db
-    .select({ token: shareLinks.token, expiresAt: shareLinks.expiresAt })
-    .from(shareLinks)
-    .where(eq(shareLinks.diagramId, params.id!))
-    .get();
-
-  if (
-    existingLink &&
-    (!existingLink.expiresAt || new Date(existingLink.expiresAt) > new Date())
-  ) {
-    const url = new URL(`/s/${existingLink.token}`, request.url).toString();
-    return jsonResponse(
-      apiSuccess({
-        token: existingLink.token,
-        expiresAt: existingLink.expiresAt,
-        url,
-      }),
-      200,
-    );
+  const activeLink = await shares.getUnexpiredShareLinkInfo(params.id!);
+  if (activeLink) {
+    const url = new URL(`/s/${activeLink.token}`, request.url).toString();
+    return jsonResponse(apiSuccess({ ...activeLink, url }), 200);
   }
 
-  const result = await createShareLink(
-    db,
-    locals.runtime.env.KV,
+  const result = await shares.create(
     params.id!,
     locals.user.id,
     parsed.data.expiresIn,
   );
 
   const url = new URL(`/s/${result.token}`, request.url).toString();
-
   return jsonResponse(apiSuccess({ ...result, url }), 201);
 }
 
@@ -90,26 +63,20 @@ export async function DELETE({ request, params, locals }: APIContext) {
     return jsonResponse(err.body, err.status);
   }
 
-  const db = createDb(locals.runtime.env.DB);
+  const { shares } = createRepositories(locals.runtime.env);
 
-  const link = await db
-    .select()
-    .from(shareLinks)
-    .where(
-      and(
-        eq(shareLinks.token, token),
-        eq(shareLinks.diagramId, params.id!),
-        eq(shareLinks.createdBy, locals.user.id),
-      ),
-    )
-    .get();
+  const link = await shares.getByTokenDiagramAndCreator(
+    token,
+    params.id!,
+    locals.user.id,
+  );
 
   if (!link) {
     const err = apiError("NOT_FOUND", "Share link not found", 404);
     return jsonResponse(err.body, err.status);
   }
 
-  await revokeShareLink(db, locals.runtime.env.KV, token);
+  await shares.revoke(token);
 
   return new Response(null, { status: 204 });
 }
