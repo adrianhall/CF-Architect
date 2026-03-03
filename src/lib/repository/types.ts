@@ -69,3 +69,14 @@ export interface UpdateDiagramFields {
   title?: string;
   description?: string | null;
 }
+
+/** Full user row as stored in D1. */
+export interface UserRow {
+  id: string;
+  email: string | null;
+  displayName: string | null;
+  avatarUrl: string | null;
+  isAdmin: boolean;
+  createdAt: string;
+  updatedAt: string;
+}

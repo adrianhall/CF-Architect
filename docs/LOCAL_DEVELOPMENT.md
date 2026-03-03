@@ -10,13 +10,13 @@ npm install
 
 ### 2. Create the local D1 database
 
-Apply the migration to provision a local SQLite database with tables and seed data:
+Apply the migrations to provision a local SQLite database with tables:
 
 ```bash
 npm run db:migrate:local
 ```
 
-This creates the `users`, `diagrams`, and `share_links` tables and seeds a default user. The local database is stored in `.wrangler/` (gitignored).
+This creates the `users`, `diagrams`, and `share_links` tables. The local database is stored in `.wrangler/` (gitignored). After migration, the `users` table starts empty — users are created automatically on first authentication.
 
 ### 3. Start the dev server
 
@@ -31,6 +31,32 @@ This starts the Astro dev server with the Cloudflare platform proxy enabled, giv
 ### 4. Open the app
 
 Navigate to http://localhost:4321. You'll be redirected to the dashboard where you can create your first diagram.
+
+## Authentication
+
+Authentication is handled by **Cloudflare Access (Zero Trust)** in production. In local development, authentication is bypassed automatically via the `DEV_MODE` environment variable.
+
+### How dev-mode auth works
+
+The `wrangler.toml` `[vars]` section sets `DEV_MODE = "true"` for local development. When a request hits a protected route (`/dashboard`, `/diagram/*`, `/api/v1/*`) without a Cloudflare Access JWT header, the middleware automatically:
+
+1. Creates (or retrieves) a `dev@localhost` user in the local D1 database
+2. Sets that user on `context.locals.user`
+3. Logs `[Auth] Using mock user for development.` to the console
+
+The dev user is the first user created in a fresh database, so it automatically receives admin privileges (`isAdmin = true`).
+
+Public routes (`/`, `/blueprints`, `/s/*`) do not require authentication and work without any auth headers.
+
+### Testing with a real JWT
+
+To test the production-like JWT flow locally against `wrangler dev`:
+
+```bash
+curl -H "Cf-Access-Jwt-Assertion: <your-jwt-token>" http://localhost:4321/api/v1/diagrams
+```
+
+The JWT will be verified against your Cloudflare Access team's public key endpoint. Set the `CF_ACCESS_TEAM_DOMAIN` environment variable to your team domain for this to work.
 
 ## Available Scripts
 

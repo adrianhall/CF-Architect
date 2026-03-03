@@ -4,12 +4,12 @@ import { MockDatabase } from "../../helpers/mock-db";
 import { MockKV } from "../../helpers/mock-kv";
 import { createMockContext } from "../../helpers/mock-context";
 import {
+  TEST_USER_ID,
   makeDiagramRow,
   makeShareLinkRow,
   jsonBody,
 } from "../../helpers/fixtures";
 import { diagrams, shareLinks } from "@lib/db/schema";
-import { SEED_USER_ID } from "@lib/auth/types";
 import { DiagramRepository } from "@lib/repository/diagram-repository";
 import { ShareRepository } from "@lib/repository/share-repository";
 
@@ -172,7 +172,7 @@ describe("DELETE /api/v1/diagrams/:id/share", () => {
       makeShareLinkRow({
         diagramId: "d-share",
         token: "tok123",
-        createdBy: SEED_USER_ID,
+        createdBy: TEST_USER_ID,
       }),
     ]);
     await mockKv.put(

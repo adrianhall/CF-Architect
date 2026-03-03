@@ -15,6 +15,8 @@ import { jsonResponse } from "@lib/helpers";
  * @returns The diagram, or 404 if not found
  */
 export async function GET({ params, locals }: APIContext) {
+  if (!locals.user)
+    return jsonResponse(apiError("UNAUTHORIZED", "Unauthorized").body, 401);
   const { diagrams } = createRepositories(locals.runtime.env);
   const row = await diagrams.getByIdAndOwner(params.id!, locals.user.id);
 
@@ -34,6 +36,8 @@ export async function GET({ params, locals }: APIContext) {
  * @returns The updated diagram, or 404 if not found
  */
 export async function PATCH({ request, params, locals }: APIContext) {
+  if (!locals.user)
+    return jsonResponse(apiError("UNAUTHORIZED", "Unauthorized").body, 401);
   const body = await request.json().catch(() => ({}));
   const parsed = UpdateDiagramSchema.safeParse(body);
 
@@ -64,6 +68,8 @@ export async function PATCH({ request, params, locals }: APIContext) {
  * @returns 204 on success, or 404 if not found
  */
 export async function DELETE({ params, locals }: APIContext) {
+  if (!locals.user)
+    return jsonResponse(apiError("UNAUTHORIZED", "Unauthorized").body, 401);
   const { diagrams, shares } = createRepositories(locals.runtime.env);
 
   await shares.revokeAllForDiagram(params.id!);

@@ -27,7 +27,6 @@ export default defineConfig({
         "src/**/*.astro",
         "src/lib/scaffold-templates/**",
         "src/**/types.ts",
-        "src/lib/auth/bypass.ts",
       ],
       reporter: ["text", "json", "lcov", "text-summary", "json-summary"],
       reportsDirectory: "coverage",

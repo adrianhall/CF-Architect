@@ -3,8 +3,11 @@ import { ShareRepository } from "@lib/repository/share-repository";
 import { diagrams, shareLinks } from "@lib/db/schema";
 import { createMockDatabase, MockDatabase } from "../../../helpers/mock-db";
 import { createMockKV, MockKV } from "../../../helpers/mock-kv";
-import { SEED_USER_ID } from "@lib/auth/types";
-import { makeDiagramRow, makeShareLinkRow } from "../../../helpers/fixtures";
+import {
+  TEST_USER_ID,
+  makeDiagramRow,
+  makeShareLinkRow,
+} from "../../../helpers/fixtures";
 
 let db: MockDatabase;
 let kv: MockKV;
@@ -24,21 +27,21 @@ beforeEach(() => {
 
 describe("create", () => {
   it("returns a token of length 12 and expiresAt", async () => {
-    const result = await repo.create("diag-001", SEED_USER_ID);
+    const result = await repo.create("diag-001", TEST_USER_ID);
     expect(result.token).toHaveLength(12);
     expect(result).toHaveProperty("expiresAt");
   });
 
   it("inserts a row into the share_links table", async () => {
-    await repo.create("diag-001", SEED_USER_ID);
+    await repo.create("diag-001", TEST_USER_ID);
     const rows = db.getRows(shareLinks);
     expect(rows).toHaveLength(1);
     expect(rows[0].diagramId).toBe("diag-001");
-    expect(rows[0].createdBy).toBe(SEED_USER_ID);
+    expect(rows[0].createdBy).toBe(TEST_USER_ID);
   });
 
   it("writes a KV entry at share:<token>", async () => {
-    const result = await repo.create("diag-001", SEED_USER_ID);
+    const result = await repo.create("diag-001", TEST_USER_ID);
     const kvVal = await kv.get(`share:${result.token}`);
     expect(kvVal).toBeTruthy();
     const meta = JSON.parse(kvVal!);
@@ -46,18 +49,18 @@ describe("create", () => {
   });
 
   it("sets expirationTtl on KV when expiresInSeconds is provided", async () => {
-    const result = await repo.create("diag-001", SEED_USER_ID, 3600);
+    const result = await repo.create("diag-001", TEST_USER_ID, 3600);
     expect(result.expiresAt).toBeTruthy();
     expect(kv.ttls.get(`share:${result.token}`)).toBe(3600);
   });
 
   it("returns expiresAt: null when no TTL is provided", async () => {
-    const result = await repo.create("diag-001", SEED_USER_ID);
+    const result = await repo.create("diag-001", TEST_USER_ID);
     expect(result.expiresAt).toBeNull();
   });
 
   it("includes expiresAt in the KV metadata", async () => {
-    const result = await repo.create("diag-001", SEED_USER_ID, 60);
+    const result = await repo.create("diag-001", TEST_USER_ID, 60);
     const meta = JSON.parse((await kv.get(`share:${result.token}`))!);
     expect(meta.expiresAt).toBe(result.expiresAt);
   });
@@ -201,14 +204,14 @@ describe("getByTokenDiagramAndCreator", () => {
         id: "sl-5",
         diagramId: "d-1",
         token: "tok-auth",
-        createdBy: SEED_USER_ID,
+        createdBy: TEST_USER_ID,
       }),
     ]);
 
     const row = await repo.getByTokenDiagramAndCreator(
       "tok-auth",
       "d-1",
-      SEED_USER_ID,
+      TEST_USER_ID,
     );
     expect(row).toBeDefined();
     expect(row!.id).toBe("sl-5");
@@ -222,7 +225,7 @@ describe("getByTokenDiagramAndCreator", () => {
     const row = await repo.getByTokenDiagramAndCreator(
       "wrong-token",
       "d-1",
-      SEED_USER_ID,
+      TEST_USER_ID,
     );
     expect(row).toBeUndefined();
   });
@@ -235,7 +238,7 @@ describe("getByTokenDiagramAndCreator", () => {
     const row = await repo.getByTokenDiagramAndCreator(
       "tok-auth",
       "d-other",
-      SEED_USER_ID,
+      TEST_USER_ID,
     );
     expect(row).toBeUndefined();
   });

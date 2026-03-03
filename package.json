@@ -33,6 +33,7 @@
     "elkjs": "0.11.0",
     "fflate": "0.8.2",
     "html-to-image": "1.11.11",
+    "jose": "6.1.3",
     "nanoid": "5.1.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
