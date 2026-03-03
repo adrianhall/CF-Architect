@@ -4,6 +4,9 @@
  * Defines the three core tables — `users`, `diagrams`, and `share_links` —
  * that back the CF Architect data model. Changes here require a new migration
  * via `npm run db:generate`.
+ *
+ * **Note:** The `v8 ignore next` comments are used to suppress TypeScript errors
+ * v8 coverage problems.  References cannot be tested with coverage in the schema.
  */
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
@@ -45,6 +48,7 @@ export const diagrams = sqliteTable("diagrams", {
   /** UUID primary key. */
   id: text("id").primaryKey(),
   /** FK to the owning user. */
+  /* v8 ignore next -- @preserve */
   ownerId: text("owner_id")
     .notNull()
     .references(() => users.id),
@@ -78,12 +82,14 @@ export const shareLinks = sqliteTable("share_links", {
   /** UUID primary key. */
   id: text("id").primaryKey(),
   /** FK to the shared diagram. */
+  /* v8 ignore next -- @preserve */
   diagramId: text("diagram_id")
     .notNull()
     .references(() => diagrams.id),
   /** Short URL-safe token (nanoid, 12 chars). Unique across all links. */
   token: text("token").unique().notNull(),
   /** FK to the user who created the share link. */
+  /* v8 ignore next -- @preserve */
   createdBy: text("created_by")
     .notNull()
     .references(() => users.id),

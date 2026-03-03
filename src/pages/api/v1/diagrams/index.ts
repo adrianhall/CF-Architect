@@ -16,8 +16,9 @@ import { BLUEPRINT_MAP } from "@lib/blueprints";
  * @returns ApiResult<Diagram[]>
  */
 export async function GET({ locals }: APIContext) {
-  if (!locals.user)
+  if (!locals.user) {
     return jsonResponse(apiError("UNAUTHORIZED", "Unauthorized").body, 401);
+  }
   const { diagrams } = createRepositories(locals.runtime.env);
   const rows = await diagrams.listByOwner(locals.user.id);
   return jsonResponse(apiSuccess(rows));
@@ -31,8 +32,9 @@ export async function GET({ locals }: APIContext) {
  * @returns 201 with the new diagram, or 404 if blueprintId is invalid
  */
 export async function POST({ request, locals }: APIContext) {
-  if (!locals.user)
+  if (!locals.user) {
     return jsonResponse(apiError("UNAUTHORIZED", "Unauthorized").body, 401);
+  }
   const body = await request.json().catch(() => ({}));
   const parsed = CreateDiagramSchema.safeParse(body);
 

@@ -43,6 +43,48 @@ function ctx(options: Parameters<typeof createMockContext>[0] = {}) {
 }
 
 // ---------------------------------------------------------------------------
+// Auth guard (401)
+// ---------------------------------------------------------------------------
+
+describe("single diagram auth guard", () => {
+  it("GET returns 401 when user is not authenticated", async () => {
+    const res = await GET(ctx({ params: { id: "d1" }, user: undefined }));
+    const body = await jsonBody(res);
+
+    expect(res.status).toBe(401);
+    expect(body.ok).toBe(false);
+    expect(body.error.code).toBe("UNAUTHORIZED");
+  });
+
+  it("PATCH returns 401 when user is not authenticated", async () => {
+    const res = await PATCH(
+      ctx({
+        method: "PATCH",
+        params: { id: "d1" },
+        body: { title: "T" },
+        user: undefined,
+      }),
+    );
+    const body = await jsonBody(res);
+
+    expect(res.status).toBe(401);
+    expect(body.ok).toBe(false);
+    expect(body.error.code).toBe("UNAUTHORIZED");
+  });
+
+  it("DELETE returns 401 when user is not authenticated", async () => {
+    const res = await DELETE(
+      ctx({ method: "DELETE", params: { id: "d1" }, user: undefined }),
+    );
+    const body = await jsonBody(res);
+
+    expect(res.status).toBe(401);
+    expect(body.ok).toBe(false);
+    expect(body.error.code).toBe("UNAUTHORIZED");
+  });
+});
+
+// ---------------------------------------------------------------------------
 // GET (single)
 // ---------------------------------------------------------------------------
 

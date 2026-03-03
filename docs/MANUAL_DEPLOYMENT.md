@@ -47,14 +47,14 @@ Authentication is handled by Cloudflare Access. You need to create an Access App
 
 1. Go to the [Cloudflare Zero Trust dashboard](https://one.dash.cloudflare.com/)
 2. Navigate to **Access > Applications** and create a new **Self-hosted** application
-3. Set the application domain to your Workers deployment URL
+3. Set the **Application domain** to your Workers deployment URL — this is the full hostname shown after you deploy (e.g. `cf-architect.myaccount.workers.dev`). You can also find it in the Cloudflare dashboard under **Workers & Pages**.
 4. Add path rules to protect: `/dashboard`, `/diagram/*`, and `/api/v1/*`
 5. Configure an identity provider (e.g. GitHub, Google, or email OTP) under **Settings > Authentication**
-6. Set the `CF_ACCESS_TEAM_DOMAIN` environment variable in your Worker:
+6. Set the `CF_ACCESS_TEAM_DOMAIN` secret in your Worker. This is your **Zero Trust organization name** (not the workers subdomain). You can find it in the Zero Trust dashboard URL (`https://one.dash.cloudflare.com/<account-id>/<team-name>/...`) or under **Settings > Custom Pages**. The app uses it to construct the JWT issuer URL `https://<team>.cloudflareaccess.com`.
 
 ```bash
 npx wrangler secret put CF_ACCESS_TEAM_DOMAIN
-# Enter your team domain (e.g. "myteam") when prompted
+# Enter your Zero Trust team name (e.g. "myteam") when prompted
 ```
 
 Ensure `DEV_MODE` is **not** set in production. The `wrangler.toml` `[vars]` section only applies to local development; production environment variables are managed via the Cloudflare dashboard or `wrangler secret`.

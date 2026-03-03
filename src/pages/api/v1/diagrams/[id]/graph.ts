@@ -15,8 +15,9 @@ import { jsonResponse } from "@lib/helpers";
  * @returns The updated timestamp, or 404 if diagram not found
  */
 export async function PUT({ request, params, locals }: APIContext) {
-  if (!locals.user)
+  if (!locals.user) {
     return jsonResponse(apiError("UNAUTHORIZED", "Unauthorized").body, 401);
+  }
   const body = await request.json().catch(() => ({}));
   const parsed = SaveGraphSchema.safeParse(body);
 

@@ -44,6 +44,45 @@ function ctx(options: Parameters<typeof createMockContext>[0] = {}) {
 }
 
 // ---------------------------------------------------------------------------
+// Auth guard (401)
+// ---------------------------------------------------------------------------
+
+describe("share auth guard", () => {
+  it("POST returns 401 when user is not authenticated", async () => {
+    const res = await POST(
+      ctx({
+        method: "POST",
+        url: "http://localhost:4321/api/v1/diagrams/d1/share",
+        params: { id: "d1" },
+        body: {},
+        user: undefined,
+      }),
+    );
+    const body = await jsonBody(res);
+
+    expect(res.status).toBe(401);
+    expect(body.ok).toBe(false);
+    expect(body.error.code).toBe("UNAUTHORIZED");
+  });
+
+  it("DELETE returns 401 when user is not authenticated", async () => {
+    const res = await DELETE(
+      ctx({
+        method: "DELETE",
+        url: "http://localhost:4321/api/v1/diagrams/d1/share?token=tok123",
+        params: { id: "d1" },
+        user: undefined,
+      }),
+    );
+    const body = await jsonBody(res);
+
+    expect(res.status).toBe(401);
+    expect(body.ok).toBe(false);
+    expect(body.error.code).toBe("UNAUTHORIZED");
+  });
+});
+
+// ---------------------------------------------------------------------------
 // POST (create share)
 // ---------------------------------------------------------------------------
 

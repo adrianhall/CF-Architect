@@ -15,8 +15,9 @@ import { jsonResponse } from "@lib/helpers";
  * @returns 201 with token and URL, or 200 if reusing existing link, or 404 if diagram not found
  */
 export async function POST({ request, params, locals }: APIContext) {
-  if (!locals.user)
+  if (!locals.user) {
     return jsonResponse(apiError("UNAUTHORIZED", "Unauthorized").body, 401);
+  }
   const body = await request.json().catch(() => ({}));
   const parsed = CreateShareSchema.safeParse(body);
 
@@ -57,8 +58,9 @@ export async function POST({ request, params, locals }: APIContext) {
  * @returns 204 on success, or 404 if share link not found
  */
 export async function DELETE({ request, params, locals }: APIContext) {
-  if (!locals.user)
+  if (!locals.user) {
     return jsonResponse(apiError("UNAUTHORIZED", "Unauthorized").body, 401);
+  }
   const url = new URL(request.url);
   const token = url.searchParams.get("token");
 

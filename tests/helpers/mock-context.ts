@@ -23,8 +23,8 @@ export interface MockContextOptions {
   body?: unknown;
   /** Route params (e.g. { id: "abc" }). */
   params?: Record<string, string>;
-  /** Override the default test user. */
-  user?: AppUser;
+  /** Override the default test user. Pass `undefined` to simulate unauthenticated. */
+  user?: AppUser | undefined;
   /** MockDatabase instance to wire into locals.runtime.env.DB. */
   db?: MockDatabase;
   /** MockKV instance to wire into locals.runtime.env.KV. */
@@ -44,10 +44,11 @@ export function createMockContext(options: MockContextOptions = {}) {
     url = "http://localhost:4321/",
     body,
     params = {},
-    user = TEST_USER,
     db = new MockDatabase(),
     kv = new MockKV(),
   } = options;
+
+  const user = "user" in options ? options.user : TEST_USER;
 
   const init: RequestInit = { method };
   if (body !== undefined) {

@@ -40,6 +40,30 @@ function ctx(options: Parameters<typeof createMockContext>[0] = {}) {
 }
 
 // ---------------------------------------------------------------------------
+// Auth guard (401)
+// ---------------------------------------------------------------------------
+
+describe("diagrams collection auth guard", () => {
+  it("GET returns 401 when user is not authenticated", async () => {
+    const res = await GET(ctx({ user: undefined }));
+    const body = await jsonBody(res);
+
+    expect(res.status).toBe(401);
+    expect(body.ok).toBe(false);
+    expect(body.error.code).toBe("UNAUTHORIZED");
+  });
+
+  it("POST returns 401 when user is not authenticated", async () => {
+    const res = await POST(ctx({ method: "POST", body: {}, user: undefined }));
+    const body = await jsonBody(res);
+
+    expect(res.status).toBe(401);
+    expect(body.ok).toBe(false);
+    expect(body.error.code).toBe("UNAUTHORIZED");
+  });
+});
+
+// ---------------------------------------------------------------------------
 // GET (list)
 // ---------------------------------------------------------------------------
 
