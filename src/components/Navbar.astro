@@ -1,9 +1,13 @@
 ---
+import { ProfileButton } from "../islands/toolbar/ProfileButton";
+
 interface Props {
   showDarkToggle?: boolean;
+  userEmail?: string;
+  userDisplayName?: string;
 }
 
-const { showDarkToggle = true } = Astro.props;
+const { showDarkToggle = true, userEmail, userDisplayName } = Astro.props;
 ---
 
 <nav class="navbar">
@@ -30,6 +34,15 @@ const { showDarkToggle = true } = Astro.props;
         <button class="dark-toggle" id="dark-toggle" title="Toggle dark mode">
           ☀
         </button>
+      )
+    }
+    {
+      userEmail && (
+        <ProfileButton
+          email={userEmail}
+          displayName={userDisplayName}
+          client:load
+        />
       )
     }
   </div>

@@ -62,6 +62,26 @@ config = config
   .replace('id = "local-session"', `id = "${vars.SESSION_NAMESPACE_ID}"`)
   .replace('id = "local"', `id = "${vars.KV_NAMESPACE_ID}"`);
 
+// Strip DEV_MODE — it must never be deployed to production
+config = config.replace(/^\s*DEV_MODE\s*=.*\r?\n?/m, "");
+
+// Remove empty [vars] section left after stripping
+config = config.replace(/\[vars\]\s*(?:\r?\n\s*)*(?=\[|$)/, "");
+
+// If CF_ACCESS_TEAM_DOMAIN is provided as an env var, set it as a deployed var
+// so it doesn't need to be configured separately via `wrangler secret put`.
+const cfAccessTeamDomain = process.env.CF_ACCESS_TEAM_DOMAIN;
+if (cfAccessTeamDomain) {
+  if (config.includes("[vars]")) {
+    config = config.replace(
+      "[vars]",
+      `[vars]\nCF_ACCESS_TEAM_DOMAIN = "${cfAccessTeamDomain}"`,
+    );
+  } else {
+    config += `\n[vars]\nCF_ACCESS_TEAM_DOMAIN = "${cfAccessTeamDomain}"\n`;
+  }
+}
+
 writeFileSync(WRANGLER_TMP, config, "utf-8");
 
 // Copy .assetsignore to dist/ so Wrangler picks it up during deploy

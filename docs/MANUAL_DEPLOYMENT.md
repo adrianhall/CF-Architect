@@ -68,10 +68,20 @@ Authentication is handled by Cloudflare Access. You need to create an Access App
 
 You can also do this last step from the command line:
 
-```bash
-npx wrangler secret put CF_ACCESS_TEAM_DOMAIN
-# Enter your Zero Trust team name (e.g. "myteam") when prompted
-```
+   **Option A** -- set it in `.env` so the deploy script includes it as a Worker var automatically:
+
+   ```env
+   CF_ACCESS_TEAM_DOMAIN=myteam
+   ```
+
+   **Option B** -- set it as a secret directly on the Worker:
+
+   ```bash
+   npx wrangler secret put CF_ACCESS_TEAM_DOMAIN
+   # Enter your Zero Trust team name (e.g. "myteam") when prompted
+   ```
+
+   If the value is already set as a secret on the Worker and you don't provide it in `.env`, the existing secret is preserved.
 
 #### Update the CloudFlare One Application
 

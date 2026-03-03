@@ -7,6 +7,7 @@ import { fetchApi, ShareResponseSchema } from "../../lib/validation";
 import { ExportButton } from "./ExportButton";
 import { PrintButton } from "./PrintButton";
 import { DarkToggle } from "./DarkToggle";
+import { ProfileButton } from "./ProfileButton";
 
 type LayoutDirection = "DOWN" | "RIGHT";
 
@@ -69,7 +70,17 @@ export function remapEdgeHandles(
  * auto-layout button (ELK), export button, and share button.
  * In read-only mode only the logo, title, and export button are shown.
  */
-export function Toolbar({ readOnly = false }: { readOnly?: boolean }) {
+interface ToolbarProps {
+  readOnly?: boolean;
+  userEmail?: string;
+  userDisplayName?: string;
+}
+
+export function Toolbar({
+  readOnly = false,
+  userEmail,
+  userDisplayName,
+}: ToolbarProps) {
   const { fitView, zoomIn, zoomOut } = useReactFlow();
   const { undo, redo, undoStack, redoStack, title, setTitle } =
     useDiagramStore();
@@ -308,6 +319,9 @@ export function Toolbar({ readOnly = false }: { readOnly?: boolean }) {
         <PrintButton />
         {!readOnly && <ShareButton />}
         <DarkToggle />
+        {userEmail && (
+          <ProfileButton email={userEmail} displayName={userDisplayName} />
+        )}
       </div>
     </div>
   );

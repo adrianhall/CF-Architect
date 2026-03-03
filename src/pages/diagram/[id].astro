@@ -6,8 +6,14 @@ const { id } = Astro.params;
 if (!id) {
   return Astro.redirect("/dashboard");
 }
+const user = Astro.locals.user;
 ---
 
 <Layout title="Editor — CF Architect" fullscreen>
-  <DiagramCanvasWrapper diagramId={id} client:only="react" />
+  <DiagramCanvasWrapper
+    diagramId={id}
+    userEmail={user?.email ?? undefined}
+    userDisplayName={user?.displayName ?? undefined}
+    client:only="react"
+  />
 </Layout>
