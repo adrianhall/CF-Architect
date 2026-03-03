@@ -50,14 +50,24 @@ Authentication is handled by Cloudflare Access. You need to create an Access App
 3. Set the **Application domain** to your Workers deployment URL — this is the full hostname shown after you deploy (e.g. `cf-architect.myaccount.workers.dev`). You can also find it in the Cloudflare dashboard under **Workers & Pages**.
 4. Add path rules to protect: `/dashboard`, `/diagram/*`, and `/api/v1/*`
 5. Configure an identity provider (e.g. GitHub, Google, or email OTP) under **Settings > Authentication**
-6. Set the `CF_ACCESS_TEAM_DOMAIN` secret in your Worker. This is your **Zero Trust organization name** (not the workers subdomain). You can find it in the Zero Trust dashboard URL (`https://one.dash.cloudflare.com/<account-id>/<team-name>/...`) or under **Settings > Custom Pages**. The app uses it to construct the JWT issuer URL `https://<team>.cloudflareaccess.com`.
+6. Set the `CF_ACCESS_TEAM_DOMAIN` for your Worker. This is your **Zero Trust organization name** (not the workers subdomain). You can find it in the Zero Trust dashboard URL (`https://one.dash.cloudflare.com/<account-id>/<team-name>/...`) or under **Settings > Custom Pages**. The app uses it to construct the JWT issuer URL `https://<team>.cloudflareaccess.com`.
 
-```bash
-npx wrangler secret put CF_ACCESS_TEAM_DOMAIN
-# Enter your Zero Trust team name (e.g. "myteam") when prompted
-```
+   **Option A** -- set it in `.env` so the deploy script includes it as a Worker var automatically:
 
-Ensure `DEV_MODE` is **not** set in production. The `wrangler.toml` `[vars]` section only applies to local development; production environment variables are managed via the Cloudflare dashboard or `wrangler secret`.
+   ```env
+   CF_ACCESS_TEAM_DOMAIN=myteam
+   ```
+
+   **Option B** -- set it as a secret directly on the Worker:
+
+   ```bash
+   npx wrangler secret put CF_ACCESS_TEAM_DOMAIN
+   # Enter your Zero Trust team name (e.g. "myteam") when prompted
+   ```
+
+   If the value is already set as a secret on the Worker and you don't provide it in `.env`, the existing secret is preserved.
+
+> **Note:** `DEV_MODE` in `wrangler.toml` is for local development only. The deploy script automatically strips it from the production config so it is never deployed.
 
 **Admin assignment:** The first user to authenticate after deployment is automatically granted admin privileges. If this is incorrect (e.g. an unintended user authenticates first), you can fix it via the D1 console:
 
