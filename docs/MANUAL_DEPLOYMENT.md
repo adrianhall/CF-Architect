@@ -43,14 +43,30 @@ The `.env` file is gitignored, so your IDs will never be committed.
 
 ### 5. Configure Cloudflare Access (Zero Trust)
 
-Authentication is handled by Cloudflare Access. You need to create an Access Application that protects the application's routes.
+Authentication is handled by Cloudflare Access. You need to create an Access Application that protects the application's routes. 
+
+#### Sign in to CloudFlare One
 
 1. Go to the [Cloudflare Zero Trust dashboard](https://one.dash.cloudflare.com/)
-2. Navigate to **Access > Applications** and create a new **Self-hosted** application
-3. Set the **Application domain** to your Workers deployment URL — this is the full hostname shown after you deploy (e.g. `cf-architect.myaccount.workers.dev`). You can also find it in the Cloudflare dashboard under **Workers & Pages**.
-4. Add path rules to protect: `/dashboard`, `/diagram/*`, and `/api/v1/*`
-5. Configure an identity provider (e.g. GitHub, Google, or email OTP) under **Settings > Authentication**
-6. Set the `CF_ACCESS_TEAM_DOMAIN` for your Worker. This is your **Zero Trust organization name** (not the workers subdomain). You can find it in the Zero Trust dashboard URL (`https://one.dash.cloudflare.com/<account-id>/<team-name>/...`) or under **Settings > Custom Pages**. The app uses it to construct the JWT issuer URL `https://<team>.cloudflareaccess.com`.
+2. If required, follow the prompts to set up an account (Free Plan is ok).  You will be required to provide payment details.
+
+#### Create an Identity Provider
+
+1. Select **Integrations > Identity Providers**.
+2. Select **Add an identity provider**.
+3. Select your preferred identity provider, then follow the instructions all the way through to "Finish Setup" step.
+4. Once you have verified your identity provider, you can continue to the next step.
+
+#### Configure CloudFlare Access
+
+1. Log into [CloudFlare Dev Platform dashboard](https://dash.cloudflare.com)
+2. Select **Build > Workers & Pages**
+3. Select your CF-Architect worker.
+4. Select **Settings**.
+5. On the `workers.dev` **Domains & Routes**, select the triple dot, then turn on **CloudFlare Access**
+6. In **Variables and Secrets**, create a new variable called `CF_ACCESS_TEAM_DOMAIN` - set it to your CloudFlare one team name.
+
+You can also do this last step from the command line:
 
    **Option A** -- set it in `.env` so the deploy script includes it as a Worker var automatically:
 
@@ -67,7 +83,30 @@ Authentication is handled by Cloudflare Access. You need to create an Access App
 
    If the value is already set as a secret on the Worker and you don't provide it in `.env`, the existing secret is preserved.
 
-> **Note:** `DEV_MODE` in `wrangler.toml` is for local development only. The deploy script automatically strips it from the production config so it is never deployed.
+#### Update the CloudFlare One Application
+
+1. Go back to the [Cloudflare Zero Trust dashboard](https://one.dash.cloudflare.com/).
+2. Select **Access controls > Applications > cf-architect - CloudFlare Workers** (or whatever your application is called)
+3. Select **Configure**.
+4. Replace the Public hostname
+    * Subdomain: cf-architect (or your worker name)
+    * Domain: foo.workers.dev (or your worker domain)
+    * Path: dashboard
+5. Add two new public hostnames that are identical except for the path: `diagram/*` and `api/v1/*`
+6. Click **Save application**
+7. Select **Login methods**#
+8. Ensure the Login method matches your identity provider.
+
+#### Update the CloudFlare One Policy
+
+1. Select **Access controls > Policies > cf-architect - Production** (or whatever your policy is called)
+2. Select **Configure**
+3. Set the rule to be:
+    * Selector: **Login Methods**
+    * Value: _Your identity provider_
+4. Click **Save**
+
+Ensure `DEV_MODE` is **not** set in production. The `wrangler.toml` `[vars]` section only applies to local development; production environment variables are managed via the Cloudflare dashboard or `wrangler secret`.
 
 **Admin assignment:** The first user to authenticate after deployment is automatically granted admin privileges. If this is incorrect (e.g. an unintended user authenticates first), you can fix it via the D1 console:
 
