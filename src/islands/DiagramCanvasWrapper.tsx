@@ -10,6 +10,8 @@ interface Props {
     description: string;
     graphData: string;
   };
+  userEmail?: string;
+  userDisplayName?: string;
 }
 
 /**

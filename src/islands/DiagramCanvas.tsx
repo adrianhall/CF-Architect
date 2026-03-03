@@ -48,6 +48,8 @@ interface DiagramCanvasProps {
     description: string;
     graphData: string;
   };
+  userEmail?: string;
+  userDisplayName?: string;
 }
 
 /**
@@ -61,6 +63,8 @@ export default function DiagramCanvas({
   diagramId,
   readOnly = false,
   initialData,
+  userEmail,
+  userDisplayName,
 }: DiagramCanvasProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition, fitView, getNodes } = useReactFlow();
@@ -313,7 +317,13 @@ export default function DiagramCanvas({
       onKeyDown={onKeyDown}
       tabIndex={0}
     >
-      {!printMode && <Toolbar readOnly={readOnly} />}
+      {!printMode && (
+        <Toolbar
+          readOnly={readOnly}
+          userEmail={userEmail}
+          userDisplayName={userDisplayName}
+        />
+      )}
       <div className="diagram-editor-body">
         {!readOnly && !printMode && <ServicePalette />}
         <div className="diagram-canvas-wrapper" ref={reactFlowWrapper}>
