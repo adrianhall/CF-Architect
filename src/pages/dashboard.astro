@@ -2,10 +2,15 @@
 import Layout from "../components/Layout.astro";
 import Navbar from "../components/Navbar.astro";
 import DiagramList from "../islands/dashboard/DiagramList";
+
+const user = Astro.locals.user;
 ---
 
 <Layout title="Dashboard — CF Architect">
-  <Navbar />
+  <Navbar
+    userEmail={user?.email ?? undefined}
+    userDisplayName={user?.displayName ?? undefined}
+  />
   <main class="dashboard">
     <DiagramList client:load />
   </main>

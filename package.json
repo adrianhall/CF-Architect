@@ -11,6 +11,7 @@
     "start": "wrangler dev",
     "build": "astro build",
     "check": "run-s format typecheck lint",
+    "fullcheck": "run-s format typecheck lint test:coverage test:e2e",
     "preview": "astro preview",
     "deploy": "node scripts/deploy.mjs",
     "db:generate": "drizzle-kit generate",
