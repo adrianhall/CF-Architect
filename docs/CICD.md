@@ -42,6 +42,7 @@ The **Deploy** workflow (`.github/workflows/deploy.yml`) runs automatically when
    - `D1_DATABASE_ID` -- the D1 database ID (run `npx wrangler d1 list` to find it)
    - `KV_NAMESPACE_ID` -- the KV namespace ID for the `KV` binding
    - `SESSION_NAMESPACE_ID` -- the KV namespace ID for the `SESSION` binding
+   - `CF_ACCESS_TEAM_DOMAIN` -- _(optional)_ your Cloudflare Zero Trust team name (e.g. `myteam`). If provided, the deploy script sets it as a Worker var. If omitted, you must set it manually via `npx wrangler secret put CF_ACCESS_TEAM_DOMAIN`.
 
 3. **(Optional) Create a `production` environment.** Go to **Settings > Environments**, create an environment named `production`, and optionally add required reviewers for an approval gate before deploys.
 
