@@ -1,16 +1,17 @@
 /**
  * Factory for building mock Astro APIContext objects for route handler tests.
  */
-import { SEED_USER_ID } from "@lib/auth/types";
 import type { AppUser } from "@lib/auth/types";
+import { TEST_USER_ID } from "./fixtures";
 import { MockDatabase } from "./mock-db";
 import { MockKV } from "./mock-kv";
 
-const SEED_USER: AppUser = {
-  id: SEED_USER_ID,
-  email: null,
-  displayName: "Default User",
+const TEST_USER: AppUser = {
+  id: TEST_USER_ID,
+  email: "test@example.com",
+  displayName: "Test User",
   avatarUrl: null,
+  isAdmin: false,
 };
 
 export interface MockContextOptions {
@@ -22,8 +23,8 @@ export interface MockContextOptions {
   body?: unknown;
   /** Route params (e.g. { id: "abc" }). */
   params?: Record<string, string>;
-  /** Override the default seed user. */
-  user?: AppUser;
+  /** Override the default test user. Pass `undefined` to simulate unauthenticated. */
+  user?: AppUser | undefined;
   /** MockDatabase instance to wire into locals.runtime.env.DB. */
   db?: MockDatabase;
   /** MockKV instance to wire into locals.runtime.env.KV. */
@@ -43,10 +44,11 @@ export function createMockContext(options: MockContextOptions = {}) {
     url = "http://localhost:4321/",
     body,
     params = {},
-    user = SEED_USER,
     db = new MockDatabase(),
     kv = new MockKV(),
   } = options;
+
+  const user = "user" in options ? options.user : TEST_USER;
 
   const init: RequestInit = { method };
   if (body !== undefined) {

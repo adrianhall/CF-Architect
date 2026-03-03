@@ -1,7 +1,9 @@
 /**
  * Reusable test data constants and utilities.
  */
-import { SEED_USER_ID } from "@lib/auth/types";
+
+/** Fixed UUID used as the default user id across all tests. */
+export const TEST_USER_ID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 
 /**
  * Parse a Response body as JSON with a permissive type.
@@ -49,7 +51,7 @@ export function makeDiagramRow(overrides: Record<string, unknown> = {}) {
   const now = new Date().toISOString();
   return {
     id: "diag-001",
-    ownerId: SEED_USER_ID,
+    ownerId: TEST_USER_ID,
     title: "Test Diagram",
     description: "A test diagram",
     graphData: DEFAULT_GRAPH_DATA,
@@ -67,7 +69,7 @@ export function makeShareLinkRow(overrides: Record<string, unknown> = {}) {
     id: "share-001",
     diagramId: "diag-001",
     token: "abc123token!",
-    createdBy: SEED_USER_ID,
+    createdBy: TEST_USER_ID,
     expiresAt: null,
     createdAt: now,
     ...overrides,

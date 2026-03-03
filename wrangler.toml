@@ -23,3 +23,6 @@ id = "local"
 [[kv_namespaces]]
 binding = "SESSION"
 id = "local-session"
+
+[vars]
+DEV_MODE = "true"

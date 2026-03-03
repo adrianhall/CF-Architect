@@ -8,9 +8,11 @@
 import { createDb } from "../db/client";
 import { DiagramRepository } from "./diagram-repository";
 import { ShareRepository } from "./share-repository";
+import { UserRepository } from "./user-repository";
 
 export { DiagramRepository } from "./diagram-repository";
 export { ShareRepository } from "./share-repository";
+export { UserRepository } from "./user-repository";
 export type {
   DiagramRow,
   PublicDiagramFields,
@@ -20,6 +22,7 @@ export type {
   ShareLinkRow,
   CreateDiagramFields,
   UpdateDiagramFields,
+  UserRow,
 } from "./types";
 
 /**
@@ -33,5 +36,6 @@ export function createRepositories(env: { DB: D1Database; KV: KVNamespace }) {
   return {
     diagrams: new DiagramRepository(db),
     shares: new ShareRepository(db, env.KV),
+    users: new UserRepository(db),
   };
 }

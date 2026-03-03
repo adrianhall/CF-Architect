@@ -3,9 +3,8 @@ import type { APIContext } from "astro";
 import { MockDatabase } from "../../helpers/mock-db";
 import { MockKV } from "../../helpers/mock-kv";
 import { createMockContext } from "../../helpers/mock-context";
-import { makeDiagramRow, jsonBody } from "../../helpers/fixtures";
+import { TEST_USER_ID, makeDiagramRow, jsonBody } from "../../helpers/fixtures";
 import { diagrams } from "@lib/db/schema";
-import { SEED_USER_ID } from "@lib/auth/types";
 import { BLUEPRINT_MAP } from "@lib/blueprints";
 import { DiagramRepository } from "@lib/repository/diagram-repository";
 import { ShareRepository } from "@lib/repository/share-repository";
@@ -41,6 +40,30 @@ function ctx(options: Parameters<typeof createMockContext>[0] = {}) {
 }
 
 // ---------------------------------------------------------------------------
+// Auth guard (401)
+// ---------------------------------------------------------------------------
+
+describe("diagrams collection auth guard", () => {
+  it("GET returns 401 when user is not authenticated", async () => {
+    const res = await GET(ctx({ user: undefined }));
+    const body = await jsonBody(res);
+
+    expect(res.status).toBe(401);
+    expect(body.ok).toBe(false);
+    expect(body.error.code).toBe("UNAUTHORIZED");
+  });
+
+  it("POST returns 401 when user is not authenticated", async () => {
+    const res = await POST(ctx({ method: "POST", body: {}, user: undefined }));
+    const body = await jsonBody(res);
+
+    expect(res.status).toBe(401);
+    expect(body.ok).toBe(false);
+    expect(body.error.code).toBe("UNAUTHORIZED");
+  });
+});
+
+// ---------------------------------------------------------------------------
 // GET (list)
 // ---------------------------------------------------------------------------
 
@@ -70,7 +93,7 @@ describe("GET /api/v1/diagrams", () => {
 
   it("only returns diagrams owned by locals.user.id", async () => {
     mockDb.seed(diagrams, [
-      makeDiagramRow({ id: "mine", ownerId: SEED_USER_ID }),
+      makeDiagramRow({ id: "mine", ownerId: TEST_USER_ID }),
       makeDiagramRow({ id: "theirs", ownerId: "other-user" }),
     ]);
 
@@ -119,7 +142,7 @@ describe("POST /api/v1/diagrams", () => {
     const body = await jsonBody(res);
 
     expect(body.data.id).toBeTruthy();
-    expect(body.data.ownerId).toBe(SEED_USER_ID);
+    expect(body.data.ownerId).toBe(TEST_USER_ID);
   });
 
   it("new diagram has default empty graph data", async () => {

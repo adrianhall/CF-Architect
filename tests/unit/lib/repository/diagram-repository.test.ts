@@ -2,8 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { DiagramRepository } from "@lib/repository/diagram-repository";
 import { diagrams } from "@lib/db/schema";
 import { createMockDatabase, MockDatabase } from "../../../helpers/mock-db";
-import { SEED_USER_ID } from "@lib/auth/types";
-import { makeDiagramRow } from "../../../helpers/fixtures";
+import { TEST_USER_ID, makeDiagramRow } from "../../../helpers/fixtures";
 
 let db: MockDatabase;
 let repo: DiagramRepository;
@@ -25,7 +24,7 @@ describe("listByOwner", () => {
       makeDiagramRow({ id: "d-2" }),
     ]);
 
-    const rows = await repo.listByOwner(SEED_USER_ID);
+    const rows = await repo.listByOwner(TEST_USER_ID);
     expect(rows).toHaveLength(2);
   });
 
@@ -35,13 +34,13 @@ describe("listByOwner", () => {
       makeDiagramRow({ id: "d-other", ownerId: "other-user" }),
     ]);
 
-    const rows = await repo.listByOwner(SEED_USER_ID);
+    const rows = await repo.listByOwner(TEST_USER_ID);
     expect(rows).toHaveLength(1);
     expect(rows[0].id).toBe("d-1");
   });
 
   it("returns empty array when no diagrams exist", async () => {
-    const rows = await repo.listByOwner(SEED_USER_ID);
+    const rows = await repo.listByOwner(TEST_USER_ID);
     expect(rows).toHaveLength(0);
   });
 
@@ -51,7 +50,7 @@ describe("listByOwner", () => {
       makeDiagramRow({ id: "d-new", updatedAt: "2025-01-01T00:00:00.000Z" }),
     ]);
 
-    const rows = await repo.listByOwner(SEED_USER_ID);
+    const rows = await repo.listByOwner(TEST_USER_ID);
     expect(rows[0].id).toBe("d-new");
     expect(rows[1].id).toBe("d-old");
   });
@@ -65,20 +64,20 @@ describe("getByIdAndOwner", () => {
   it("returns the diagram when it exists and matches owner", async () => {
     db.seed(diagrams, [makeDiagramRow({ id: "d-1" })]);
 
-    const row = await repo.getByIdAndOwner("d-1", SEED_USER_ID);
+    const row = await repo.getByIdAndOwner("d-1", TEST_USER_ID);
     expect(row).toBeDefined();
     expect(row!.id).toBe("d-1");
   });
 
   it("returns undefined when diagram does not exist", async () => {
-    const row = await repo.getByIdAndOwner("missing", SEED_USER_ID);
+    const row = await repo.getByIdAndOwner("missing", TEST_USER_ID);
     expect(row).toBeUndefined();
   });
 
   it("returns undefined when diagram belongs to another user", async () => {
     db.seed(diagrams, [makeDiagramRow({ id: "d-1", ownerId: "other-user" })]);
 
-    const row = await repo.getByIdAndOwner("d-1", SEED_USER_ID);
+    const row = await repo.getByIdAndOwner("d-1", TEST_USER_ID);
     expect(row).toBeUndefined();
   });
 });
@@ -133,12 +132,12 @@ describe("getPublicFields", () => {
 describe("create", () => {
   it("inserts a row and returns it with generated id and timestamps", async () => {
     const row = await repo.create({
-      ownerId: SEED_USER_ID,
+      ownerId: TEST_USER_ID,
       title: "New Diagram",
     });
 
     expect(row.id).toBeTruthy();
-    expect(row.ownerId).toBe(SEED_USER_ID);
+    expect(row.ownerId).toBe(TEST_USER_ID);
     expect(row.title).toBe("New Diagram");
     expect(row.createdAt).toBeTruthy();
     expect(row.updatedAt).toBeTruthy();
@@ -146,12 +145,12 @@ describe("create", () => {
   });
 
   it("defaults title to 'Untitled Diagram' when omitted", async () => {
-    const row = await repo.create({ ownerId: SEED_USER_ID });
+    const row = await repo.create({ ownerId: TEST_USER_ID });
     expect(row.title).toBe("Untitled Diagram");
   });
 
   it("defaults graphData to empty graph when omitted", async () => {
-    const row = await repo.create({ ownerId: SEED_USER_ID });
+    const row = await repo.create({ ownerId: TEST_USER_ID });
     const graph = JSON.parse(row.graphData);
     expect(graph.nodes).toEqual([]);
     expect(graph.edges).toEqual([]);
@@ -164,20 +163,20 @@ describe("create", () => {
       edges: [],
       viewport: { x: 0, y: 0, zoom: 1 },
     });
-    const row = await repo.create({ ownerId: SEED_USER_ID, graphData });
+    const row = await repo.create({ ownerId: TEST_USER_ID, graphData });
     expect(row.graphData).toBe(graphData);
   });
 
   it("sets blueprintId when provided", async () => {
     const row = await repo.create({
-      ownerId: SEED_USER_ID,
+      ownerId: TEST_USER_ID,
       blueprintId: "simple-worker",
     });
     expect(row.blueprintId).toBe("simple-worker");
   });
 
   it("defaults description and blueprintId to null", async () => {
-    const row = await repo.create({ ownerId: SEED_USER_ID });
+    const row = await repo.create({ ownerId: TEST_USER_ID });
     expect(row.description).toBeNull();
     expect(row.blueprintId).toBeNull();
     expect(row.thumbnailKey).toBeNull();
@@ -192,7 +191,7 @@ describe("updateMetadata", () => {
   it("updates the title and returns the updated row", async () => {
     db.seed(diagrams, [makeDiagramRow({ id: "d-1" })]);
 
-    const updated = await repo.updateMetadata("d-1", SEED_USER_ID, {
+    const updated = await repo.updateMetadata("d-1", TEST_USER_ID, {
       title: "New Title",
     });
     expect(updated).toBeDefined();
@@ -202,7 +201,7 @@ describe("updateMetadata", () => {
   it("updates the description", async () => {
     db.seed(diagrams, [makeDiagramRow({ id: "d-1" })]);
 
-    const updated = await repo.updateMetadata("d-1", SEED_USER_ID, {
+    const updated = await repo.updateMetadata("d-1", TEST_USER_ID, {
       description: "New Desc",
     });
     expect(updated!.description).toBe("New Desc");
@@ -211,7 +210,7 @@ describe("updateMetadata", () => {
   it("clears description with null", async () => {
     db.seed(diagrams, [makeDiagramRow({ id: "d-1", description: "old desc" })]);
 
-    const updated = await repo.updateMetadata("d-1", SEED_USER_ID, {
+    const updated = await repo.updateMetadata("d-1", TEST_USER_ID, {
       description: null,
     });
     expect(updated!.description).toBeNull();
@@ -221,14 +220,14 @@ describe("updateMetadata", () => {
     const oldDate = "2020-01-01T00:00:00.000Z";
     db.seed(diagrams, [makeDiagramRow({ id: "d-1", updatedAt: oldDate })]);
 
-    const updated = await repo.updateMetadata("d-1", SEED_USER_ID, {
+    const updated = await repo.updateMetadata("d-1", TEST_USER_ID, {
       title: "T",
     });
     expect(updated!.updatedAt).not.toBe(oldDate);
   });
 
   it("returns undefined for non-existent diagram", async () => {
-    const result = await repo.updateMetadata("missing", SEED_USER_ID, {
+    const result = await repo.updateMetadata("missing", TEST_USER_ID, {
       title: "T",
     });
     expect(result).toBeUndefined();
@@ -237,7 +236,7 @@ describe("updateMetadata", () => {
   it("returns undefined when diagram belongs to another user", async () => {
     db.seed(diagrams, [makeDiagramRow({ id: "d-1", ownerId: "other-user" })]);
 
-    const result = await repo.updateMetadata("d-1", SEED_USER_ID, {
+    const result = await repo.updateMetadata("d-1", TEST_USER_ID, {
       title: "T",
     });
     expect(result).toBeUndefined();
@@ -254,7 +253,7 @@ describe("saveGraphData", () => {
 
     const updatedAt = await repo.saveGraphData(
       "d-1",
-      SEED_USER_ID,
+      TEST_USER_ID,
       '{"nodes":[],"edges":[],"viewport":{"x":1,"y":2,"zoom":3}}',
     );
     expect(updatedAt).toBeTruthy();
@@ -264,14 +263,14 @@ describe("saveGraphData", () => {
   });
 
   it("returns null for non-existent diagram", async () => {
-    const result = await repo.saveGraphData("missing", SEED_USER_ID, "{}");
+    const result = await repo.saveGraphData("missing", TEST_USER_ID, "{}");
     expect(result).toBeNull();
   });
 
   it("returns null when diagram belongs to another user", async () => {
     db.seed(diagrams, [makeDiagramRow({ id: "d-1", ownerId: "other-user" })]);
 
-    const result = await repo.saveGraphData("d-1", SEED_USER_ID, "{}");
+    const result = await repo.saveGraphData("d-1", TEST_USER_ID, "{}");
     expect(result).toBeNull();
   });
 });
@@ -284,20 +283,20 @@ describe("remove", () => {
   it("deletes the diagram and returns true", async () => {
     db.seed(diagrams, [makeDiagramRow({ id: "d-1" })]);
 
-    const result = await repo.remove("d-1", SEED_USER_ID);
+    const result = await repo.remove("d-1", TEST_USER_ID);
     expect(result).toBe(true);
     expect(db.getRows(diagrams)).toHaveLength(0);
   });
 
   it("returns false for non-existent diagram", async () => {
-    const result = await repo.remove("missing", SEED_USER_ID);
+    const result = await repo.remove("missing", TEST_USER_ID);
     expect(result).toBe(false);
   });
 
   it("returns false when diagram belongs to another user", async () => {
     db.seed(diagrams, [makeDiagramRow({ id: "d-1", ownerId: "other-user" })]);
 
-    const result = await repo.remove("d-1", SEED_USER_ID);
+    const result = await repo.remove("d-1", TEST_USER_ID);
     expect(result).toBe(false);
     expect(db.getRows(diagrams)).toHaveLength(1);
   });

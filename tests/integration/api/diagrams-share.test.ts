@@ -4,12 +4,12 @@ import { MockDatabase } from "../../helpers/mock-db";
 import { MockKV } from "../../helpers/mock-kv";
 import { createMockContext } from "../../helpers/mock-context";
 import {
+  TEST_USER_ID,
   makeDiagramRow,
   makeShareLinkRow,
   jsonBody,
 } from "../../helpers/fixtures";
 import { diagrams, shareLinks } from "@lib/db/schema";
-import { SEED_USER_ID } from "@lib/auth/types";
 import { DiagramRepository } from "@lib/repository/diagram-repository";
 import { ShareRepository } from "@lib/repository/share-repository";
 
@@ -42,6 +42,45 @@ function ctx(options: Parameters<typeof createMockContext>[0] = {}) {
     ...options,
   }) as APIContext;
 }
+
+// ---------------------------------------------------------------------------
+// Auth guard (401)
+// ---------------------------------------------------------------------------
+
+describe("share auth guard", () => {
+  it("POST returns 401 when user is not authenticated", async () => {
+    const res = await POST(
+      ctx({
+        method: "POST",
+        url: "http://localhost:4321/api/v1/diagrams/d1/share",
+        params: { id: "d1" },
+        body: {},
+        user: undefined,
+      }),
+    );
+    const body = await jsonBody(res);
+
+    expect(res.status).toBe(401);
+    expect(body.ok).toBe(false);
+    expect(body.error.code).toBe("UNAUTHORIZED");
+  });
+
+  it("DELETE returns 401 when user is not authenticated", async () => {
+    const res = await DELETE(
+      ctx({
+        method: "DELETE",
+        url: "http://localhost:4321/api/v1/diagrams/d1/share?token=tok123",
+        params: { id: "d1" },
+        user: undefined,
+      }),
+    );
+    const body = await jsonBody(res);
+
+    expect(res.status).toBe(401);
+    expect(body.ok).toBe(false);
+    expect(body.error.code).toBe("UNAUTHORIZED");
+  });
+});
 
 // ---------------------------------------------------------------------------
 // POST (create share)
@@ -172,7 +211,7 @@ describe("DELETE /api/v1/diagrams/:id/share", () => {
       makeShareLinkRow({
         diagramId: "d-share",
         token: "tok123",
-        createdBy: SEED_USER_ID,
+        createdBy: TEST_USER_ID,
       }),
     ]);
     await mockKv.put(

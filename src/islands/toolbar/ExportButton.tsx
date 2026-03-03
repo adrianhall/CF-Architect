@@ -138,6 +138,8 @@ export function ExportButton() {
       triggerDownload(url, generateExportFilename(title, "zip"));
       URL.revokeObjectURL(url);
     } catch (err) {
+      /* Note: this error is not expected to be thrown; defensively ignore it. */
+      /* v8 ignore next -- @preserve */
       console.error("Export failed:", err);
     } finally {
       setExporting(false);

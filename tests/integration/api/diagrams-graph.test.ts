@@ -41,6 +41,24 @@ function ctx(options: Parameters<typeof createMockContext>[0] = {}) {
   }) as APIContext;
 }
 
+describe("graph auth guard", () => {
+  it("PUT returns 401 when user is not authenticated", async () => {
+    const res = await PUT(
+      ctx({
+        method: "PUT",
+        params: { id: "d1" },
+        body: { graphData: "{}" },
+        user: undefined,
+      }),
+    );
+    const body = await jsonBody(res);
+
+    expect(res.status).toBe(401);
+    expect(body.ok).toBe(false);
+    expect(body.error.code).toBe("UNAUTHORIZED");
+  });
+});
+
 describe("PUT /api/v1/diagrams/:id/graph", () => {
   it("updates graphData on the diagram", async () => {
     mockDb.seed(diagrams, [makeDiagramRow({ id: "d-graph" })]);

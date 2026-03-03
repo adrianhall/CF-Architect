@@ -2,33 +2,51 @@
  * Astro middleware — runs on every incoming request before page/API route handlers.
  *
  * Responsibilities:
- * 1. Resolves the current user via the active {@link AuthStrategy} and sets
- *    `context.locals.user` so that downstream pages and API routes can access
- *    the authenticated user without repeating auth logic.
- *
- * In the MVP, the bypass strategy always returns the seed user (no login
- * required). Post-MVP, this will be replaced with an OIDC strategy that
- * validates session cookies and returns 401 for protected routes.
+ * 1. Determines whether the requested route is protected or public.
+ * 2. For protected routes, verifies the Cloudflare Access JWT and populates
+ *    `context.locals.user` with the authenticated user from D1.
+ * 3. In dev mode (DEV_MODE env var), injects a dev user when no JWT is present.
+ * 4. Returns 401 for unauthenticated requests to protected routes in production.
  */
 import { defineMiddleware } from "astro:middleware";
-import { bypassAuth } from "./lib/auth/bypass";
+import { cloudflareAccessAuth } from "./lib/auth/cloudflare-access";
+import { createRepositories } from "./lib/repository";
 
-/**
- * Middleware request handler.
- *
- * @param context - Astro request context (includes `request`, `locals`, `params`, etc.).
- * @param next    - Callback to continue to the next middleware or route handler.
- * @returns The response from the downstream handler.
- */
+const PROTECTED_PATTERNS = [/^\/dashboard/, /^\/diagram\//, /^\/api\/v1\//];
+
+function isProtectedRoute(pathname: string): boolean {
+  return PROTECTED_PATTERNS.some((p) => p.test(pathname));
+}
+
 export const onRequest = defineMiddleware(async (context, next) => {
-  const user = await bypassAuth.resolveUser(
-    context.request,
-    context.locals.runtime.env,
-  );
+  const { pathname } = new URL(context.request.url);
+
+  if (!isProtectedRoute(pathname)) {
+    return next();
+  }
+
+  const env = context.locals.runtime.env;
+
+  const user = await cloudflareAccessAuth.resolveUser(context.request, env);
 
   if (user) {
     context.locals.user = user;
+    return next();
   }
 
-  return next();
+  if (env.DEV_MODE) {
+    const { users } = createRepositories(env);
+    const devUser = await users.upsert("dev@localhost", "Dev User", null);
+    context.locals.user = {
+      id: devUser.id,
+      email: devUser.email,
+      displayName: devUser.displayName,
+      avatarUrl: devUser.avatarUrl,
+      isAdmin: devUser.isAdmin,
+    };
+    console.warn("[Auth] Using mock user for development.");
+    return next();
+  }
+
+  return new Response("Unauthorized", { status: 401 });
 });
