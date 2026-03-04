@@ -23,6 +23,8 @@ import { onRequest } from "../../src/middleware";
 function createContext(url: string, env: Record<string, unknown> = {}) {
   return {
     request: new Request(url),
+    redirect: (path: string, status: number) =>
+      new Response(null, { status, headers: { Location: path } }),
     locals: {
       user: undefined as any,
       runtime: {
@@ -180,6 +182,97 @@ describe("onRequest middleware", () => {
     it("returns 401 for /api/v1/ routes without auth", async () => {
       mockResolveUser.mockResolvedValue(null);
       const ctx = createContext("http://localhost:4321/api/v1/diagrams");
+      const next = vi.fn().mockResolvedValue(new Response("ok"));
+
+      const result = await onRequest(ctx as any, next);
+
+      expect((result as Response).status).toBe(401);
+      expect(next).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("admin route protection", () => {
+    it("allows admin users to access /admin page", async () => {
+      const adminUser = {
+        id: "u1",
+        email: "admin@example.com",
+        displayName: "Admin",
+        avatarUrl: null,
+        isAdmin: true,
+      };
+      mockResolveUser.mockResolvedValue(adminUser);
+      const ctx = createContext("http://localhost:4321/admin");
+      const next = vi.fn().mockResolvedValue(new Response("ok"));
+
+      await onRequest(ctx as any, next);
+
+      expect(next).toHaveBeenCalled();
+      expect(ctx.locals.user).toBe(adminUser);
+    });
+
+    it("allows admin users to access /api/v1/admin/ routes", async () => {
+      const adminUser = {
+        id: "u1",
+        email: "admin@example.com",
+        displayName: "Admin",
+        avatarUrl: null,
+        isAdmin: true,
+      };
+      mockResolveUser.mockResolvedValue(adminUser);
+      const ctx = createContext("http://localhost:4321/api/v1/admin/users");
+      const next = vi.fn().mockResolvedValue(new Response("ok"));
+
+      await onRequest(ctx as any, next);
+
+      expect(next).toHaveBeenCalled();
+    });
+
+    it("redirects non-admin users to /dashboard for /admin page", async () => {
+      const regularUser = {
+        id: "u2",
+        email: "user@example.com",
+        displayName: "User",
+        avatarUrl: null,
+        isAdmin: false,
+      };
+      mockResolveUser.mockResolvedValue(regularUser);
+      const ctx = createContext("http://localhost:4321/admin");
+      const next = vi.fn().mockResolvedValue(new Response("ok"));
+
+      const result = await onRequest(ctx as any, next);
+
+      expect(result).toBeInstanceOf(Response);
+      expect((result as Response).status).toBe(302);
+      expect((result as Response).headers.get("Location")).toBe("/dashboard");
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it("returns 403 JSON for non-admin users on /api/v1/admin/ routes", async () => {
+      const regularUser = {
+        id: "u2",
+        email: "user@example.com",
+        displayName: "User",
+        avatarUrl: null,
+        isAdmin: false,
+      };
+      mockResolveUser.mockResolvedValue(regularUser);
+      const ctx = createContext("http://localhost:4321/api/v1/admin/users");
+      const next = vi.fn().mockResolvedValue(new Response("ok"));
+
+      const result = await onRequest(ctx as any, next);
+
+      const res = result as Response;
+      expect(res).toBeInstanceOf(Response);
+      expect(res.status).toBe(403);
+      const body: { ok: boolean; error: { code: string } } = await res.json();
+      expect(body.ok).toBe(false);
+      expect(body.error.code).toBe("FORBIDDEN");
+      expect(next).not.toHaveBeenCalled();
+    });
+
+    it("returns 401 for unauthenticated requests to /admin", async () => {
+      mockResolveUser.mockResolvedValue(null);
+      const ctx = createContext("http://localhost:4321/admin");
       const next = vi.fn().mockResolvedValue(new Response("ok"));
 
       const result = await onRequest(ctx as any, next);

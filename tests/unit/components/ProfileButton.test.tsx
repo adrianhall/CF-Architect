@@ -85,4 +85,39 @@ describe("ProfileButton", () => {
     fireEvent.mouseDown(screen.getByTestId("outside"));
     expect(screen.queryByText("alice@example.com")).not.toBeInTheDocument();
   });
+
+  it("does not show Admin link when isAdmin is false", () => {
+    render(<ProfileButton email="alice@example.com" isAdmin={false} />);
+    fireEvent.click(screen.getByTitle("alice@example.com"));
+    expect(screen.queryByText("Admin")).not.toBeInTheDocument();
+  });
+
+  it("does not show Admin link when isAdmin is omitted", () => {
+    render(<ProfileButton email="alice@example.com" />);
+    fireEvent.click(screen.getByTitle("alice@example.com"));
+    expect(screen.queryByText("Admin")).not.toBeInTheDocument();
+  });
+
+  it("shows Admin link when isAdmin is true", () => {
+    render(<ProfileButton email="alice@example.com" isAdmin={true} />);
+    fireEvent.click(screen.getByTitle("alice@example.com"));
+    expect(screen.getByText("Admin")).toBeInTheDocument();
+  });
+
+  it("renders the Admin link pointing to /admin", () => {
+    render(<ProfileButton email="alice@example.com" isAdmin={true} />);
+    fireEvent.click(screen.getByTitle("alice@example.com"));
+    const link = screen.getByText("Admin").closest("a");
+    expect(link).toHaveAttribute("href", "/admin");
+  });
+
+  it("shows a separator before the Admin link", () => {
+    const { container } = render(
+      <ProfileButton email="alice@example.com" isAdmin={true} />,
+    );
+    fireEvent.click(screen.getByTitle("alice@example.com"));
+    expect(
+      container.querySelector(".profile-dropdown-separator"),
+    ).toBeInTheDocument();
+  });
 });

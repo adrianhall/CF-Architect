@@ -25,6 +25,19 @@ export function nowISO(): string {
 }
 
 /**
+ * Parse a string as a base-10 integer, returning {@link fallback} when the
+ * value is `null` or non-numeric.
+ *
+ * Uses `Number.isNaN` instead of the `|| fallback` idiom so that a
+ * legitimate `"0"` is not replaced by the fallback.
+ */
+export function parseIntParam(value: string | null, fallback: number): number {
+  if (value === null) return fallback;
+  const parsed = parseInt(value, 10);
+  return Number.isNaN(parsed) ? fallback : parsed;
+}
+
+/**
  * Create a JSON {@link Response} with the appropriate content-type header.
  *
  * @param data   - The value to serialise as JSON in the response body.

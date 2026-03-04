@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { generateId, nowISO, jsonResponse } from "@lib/helpers";
+import { generateId, nowISO, jsonResponse, parseIntParam } from "@lib/helpers";
 
 describe("generateId", () => {
   it("returns a valid UUID v4 format", () => {
@@ -53,5 +53,35 @@ describe("jsonResponse", () => {
   it("accepts a custom HTTP status code", () => {
     const res = jsonResponse({ error: "not found" }, 404);
     expect(res.status).toBe(404);
+  });
+});
+
+describe("parseIntParam", () => {
+  it("returns fallback when value is null", () => {
+    expect(parseIntParam(null, 1)).toBe(1);
+  });
+
+  it("returns parsed integer for a valid numeric string", () => {
+    expect(parseIntParam("42", 1)).toBe(42);
+  });
+
+  it("returns fallback for a non-numeric string", () => {
+    expect(parseIntParam("abc", 20)).toBe(20);
+  });
+
+  it("returns fallback for an empty string", () => {
+    expect(parseIntParam("", 10)).toBe(10);
+  });
+
+  it("returns 0 for the string '0' (not the fallback)", () => {
+    expect(parseIntParam("0", 20)).toBe(0);
+  });
+
+  it("truncates decimal strings via parseInt behaviour", () => {
+    expect(parseIntParam("3.7", 1)).toBe(3);
+  });
+
+  it("parses leading digits from a mixed string", () => {
+    expect(parseIntParam("42abc", 1)).toBe(42);
   });
 });
