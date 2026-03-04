@@ -42,6 +42,11 @@ export const CreateShareSchema = z.object({
   expiresIn: z.number().int().positive().optional(),
 });
 
+/** Schema for `PATCH /api/v1/admin/users/:id` request body. */
+export const UpdateUserAdminSchema = z.object({
+  isAdmin: z.boolean(),
+});
+
 /** Inferred TypeScript type for a create-diagram request. */
 export type CreateDiagramInput = z.infer<typeof CreateDiagramSchema>;
 /** Inferred TypeScript type for an update-diagram request. */
@@ -50,6 +55,8 @@ export type UpdateDiagramInput = z.infer<typeof UpdateDiagramSchema>;
 export type SaveGraphInput = z.infer<typeof SaveGraphSchema>;
 /** Inferred TypeScript type for a create-share request. */
 export type CreateShareInput = z.infer<typeof CreateShareSchema>;
+/** Inferred TypeScript type for an admin user update request. */
+export type UpdateUserAdminInput = z.infer<typeof UpdateUserAdminSchema>;
 
 // ---------------------------------------------------------------------------
 // Response envelope (used by API routes to build JSON responses)
@@ -149,6 +156,39 @@ export const ShareResponseSchema = apiResponseSchema(
     url: z.string(),
   }),
 );
+
+// ---------------------------------------------------------------------------
+// Admin user schemas
+// ---------------------------------------------------------------------------
+
+/** Zod schema for a single admin user row (includes aggregate counts). */
+export const AdminUserSchema = z.object({
+  id: z.string(),
+  email: z.string().nullable(),
+  displayName: z.string().nullable(),
+  avatarUrl: z.string().nullable(),
+  isAdmin: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  diagramCount: z.number(),
+  shareCount: z.number(),
+});
+
+/** TypeScript type for an admin user row. */
+export type AdminUser = z.infer<typeof AdminUserSchema>;
+
+/** Zod schema for the paginated admin user list payload. */
+const AdminUserListPayload = z.object({
+  users: z.array(AdminUserSchema),
+  total: z.number(),
+});
+
+/** Response schema for `GET /api/v1/admin/users`. */
+export const AdminUserListResponseSchema =
+  apiResponseSchema(AdminUserListPayload);
+
+/** Response schema for single-user admin endpoints (PATCH). */
+export const AdminUserResponseSchema = apiResponseSchema(AdminUserSchema);
 
 /**
  * Discriminated union representing any API response.

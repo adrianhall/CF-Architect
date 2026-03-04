@@ -23,6 +23,9 @@ export type {
   CreateDiagramFields,
   UpdateDiagramFields,
   UserRow,
+  AdminUserRow,
+  ListUsersOptions,
+  ListUsersResult,
 } from "./types";
 
 /**

@@ -1,0 +1,25 @@
+---
+import Layout from "../components/Layout.astro";
+import Navbar from "../components/Navbar.astro";
+import AdminUserList from "../islands/admin/AdminUserList";
+
+const user = Astro.locals.user;
+
+if (!user?.isAdmin) {
+  return Astro.redirect("/dashboard", 302);
+}
+---
+
+<Layout title="Admin — CF Architect">
+  <Navbar
+    userEmail={user.email ?? undefined}
+    userDisplayName={user.displayName ?? undefined}
+    isAdmin={user.isAdmin}
+  />
+  <main class="dashboard">
+    <div class="dashboard-header">
+      <h1 class="dashboard-title">User Management</h1>
+    </div>
+    <AdminUserList currentUserId={user.id} client:load />
+  </main>
+</Layout>

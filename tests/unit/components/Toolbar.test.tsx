@@ -19,6 +19,19 @@ vi.mock("html-to-image", () => ({
 vi.mock("@lib/preferences", () => ({
   setTheme: vi.fn(),
 }));
+vi.mock("elkjs/lib/elk.bundled.js", () => ({
+  default: class MockELK {
+    layout(graph: { children?: { id: string }[] }) {
+      return Promise.resolve({
+        children: (graph.children ?? []).map((c) => ({
+          id: c.id,
+          x: 0,
+          y: 0,
+        })),
+      });
+    }
+  },
+}));
 
 import React from "react";
 import {

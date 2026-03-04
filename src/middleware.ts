@@ -12,10 +12,21 @@ import { defineMiddleware } from "astro:middleware";
 import { cloudflareAccessAuth } from "./lib/auth/cloudflare-access";
 import { createRepositories } from "./lib/repository";
 
-const PROTECTED_PATTERNS = [/^\/dashboard/, /^\/diagram\//, /^\/api\/v1\//];
+const PROTECTED_PATTERNS = [
+  /^\/dashboard/,
+  /^\/diagram\//,
+  /^\/api\/v1\//,
+  /^\/admin/,
+];
+
+const ADMIN_PATTERNS = [/^\/admin/, /^\/api\/v1\/admin\//];
 
 function isProtectedRoute(pathname: string): boolean {
   return PROTECTED_PATTERNS.some((p) => p.test(pathname));
+}
+
+function isAdminRoute(pathname: string): boolean {
+  return ADMIN_PATTERNS.some((p) => p.test(pathname));
 }
 
 export const onRequest = defineMiddleware(async (context, next) => {
@@ -31,10 +42,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   if (user) {
     context.locals.user = user;
-    return next();
-  }
-
-  if (env.DEV_MODE) {
+  } else if (env.DEV_MODE) {
     const { users } = createRepositories(env);
     const devUser = await users.upsert("dev@localhost", "Dev User", null);
     context.locals.user = {
@@ -45,8 +53,26 @@ export const onRequest = defineMiddleware(async (context, next) => {
       isAdmin: devUser.isAdmin,
     };
     console.warn("[Auth] Using mock user for development.");
-    return next();
+  } else {
+    return new Response("Unauthorized", { status: 401 });
   }
 
-  return new Response("Unauthorized", { status: 401 });
+  if (isAdminRoute(pathname) && !context.locals.user.isAdmin) {
+    const isApi = pathname.startsWith("/api/");
+    if (isApi) {
+      return new Response(
+        JSON.stringify({
+          ok: false,
+          error: { code: "FORBIDDEN", message: "Admin access required" },
+        }),
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+    return context.redirect("/dashboard", 302);
+  }
+
+  return next();
 });

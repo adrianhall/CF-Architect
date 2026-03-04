@@ -80,3 +80,24 @@ export interface UserRow {
   createdAt: string;
   updatedAt: string;
 }
+
+/** User row with aggregate counts for the admin user list. */
+export interface AdminUserRow extends UserRow {
+  diagramCount: number;
+  shareCount: number;
+}
+
+/** Options for the paginated admin user list query. */
+export interface ListUsersOptions {
+  page: number;
+  pageSize: number;
+  sortBy: "email" | "displayName" | "createdAt";
+  sortOrder: "asc" | "desc";
+  search?: string;
+}
+
+/** Paginated result returned by the admin user list query. */
+export interface ListUsersResult {
+  users: AdminUserRow[];
+  total: number;
+}

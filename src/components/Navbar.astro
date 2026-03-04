@@ -5,9 +5,15 @@ interface Props {
   showDarkToggle?: boolean;
   userEmail?: string;
   userDisplayName?: string;
+  isAdmin?: boolean;
 }
 
-const { showDarkToggle = true, userEmail, userDisplayName } = Astro.props;
+const {
+  showDarkToggle = true,
+  userEmail,
+  userDisplayName,
+  isAdmin,
+} = Astro.props;
 ---
 
 <nav class="navbar">
@@ -41,6 +47,7 @@ const { showDarkToggle = true, userEmail, userDisplayName } = Astro.props;
         <ProfileButton
           email={userEmail}
           displayName={userDisplayName}
+          isAdmin={isAdmin}
           client:load
         />
       )
