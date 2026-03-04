@@ -140,7 +140,7 @@ export default function AdminUserList({ currentUserId }: Props) {
         <input
           type="text"
           className="admin-search"
-          placeholder="Search by email\u2026"
+          placeholder="Search by email…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />

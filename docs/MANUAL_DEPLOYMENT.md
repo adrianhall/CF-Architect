@@ -43,12 +43,12 @@ The `.env` file is gitignored, so your IDs will never be committed.
 
 ### 5. Configure Cloudflare Access (Zero Trust)
 
-Authentication is handled by Cloudflare Access. You need to create an Access Application that protects the application's routes. 
+Authentication is handled by Cloudflare Access. You need to create an Access Application that protects the application's routes.
 
 #### Sign in to CloudFlare One
 
 1. Go to the [Cloudflare Zero Trust dashboard](https://one.dash.cloudflare.com/)
-2. If required, follow the prompts to set up an account (Free Plan is ok).  You will be required to provide payment details.
+2. If required, follow the prompts to set up an account (Free Plan is ok). You will be required to provide payment details.
 
 #### Create an Identity Provider
 
@@ -68,20 +68,20 @@ Authentication is handled by Cloudflare Access. You need to create an Access App
 
 You can also do this last step from the command line:
 
-   **Option A** -- set it in `.env` so the deploy script includes it as a Worker var automatically:
+**Option A** -- set it in `.env` so the deploy script includes it as a Worker var automatically:
 
-   ```env
-   CF_ACCESS_TEAM_DOMAIN=myteam
-   ```
+```env
+CF_ACCESS_TEAM_DOMAIN=myteam
+```
 
-   **Option B** -- set it as a secret directly on the Worker:
+**Option B** -- set it as a secret directly on the Worker:
 
-   ```bash
-   npx wrangler secret put CF_ACCESS_TEAM_DOMAIN
-   # Enter your Zero Trust team name (e.g. "myteam") when prompted
-   ```
+```bash
+npx wrangler secret put CF_ACCESS_TEAM_DOMAIN
+# Enter your Zero Trust team name (e.g. "myteam") when prompted
+```
 
-   If the value is already set as a secret on the Worker and you don't provide it in `.env`, the existing secret is preserved.
+If the value is already set as a secret on the Worker and you don't provide it in `.env`, the existing secret is preserved.
 
 #### Update the CloudFlare One Application
 
@@ -89,9 +89,9 @@ You can also do this last step from the command line:
 2. Select **Access controls > Applications > cf-architect - CloudFlare Workers** (or whatever your application is called)
 3. Select **Configure**.
 4. Replace the Public hostname
-    * Subdomain: cf-architect (or your worker name)
-    * Domain: foo.workers.dev (or your worker domain)
-    * Path: dashboard
+   - Subdomain: cf-architect (or your worker name)
+   - Domain: foo.workers.dev (or your worker domain)
+   - Path: dashboard
 5. Add two new public hostnames that are identical except for the path: `diagram/*` and `api/v1/*`
 6. Click **Save application**
 7. Select **Login methods**#
@@ -102,8 +102,8 @@ You can also do this last step from the command line:
 1. Select **Access controls > Policies > cf-architect - Production** (or whatever your policy is called)
 2. Select **Configure**
 3. Set the rule to be:
-    * Selector: **Login Methods**
-    * Value: _Your identity provider_
+   - Selector: **Login Methods**
+   - Value: _Your identity provider_
 4. Click **Save**
 
 Ensure `DEV_MODE` is **not** set in production. The `wrangler.toml` `[vars]` section only applies to local development; production environment variables are managed via the Cloudflare dashboard or `wrangler secret`.
