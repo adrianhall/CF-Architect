@@ -40,6 +40,8 @@ export default function AdminUserList({ currentUserId }: Props) {
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const [refreshKey, setRefreshKey] = useState(0);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const copiedTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     debounceRef.current = setTimeout(() => {
@@ -99,6 +101,13 @@ export default function AdminUserList({ currentUserId }: Props) {
   function sortIndicator(col: SortBy) {
     if (sortBy !== col) return "";
     return sortOrder === "asc" ? " \u25B2" : " \u25BC";
+  }
+
+  function handleCopyId(id: string) {
+    void navigator.clipboard.writeText(id);
+    setCopiedId(id);
+    clearTimeout(copiedTimerRef.current);
+    copiedTimerRef.current = setTimeout(() => setCopiedId(null), 1500);
   }
 
   function handleConfirmAction() {
@@ -197,37 +206,46 @@ export default function AdminUserList({ currentUserId }: Props) {
                         <span className="admin-badge">User</span>
                       )}
                     </td>
-                    <td className="admin-actions-cell">
-                      {u.isAdmin && !isSelf && (
+                    <td>
+                      <div className="admin-actions-cell">
                         <button
                           className="toolbar-btn"
-                          onClick={() =>
-                            setModalAction({ type: "demote", user: u })
-                          }
+                          title={u.id}
+                          onClick={() => handleCopyId(u.id)}
                         >
-                          Demote
+                          {copiedId === u.id ? "Copied!" : "Copy ID"}
                         </button>
-                      )}
-                      {!u.isAdmin && (
-                        <button
-                          className="toolbar-btn"
-                          onClick={() =>
-                            setModalAction({ type: "promote", user: u })
-                          }
-                        >
-                          Promote
-                        </button>
-                      )}
-                      {!isSelf && (
-                        <button
-                          className="toolbar-btn toolbar-btn-danger"
-                          onClick={() =>
-                            setModalAction({ type: "delete", user: u })
-                          }
-                        >
-                          Delete
-                        </button>
-                      )}
+                        {u.isAdmin && !isSelf && (
+                          <button
+                            className="toolbar-btn"
+                            onClick={() =>
+                              setModalAction({ type: "demote", user: u })
+                            }
+                          >
+                            Demote
+                          </button>
+                        )}
+                        {!u.isAdmin && (
+                          <button
+                            className="toolbar-btn"
+                            onClick={() =>
+                              setModalAction({ type: "promote", user: u })
+                            }
+                          >
+                            Promote
+                          </button>
+                        )}
+                        {!isSelf && (
+                          <button
+                            className="toolbar-btn toolbar-btn-danger"
+                            onClick={() =>
+                              setModalAction({ type: "delete", user: u })
+                            }
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
