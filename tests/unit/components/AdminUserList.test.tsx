@@ -95,6 +95,10 @@ beforeEach(() => {
   vi.spyOn(globalThis, "fetch").mockResolvedValue(
     new Response(JSON.stringify({ ok: true })),
   );
+  if (!navigator.clipboard) {
+    Object.assign(navigator, { clipboard: { writeText: () => {} } });
+  }
+  vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue(undefined);
 });
 
 describe("AdminUserList", () => {
@@ -192,7 +196,7 @@ describe("AdminUserList", () => {
       expect(screen.queryByText("Demote")).not.toBeInTheDocument();
     });
 
-    it("hides Delete and Demote buttons for the current user", async () => {
+    it("hides Delete and Demote but shows Copy ID for the current user", async () => {
       mockFetchApi.mockResolvedValueOnce(mockUsersResponse([SELF_USER], 1));
       render(<AdminUserList currentUserId={CURRENT_USER_ID} />);
 
@@ -202,6 +206,7 @@ describe("AdminUserList", () => {
 
       expect(screen.queryByText("Delete")).not.toBeInTheDocument();
       expect(screen.queryByText("Demote")).not.toBeInTheDocument();
+      expect(screen.getByText("Copy ID")).toBeInTheDocument();
     });
   });
 
@@ -628,6 +633,75 @@ describe("AdminUserList", () => {
       expect(screen.getByText("Diagrams")).toBeInTheDocument();
       expect(screen.getByText("Shares")).toBeInTheDocument();
       expect(screen.getByText("Actions")).toBeInTheDocument();
+    });
+  });
+
+  describe("copy ID", () => {
+    it("shows a Copy ID button for every user row", async () => {
+      mockFetchApi.mockResolvedValueOnce(
+        mockUsersResponse([ADMIN_USER, REGULAR_USER, SELF_USER], 3),
+      );
+      render(<AdminUserList currentUserId={CURRENT_USER_ID} />);
+
+      await waitFor(() => {
+        expect(screen.getByText("admin@example.com")).toBeInTheDocument();
+      });
+
+      const copyButtons = screen.getAllByText("Copy ID");
+      expect(copyButtons).toHaveLength(3);
+
+      expect(copyButtons[0]).toHaveAttribute("title", "u1");
+      expect(copyButtons[1]).toHaveAttribute("title", "u2");
+      expect(copyButtons[2]).toHaveAttribute("title", CURRENT_USER_ID);
+    });
+
+    it("calls navigator.clipboard.writeText with the user ID", async () => {
+      const writeTextSpy = vi
+        .spyOn(navigator.clipboard, "writeText")
+        .mockResolvedValue(undefined);
+      mockFetchApi.mockResolvedValueOnce(mockUsersResponse([REGULAR_USER], 1));
+      render(<AdminUserList currentUserId={CURRENT_USER_ID} />);
+
+      await waitFor(() => {
+        expect(screen.getByText("bob@example.com")).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByText("Copy ID"));
+
+      expect(writeTextSpy).toHaveBeenCalledWith("u2");
+    });
+
+    it("shows Copied! feedback then reverts after timeout", async () => {
+      vi.useFakeTimers();
+      try {
+        mockFetchApi.mockResolvedValueOnce(
+          mockUsersResponse([REGULAR_USER], 1),
+        );
+
+        render(<AdminUserList currentUserId={CURRENT_USER_ID} />);
+
+        await act(async () => {
+          await vi.advanceTimersByTimeAsync(350);
+        });
+
+        expect(screen.getByText("bob@example.com")).toBeInTheDocument();
+
+        act(() => {
+          fireEvent.click(screen.getByText("Copy ID"));
+        });
+
+        expect(screen.getByText("Copied!")).toBeInTheDocument();
+        expect(screen.queryByText("Copy ID")).not.toBeInTheDocument();
+
+        act(() => {
+          vi.advanceTimersByTime(1500);
+        });
+
+        expect(screen.queryByText("Copied!")).not.toBeInTheDocument();
+        expect(screen.getByText("Copy ID")).toBeInTheDocument();
+      } finally {
+        vi.useRealTimers();
+      }
     });
   });
 
