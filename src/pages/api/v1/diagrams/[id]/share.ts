@@ -3,6 +3,7 @@
  */
 
 import type { APIContext } from "astro";
+import { getEnv } from "@lib/env";
 import { createRepositories } from "@lib/repository";
 import { CreateShareSchema, apiSuccess, apiError } from "@lib/validation";
 import { jsonResponse } from "@lib/helpers";
@@ -26,7 +27,7 @@ export async function POST({ request, params, locals }: APIContext) {
     return jsonResponse(err.body, err.status);
   }
 
-  const { diagrams, shares } = createRepositories(locals.runtime.env);
+  const { diagrams, shares } = createRepositories(getEnv(locals));
 
   const existing = await diagrams.getByIdAndOwner(params.id!, locals.user.id);
   if (!existing) {
@@ -69,7 +70,7 @@ export async function DELETE({ request, params, locals }: APIContext) {
     return jsonResponse(err.body, err.status);
   }
 
-  const { shares } = createRepositories(locals.runtime.env);
+  const { shares } = createRepositories(getEnv(locals));
 
   const link = await shares.getByTokenDiagramAndCreator(
     token,

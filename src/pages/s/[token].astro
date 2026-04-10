@@ -1,6 +1,7 @@
 ---
 import Layout from "../../components/Layout.astro";
 import DiagramCanvasWrapper from "../../islands/DiagramCanvasWrapper";
+import { getEnv } from "../../lib/env";
 import { createRepositories } from "../../lib/repository";
 
 const { token } = Astro.params;
@@ -8,7 +9,7 @@ if (!token) {
   return Astro.redirect("/dashboard");
 }
 
-const { shares } = createRepositories(Astro.locals.runtime.env);
+const { shares } = createRepositories(getEnv(Astro.locals));
 const diagram = await shares.loadDiagramFromShareLink(token);
 
 if (!diagram) {

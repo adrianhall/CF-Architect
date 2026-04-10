@@ -3,6 +3,7 @@
  */
 
 import type { APIContext } from "astro";
+import { getEnv } from "@lib/env";
 import { createRepositories } from "@lib/repository";
 import { SaveGraphSchema, apiSuccess, apiError } from "@lib/validation";
 import { jsonResponse } from "@lib/helpers";
@@ -26,7 +27,7 @@ export async function PUT({ request, params, locals }: APIContext) {
     return jsonResponse(err.body, err.status);
   }
 
-  const { diagrams } = createRepositories(locals.runtime.env);
+  const { diagrams } = createRepositories(getEnv(locals));
   const updatedAt = await diagrams.saveGraphData(
     params.id!,
     locals.user.id,

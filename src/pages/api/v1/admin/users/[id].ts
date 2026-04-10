@@ -4,6 +4,7 @@
  */
 
 import type { APIContext } from "astro";
+import { getEnv } from "@lib/env";
 import { createRepositories } from "@lib/repository";
 import { UpdateUserAdminSchema, apiSuccess, apiError } from "@lib/validation";
 import { jsonResponse } from "@lib/helpers";
@@ -19,7 +20,7 @@ export async function DELETE({ params, locals }: APIContext) {
     return jsonResponse(err.body, err.status);
   }
 
-  const { users } = createRepositories(locals.runtime.env);
+  const { users } = createRepositories(getEnv(locals));
   const deleted = await users.delete(id!);
 
   if (!deleted) {
@@ -49,7 +50,7 @@ export async function PATCH({ params, request, locals }: APIContext) {
     return jsonResponse(err.body, err.status);
   }
 
-  const { users } = createRepositories(locals.runtime.env);
+  const { users } = createRepositories(getEnv(locals));
   const updated = await users.setAdmin(id!, parsed.data.isAdmin);
 
   if (!updated) {

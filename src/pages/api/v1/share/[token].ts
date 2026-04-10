@@ -4,6 +4,7 @@
  */
 
 import type { APIContext } from "astro";
+import { getEnv } from "@lib/env";
 import { createRepositories } from "@lib/repository";
 import { apiSuccess, apiError } from "@lib/validation";
 import { jsonResponse } from "@lib/helpers";
@@ -16,7 +17,7 @@ import { jsonResponse } from "@lib/helpers";
  * @returns The diagram data, or 404 if token is expired or not found
  */
 export async function GET({ params, locals }: APIContext) {
-  const { shares } = createRepositories(locals.runtime.env);
+  const { shares } = createRepositories(getEnv(locals));
   const diagram = await shares.loadDiagramFromShareLink(params.token!);
 
   if (!diagram) {

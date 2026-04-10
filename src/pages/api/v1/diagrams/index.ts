@@ -4,6 +4,7 @@
  */
 
 import type { APIContext } from "astro";
+import { getEnv } from "@lib/env";
 import { createRepositories } from "@lib/repository";
 import { CreateDiagramSchema, apiSuccess, apiError } from "@lib/validation";
 import { jsonResponse } from "@lib/helpers";
@@ -19,7 +20,7 @@ export async function GET({ locals }: APIContext) {
   if (!locals.user) {
     return jsonResponse(apiError("UNAUTHORIZED", "Unauthorized").body, 401);
   }
-  const { diagrams } = createRepositories(locals.runtime.env);
+  const { diagrams } = createRepositories(getEnv(locals));
   const rows = await diagrams.listByOwner(locals.user.id);
   return jsonResponse(apiSuccess(rows));
 }
@@ -60,7 +61,7 @@ export async function POST({ request, locals }: APIContext) {
     graphData = bp.graphData;
   }
 
-  const { diagrams } = createRepositories(locals.runtime.env);
+  const { diagrams } = createRepositories(getEnv(locals));
   const row = await diagrams.create({
     ownerId: locals.user.id,
     title,
