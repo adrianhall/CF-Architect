@@ -141,8 +141,8 @@ export const DiagramResponseSchema = apiResponseSchema(DiagramSchema);
 
 /** Zod schema for the parsed contents of a diagram's `graphData` JSON string. */
 export const GraphDataSchema = z.object({
-  nodes: z.array(z.record(z.unknown())).default([]),
-  edges: z.array(z.record(z.unknown())).default([]),
+  nodes: z.array(z.record(z.string(), z.unknown())).default([]),
+  edges: z.array(z.record(z.string(), z.unknown())).default([]),
   viewport: z
     .object({ x: z.number(), y: z.number(), zoom: z.number() })
     .default({ x: 0, y: 0, zoom: 1 }),
