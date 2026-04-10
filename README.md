@@ -39,7 +39,7 @@ See the following files for more information:
 
 - [Project Structure](./docs/STRUCTURE.md)
 - [Local Development](./docs/LOCAL_DEVELOPMENT.md)
-- [Manual Deployment](./docs/MANUAL_DEPLOYMENT.md)
+- [Deployment Guide](./docs/DEPLOY.md)
 - [Deploy via GitHub Actions](./docs/CICD.md)
 
 ## License
