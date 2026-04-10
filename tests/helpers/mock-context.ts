@@ -25,9 +25,9 @@ export interface MockContextOptions {
   params?: Record<string, string>;
   /** Override the default test user. Pass `undefined` to simulate unauthenticated. */
   user?: AppUser | undefined;
-  /** MockDatabase instance to wire into locals.runtime.env.DB. */
+  /** MockDatabase instance to wire into the env DB binding. */
   db?: MockDatabase;
-  /** MockKV instance to wire into locals.runtime.env.KV. */
+  /** MockKV instance to wire into the env KV binding. */
   kv?: MockKV;
 }
 
@@ -35,8 +35,8 @@ export interface MockContextOptions {
  * Build a minimal APIContext-shaped object suitable for calling route handlers.
  *
  * The returned object has `request`, `params`, and `locals` matching what
- * Astro injects. The `locals.runtime.env` is wired to the provided mock DB
- * and mock KV instances.
+ * Astro injects. The env bindings (DB, KV) are wired to the provided mock
+ * instances via `locals.runtime.env` (the current Astro 5 / cloudflare v12 shape).
  */
 export function createMockContext(options: MockContextOptions = {}) {
   const {

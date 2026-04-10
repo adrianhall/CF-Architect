@@ -31,8 +31,8 @@ export type {
 /**
  * Create repository instances wired to the given Cloudflare bindings.
  *
- * Call once per request with `locals.runtime.env` (in API routes) or
- * `Astro.locals.runtime.env` (in Astro pages).
+ * Call once per request with `getEnv(locals)` (in API routes) or
+ * `getEnv(Astro.locals)` (in Astro pages).
  */
 export function createRepositories(env: { DB: D1Database; KV: KVNamespace }) {
   const db = createDb(env.DB);

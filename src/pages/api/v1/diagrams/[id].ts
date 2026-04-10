@@ -4,6 +4,7 @@
  */
 
 import type { APIContext } from "astro";
+import { getEnv } from "@lib/env";
 import { createRepositories } from "@lib/repository";
 import { UpdateDiagramSchema, apiSuccess, apiError } from "@lib/validation";
 import { jsonResponse } from "@lib/helpers";
@@ -18,7 +19,7 @@ export async function GET({ params, locals }: APIContext) {
   if (!locals.user) {
     return jsonResponse(apiError("UNAUTHORIZED", "Unauthorized").body, 401);
   }
-  const { diagrams } = createRepositories(locals.runtime.env);
+  const { diagrams } = createRepositories(getEnv(locals));
   const row = await diagrams.getByIdAndOwner(params.id!, locals.user.id);
 
   if (!row) {
@@ -48,7 +49,7 @@ export async function PATCH({ request, params, locals }: APIContext) {
     return jsonResponse(err.body, err.status);
   }
 
-  const { diagrams } = createRepositories(locals.runtime.env);
+  const { diagrams } = createRepositories(getEnv(locals));
   const updated = await diagrams.updateMetadata(
     params.id!,
     locals.user.id,
@@ -73,7 +74,7 @@ export async function DELETE({ params, locals }: APIContext) {
   if (!locals.user) {
     return jsonResponse(apiError("UNAUTHORIZED", "Unauthorized").body, 401);
   }
-  const { diagrams, shares } = createRepositories(locals.runtime.env);
+  const { diagrams, shares } = createRepositories(getEnv(locals));
 
   await shares.revokeAllForDiagram(params.id!);
   const removed = await diagrams.remove(params.id!, locals.user.id);

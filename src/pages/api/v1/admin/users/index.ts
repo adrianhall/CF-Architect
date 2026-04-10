@@ -4,6 +4,7 @@
  */
 
 import type { APIContext } from "astro";
+import { getEnv } from "@lib/env";
 import { createRepositories } from "@lib/repository";
 import type { ListUsersOptions } from "@lib/repository";
 import { apiSuccess } from "@lib/validation";
@@ -33,7 +34,7 @@ export async function GET({ locals, url }: APIContext) {
 
   const search = url.searchParams.get("search") || undefined;
 
-  const { users } = createRepositories(locals.runtime.env);
+  const { users } = createRepositories(getEnv(locals));
   const result = await users.list({
     page,
     pageSize,

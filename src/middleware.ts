@@ -10,6 +10,7 @@
  */
 import { defineMiddleware } from "astro:middleware";
 import { cloudflareAccessAuth } from "./lib/auth/cloudflare-access";
+import { getEnv } from "./lib/env";
 import { createRepositories } from "./lib/repository";
 
 const PROTECTED_PATTERNS = [
@@ -36,7 +37,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return next();
   }
 
-  const env = context.locals.runtime.env;
+  const env = getEnv(context.locals);
 
   const user = await cloudflareAccessAuth.resolveUser(context.request, env);
 
