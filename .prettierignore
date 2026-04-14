@@ -1,5 +1,0 @@
-dist/
-.wrangler/
-.astro/
-migrations/
-package-lock.json
