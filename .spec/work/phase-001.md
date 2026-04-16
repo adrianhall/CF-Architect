@@ -27,8 +27,8 @@ Add all remaining dependencies to `package.json`. Refer to `.spec/stack.md` for 
 - `tailwind-merge` (^3.5.0)
 
 **Dev dependencies to add:**
-- `typescript` (^6.0.2)
-- `eslint` (^10.2.0)
+- `typescript` (^5.9.3)
+- `eslint` (^9.27.0)
 - `eslint-plugin-astro` (^1.7.0)
 - `@typescript-eslint/eslint-plugin` (^8.58.2)
 - `@typescript-eslint/parser` (^8.58.2)
@@ -39,7 +39,7 @@ Add all remaining dependencies to `package.json`. Refer to `.spec/stack.md` for 
 - `@cloudflare/vitest-pool-workers` (^0.14.6)
 - `@testing-library/react` (^16.3.2)
 - `@playwright/test` (^1.59.1)
-- `@vitest/coverage-v8`
+- `@vitest/coverage-istanbul`
 
 ### 2. npm Scripts
 
@@ -51,7 +51,7 @@ Update `package.json` scripts to match `.spec/stack.md` §npm Scripts exactly:
   "build": "npm run copy:tldraw-assets && astro build",
   "preview": "astro preview",
   "deploy": "npm run build && wrangler deploy",
-  "copy:tldraw-assets": "cp -r node_modules/@tldraw/assets/* public/tldraw-assets/",
+  "copy:tldraw-assets": "mkdir -p public/tldraw-assets && if [ -d node_modules/@tldraw/assets ]; then cp -r node_modules/@tldraw/assets/* public/tldraw-assets/; fi",
   "firstrun": "cd terraform && terraform init && terraform apply",
   "check": "tsc --noEmit && eslint . && prettier --check .",
   "test": "vitest run",
@@ -93,7 +93,7 @@ export default {
 
 Configure Vitest with:
 - `@cloudflare/vitest-pool-workers` as the pool for Workers API access.
-- v8 coverage provider with 80% thresholds on statements, branches, functions, lines.
+- Istanbul coverage provider (V8 is not supported by `@cloudflare/vitest-pool-workers`) with 80% thresholds on statements, branches, functions, lines.
 - Test file pattern: `tests/unit/**/*.test.{ts,tsx}`.
 - Exclude: `node_modules`, `dist`, `tests/e2e`.
 

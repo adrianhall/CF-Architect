@@ -95,7 +95,7 @@ interface CanvasViewerProps {
 **Implementation:**
 1. Initialize `<Tldraw>` with:
    - Same custom shape utils as CanvasEditor (`[CfServiceShapeUtil]`).
-   - Self-hosted asset URLs via `getAssetUrls({ baseUrl: '/tldraw-assets/' })`.
+   - tldraw v4 bundles its own UI assets internally. If corporate network restrictions block default CDN loads, configure asset URLs via tldraw's `assetUrls` prop.
    - No toolbar (hide default tldraw toolbar/menus).
 2. On mount:
    - `store.loadStoreSnapshot(JSON.parse(canvasData))`.

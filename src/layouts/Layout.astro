@@ -1,0 +1,29 @@
+---
+/**
+ * Base HTML layout for all pages.
+ * Provides the document shell with proper meta tags, Tailwind CSS, and a content slot.
+ */
+interface Props {
+  /** The page title displayed in the browser tab. */
+  title: string
+}
+
+const { title } = Astro.props
+
+import '../styles/global.css'
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

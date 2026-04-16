@@ -227,20 +227,11 @@ interface CanvasEditorProps {
 - Configure via tldraw's `acceptedImageMimeTypes: []` and `acceptedVideoMimeTypes: []` options, and override `onEditorReady` to remove the asset tools.
 - The only visual elements on the canvas are `cf-service` custom shapes, tldraw's built-in arrows, and text labels.
 
-**Self-hosted tldraw UI assets:**
-- By default tldraw fetches its fonts, icons, and translations from a public CDN (unpkg/jsdelivr). These requests may be blocked in corporate environments with strict network policies.
-- Self-host all tldraw UI assets via `public/tldraw-assets/` so they are served by Cloudflare Workers Assets alongside the rest of the static files.
-- At build time, copy assets from `node_modules/@tldraw/assets` into `public/tldraw-assets/` (add a script to `package.json`: `"copy:tldraw-assets"`). Run this as part of the `build` script.
-- Configure tldraw to use local paths:
-  ```tsx
-  import { getAssetUrls } from '@tldraw/assets/selfHosted'
-
-  const assetUrls = getAssetUrls({ baseUrl: '/tldraw-assets/' })
-
-  <Tldraw assetUrls={assetUrls} ... />
-  ```
-- This applies to both `CanvasEditor` and `CanvasViewer` components.
-- Add `public/tldraw-assets/` to `.gitignore` since these are copied from `node_modules` at build time.
+**tldraw v4 UI assets:**
+- tldraw v4 bundles its own UI assets (fonts, icons, translations) internally. The `@tldraw/assets` package no longer exists as a standalone copy target in v4.
+- If corporate network restrictions block tldraw's default CDN loads, configure asset URLs via tldraw's `assetUrls` prop at the component level.
+- The `public/tldraw-assets/` directory and `copy:tldraw-assets` npm script remain as placeholders for this purpose. The script is a no-op when `node_modules/@tldraw/assets` does not exist.
+- Add `public/tldraw-assets/` to `.gitignore`.
 
 ### 4.3 Custom Cloudflare Service Shapes
 
@@ -1264,14 +1255,24 @@ Install these via `npx shadcn@latest add` and use them inside React islands:
 File: `vitest.config.ts`
 
 ```typescript
+import { cloudflareTest } from '@cloudflare/vitest-pool-workers'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
+  plugins: [
+    cloudflareTest({
+      wrangler: { configPath: './wrangler.jsonc' },
+    }),
+  ],
   test: {
-    globals: true,
-    environment: 'miniflare',  // or use @cloudflare/vitest-pool-workers
+    include: ['tests/unit/**/*.test.{ts,tsx}'],
+    exclude: ['node_modules', 'dist', 'tests/e2e'],
     coverage: {
-      provider: 'v8',
+      // V8 coverage is not supported with @cloudflare/vitest-pool-workers.
+      // Istanbul instrumented coverage is the required alternative per CF docs.
+      provider: 'istanbul',
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/env.d.ts', 'src/**/*.astro'],
       thresholds: {
         statements: 80,
         branches: 80,

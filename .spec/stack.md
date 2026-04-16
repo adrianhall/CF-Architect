@@ -34,7 +34,7 @@
 - Read-only mode via `editor.updateInstanceState({ isReadonly: true })` for shared views.
 - Persistence via `editor.store.getStoreSnapshot()` serialized to D1 as JSON.
 - Blueprints are pre-built store snapshots loaded via `store.loadStoreSnapshot()`.
-- tldraw UI assets (fonts, icons, translations) are self-hosted via `public/tldraw-assets/` to avoid external CDN requests in corporate environments. Configured using `@tldraw/assets/selfHosted` with a custom `assetUrls` override.
+- tldraw v4 bundles its own UI assets (fonts, icons, translations) internally. The `@tldraw/assets` package no longer exists as a standalone copy target. If corporate network restrictions block tldraw's default CDN loads, configure asset URLs via tldraw's `assetUrls` prop at the component level. The `public/tldraw-assets/` directory and `copy:tldraw-assets` script remain as placeholders for this purpose.
 
 ## Database & ORM
 
@@ -84,9 +84,9 @@
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `typescript` | ^6.0.2 | Type checking |
+| `typescript` | ^5.9.3 | Type checking |
 | `wrangler` | ^4.82.2 | Cloudflare Workers CLI, local D1/KV emulation |
-| `eslint` | ^10.2.0 | Linting (flat config) |
+| `eslint` | ^9.27.0 | Linting (flat config) |
 | `eslint-plugin-astro` | ^1.7.0 | Astro-specific lint rules |
 | `@typescript-eslint/eslint-plugin` | ^8.58.2 | TypeScript lint rules |
 | `prettier` | ^3.8.2 | Code formatting |
@@ -104,7 +104,7 @@
 
 **Testing notes:**
 - Vitest runs unit tests with miniflare pool for D1/KV access in tests.
-- v8 coverage provider targeting 80% threshold.
+- Istanbul coverage provider (V8 is not supported by `@cloudflare/vitest-pool-workers`), targeting 80% threshold.
 - Playwright tests cover all three "sides" (canvas, share view, admin).
 
 ## npm Scripts
@@ -115,12 +115,12 @@
 | `build` | `npm run copy:tldraw-assets && astro build` | Production build |
 | `preview` | `astro preview` | Preview production build locally |
 | `deploy` | `npm run build && wrangler deploy` | Build and deploy to Cloudflare |
-| `copy:tldraw-assets` | `cp -r node_modules/@tldraw/assets/* public/tldraw-assets/` | Copy tldraw UI assets for self-hosting |
+| `copy:tldraw-assets` | `mkdir -p public/tldraw-assets && if [ -d node_modules/@tldraw/assets ]; then cp -r node_modules/@tldraw/assets/* public/tldraw-assets/; fi` | Copy tldraw UI assets for self-hosting (no-op in tldraw v4) |
 | `firstrun` | `cd terraform && terraform init && terraform apply` | Provision infrastructure |
 | `check` | `tsc --noEmit && eslint . && prettier --check .` | Type check + lint + format check |
 | `test` | `vitest run` | Run unit tests |
 | `test:watch` | `vitest` | Run unit tests in watch mode |
-| `test:coverage` | `vitest run --coverage` | Unit tests with v8 coverage (80% threshold) |
+| `test:coverage` | `vitest run --coverage` | Unit tests with Istanbul coverage (80% threshold) |
 | `test:e2e` | `playwright test` | End-to-end tests |
 | `generate-types` | `wrangler types` | Generate Cloudflare binding types |
 | `db:migrate` | `wrangler d1 migrations apply cf-architect-db` | Run D1 migrations (production) |
@@ -154,7 +154,7 @@ CF-Architect/
 ├── public/
 │   ├── favicon.svg
 │   ├── icons/cf/                   # Cloudflare service SVG icons
-│   └── tldraw-assets/              # Self-hosted tldraw fonts/icons/translations (copied at build, gitignored)
+│   └── tldraw-assets/              # Placeholder for tldraw asset overrides (gitignored)
 ├── src/
 │   ├── components/
 │   │   ├── canvas/                 # tldraw canvas components

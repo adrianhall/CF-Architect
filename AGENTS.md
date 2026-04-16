@@ -8,13 +8,11 @@ This document defines mandatory rules for every phase of the CF-Architect build.
 
 Every phase MUST end with ALL of the following passing:
 
-1. **`npm run check`** — `tsc --noEmit && eslint . && prettier --check .` exits cleanly.
-2. **`npm run test:coverage`** — 100% pass rate, 80% statement/branch/function/line coverage for all code introduced so far.
-3. **`npm run dev`** — Dev server starts on `http://localhost:4321` and the page loads in a browser.
-4. **`npm run build`** — Production build completes without errors.
-5. **Deployable** — `npm run firstrun` (terraform) and `npm run deploy` (wrangler) work with a valid `.env` / `terraform.tfvars`.
+1. **`npm run build`** — Production build completes without errors.
+2. **`npm run fullcheck`** - Must exist cleanly, with 80% code coverage from the unit tests.
+3. **`npm run test:e2e`** - shows all tests pass.
 
-Do NOT consider a phase complete until all five gates pass. Fix issues before moving on.
+Do NOT consider a phase complete until both gates pass. Fix issues before moving on.
 
 ---
 
@@ -88,7 +86,7 @@ Do NOT consider a phase complete until all five gates pass. Fix issues before mo
 - **Test file naming**: `*.test.ts` or `*.test.tsx`.
 - **Use miniflare** (via `@cloudflare/vitest-pool-workers`) for tests that need D1/KV.
 - **Test isolation**: Each test file sets up and tears down its own data. No shared mutable state between tests.
-- **Coverage**: v8 provider, 80% threshold on statements, branches, functions, and lines.
+- **Coverage**: Istanbul provider (V8 is not supported by `@cloudflare/vitest-pool-workers`), 80% threshold on statements, branches, functions, and lines.
 - **E2E tests** in `tests/e2e/` use Playwright.
 - **Mocking**: Mock external HTTP calls (CF Access endpoints). Never make real external calls in tests.
 - **Assertions**: Test both success and error paths for every API endpoint.
@@ -113,7 +111,7 @@ Do NOT consider a phase complete until all five gates pass. Fix issues before mo
 
 ### tldraw
 
-- Self-host assets via `public/tldraw-assets/` (copied from `node_modules/@tldraw/assets` at build).
+- tldraw v4 bundles its own UI assets (fonts, icons, translations) internally. The `@tldraw/assets` package no longer exists as a standalone copy target. If corporate network restrictions block tldraw's default CDN loads, configure asset URLs via tldraw's `assetUrls` prop at the component level. The `public/tldraw-assets/` directory and `copy:tldraw-assets` script remain as placeholders for this purpose.
 - Disable image/video embedding (`acceptedImageMimeTypes: []`, `acceptedVideoMimeTypes: []`).
 - Custom shapes use `BaseBoxShapeUtil`.
 - Persistence via `store.getStoreSnapshot()` / `store.loadStoreSnapshot()`.

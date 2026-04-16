@@ -22,3 +22,21 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# tldraw self-hosted assets (copied at build)
+public/tldraw-assets/
+
+# terraform state and providers
+terraform/.terraform/
+terraform/terraform.tfstate*
+terraform/.terraform.lock.hcl
+*.tfvars
+
+# generated wrangler types
+worker-configuration.d.ts
+
+# wrangler local state
+.wrangler/
+
+# test coverage output
+coverage/

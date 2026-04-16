@@ -1,13 +1,38 @@
 {
-	"compatibility_date": "2026-04-14",
-	"compatibility_flags": ["global_fetch_strictly_public"],
-	"name": "cf-architect",
-	"main": "@astrojs/cloudflare/entrypoints/server",
-	"assets": {
-		"directory": "./dist",
-		"binding": "ASSETS"
-	},
-	"observability": {
-		"enabled": true
-	}
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "compatibility_date": "2026-04-14",
+  "compatibility_flags": ["global_fetch_strictly_public"],
+  "name": "cf-architect",
+  "main": "@astrojs/cloudflare/entrypoints/server",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+  },
+  "observability": {
+    "enabled": true,
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "cf-architect-db",
+      "database_id": "local",
+      "migrations_dir": "src/lib/db/migrations",
+    },
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "CACHE",
+      "id": "local",
+    },
+  ],
+  "vars": {
+    "CF_ACCESS_TEAM_NAME": "dev-team",
+    "INITIAL_ADMIN_GITHUB_USERNAME": "dev-user",
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_classes": [],
+    },
+  ],
 }

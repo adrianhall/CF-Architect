@@ -35,7 +35,7 @@ Other commands:
 - `npm run test`
   - Unit tests (vitest, potentially with miniflare)
 - `npm run test:coverage`
-  - Unit tests with v8 coverage - expect 80% coverage
+  - Unit tests with Istanbul coverage - expect 80% coverage
 - `npm run test:e2e`
   - Playwright based end-to-end tests
 

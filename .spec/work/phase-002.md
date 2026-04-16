@@ -12,9 +12,9 @@ Implement the D1 database schema via migration, the Kysely type-safe query layer
 
 ### 1. D1 Migration
 
-#### `src/lib/db/migrations/0001_initial_schema.sql`
+#### `src/lib/db/migrations/0000_initial.sql`
 
-Create the initial migration exactly as specified in spec §13.1. This defines four tables:
+A placeholder migration file was created in phase 001. **Replace its contents** with the real schema as specified in spec §13.1. Do NOT create a new `0001_` file — edit the existing `0000_initial.sql` in place. This defines four tables:
 
 - **`users`** — id, github_id (UNIQUE), github_username, email, display_name, avatar_url, role (CHECK admin/user), created_at, updated_at.
 - **`diagrams`** — id, owner_id (FK users), title, description, canvas_data, thumbnail_svg, is_blueprint (INTEGER), created_at, updated_at.
@@ -296,7 +296,7 @@ All tests must achieve 80%+ coverage on the files they test.
 
 ## Acceptance Criteria
 
-- [ ] `src/lib/db/migrations/0001_initial_schema.sql` matches spec §13.1
+- [ ] `src/lib/db/migrations/0000_initial.sql` contains the full schema from spec §13.1
 - [ ] `npm run db:migrate:local` succeeds
 - [ ] `src/lib/db/schema.ts` defines all table interfaces
 - [ ] `src/lib/db/client.ts` exports `createDb`
