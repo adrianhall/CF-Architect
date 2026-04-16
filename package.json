@@ -7,13 +7,14 @@
     "node": ">=22.12.0"
   },
   "scripts": {
-    "predev": "run-s db:migrate:local",
+    "predev": "run-s generate-types db:migrate:local",
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
     "predeploy": "run-s build",
     "deploy": "wrangler deploy",
     "firstrun": "cd terraform && terraform init && terraform apply",
+    "precheck": "run-s generate-types",
     "check": "run-p check:*",
     "check:types": "tsc --noEmit",
     "check:eslint": "eslint .",

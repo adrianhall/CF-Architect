@@ -14,6 +14,7 @@ export default tseslint.config(
       'public/tldraw-assets/',
       '.wrangler/',
       'coverage/',
+      'worker-configuration.d.ts',
     ],
   },
   {

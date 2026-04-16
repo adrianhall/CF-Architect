@@ -8,3 +8,4 @@ coverage/
 .spec/
 terraform/
 package-lock.json
+worker-configuration.d.ts
