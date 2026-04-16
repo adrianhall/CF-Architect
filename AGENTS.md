@@ -16,7 +16,42 @@ Do NOT consider a phase complete until both gates pass. Fix issues before moving
 
 ---
 
-## 2. Code Style & Documentation
+## 2. Documentation-First Research
+
+When encountering an unfamiliar API, configuration option, error message, or framework behavior, **always consult official documentation before guessing or reading npm package source code.**
+
+### Available Documentation Sources
+
+Use the `WebFetch` tool to retrieve official documentation. Key sources for this project:
+
+| Topic                                                      | Documentation URL                                                     |
+| ---------------------------------------------------------- | --------------------------------------------------------------------- |
+| Cloudflare Workers / D1 / KV                               | https://developers.cloudflare.com/workers/                            |
+| Wrangler CLI                                               | https://developers.cloudflare.com/workers/wrangler/                   |
+| Cloudflare Vitest pool (`@cloudflare/vitest-pool-workers`) | https://developers.cloudflare.com/workers/testing/vitest-integration/ |
+| Astro                                                      | https://docs.astro.build/                                             |
+| React                                                      | https://react.dev/                                                    |
+| tldraw                                                     | https://tldraw.dev/docs                                               |
+| Kysely                                                     | https://kysely.dev/docs/intro                                         |
+| Vitest                                                     | https://vitest.dev/guide/                                             |
+| Playwright                                                 | https://playwright.dev/docs/intro                                     |
+| Tailwind CSS                                               | https://tailwindcss.com/docs                                          |
+| shadcn/ui                                                  | https://ui.shadcn.com/docs                                            |
+
+For any other npm package, check `https://www.npmjs.com/package/<package-name>` or the package's own documentation site first.
+
+### Rules
+
+- **Never guess** at an API signature, configuration key, or framework behavior. If uncertain, fetch the docs.
+- **Never read `node_modules/` source code** to infer how a package works. Use official documentation instead.
+- **Never run `node` scripts to inspect or analyze packages.** This is dangerous and forbidden. Use `npm info <package>` (or `npm info <package> exports`, `npm info <package> version`, etc.) to introspect package metadata from the registry instead.
+- **Fetch docs proactively**: before writing any non-trivial integration (e.g., a new Wrangler binding, a tldraw shape, a Vitest worker pool config), retrieve the relevant documentation page first.
+- **If the first doc page is insufficient**, follow links within the docs or try a more specific URL rather than falling back to guessing.
+- **Record the source URL** in a code comment when a non-obvious API usage is derived from documentation, so future agents can verify the reference.
+
+---
+
+## 3. Code Style & Documentation
 
 ### JSDoc
 
@@ -44,7 +79,7 @@ Do NOT consider a phase complete until both gates pass. Fix issues before moving
 
 ---
 
-## 3. Database Rules
+## 4. Database Rules
 
 - **All queries go through Kysely.** No raw SQL strings outside of migration files in `src/lib/db/migrations/`.
 - **Migrations** use Wrangler D1 format: plain `.sql` files, sequential numbering (`0001_`, `0002_`, ...).
@@ -55,7 +90,7 @@ Do NOT consider a phase complete until both gates pass. Fix issues before moving
 
 ---
 
-## 4. API Rules
+## 5. API Rules
 
 - Follow REST conventions from spec §7.0 exactly.
 - **Error responses** always use the `{ error: { code, message } }` envelope.
@@ -69,7 +104,7 @@ Do NOT consider a phase complete until both gates pass. Fix issues before moving
 
 ---
 
-## 5. Security Rules
+## 6. Security Rules
 
 - **CSRF**: Middleware validates `Origin` header on `POST`/`PUT`/`DELETE` to `/api/*`.
 - **Share tokens**: 24 chars from `crypto.getRandomValues()`, URL-safe alphabet.
@@ -80,7 +115,7 @@ Do NOT consider a phase complete until both gates pass. Fix issues before moving
 
 ---
 
-## 6. Testing Rules
+## 7. Testing Rules
 
 - **Unit tests** in `tests/unit/` mirror the `src/` directory structure.
 - **Test file naming**: `*.test.ts` or `*.test.tsx`.
@@ -93,7 +128,7 @@ Do NOT consider a phase complete until both gates pass. Fix issues before moving
 
 ---
 
-## 7. Component Rules
+## 8. Component Rules
 
 ### Astro Components (SSR, zero JS)
 
@@ -118,7 +153,7 @@ Do NOT consider a phase complete until both gates pass. Fix issues before moving
 
 ---
 
-## 8. File Structure
+## 9. File Structure
 
 Follow the project structure defined in `.spec/stack.md`. Do not create files outside the established directory tree without justification. Key directories:
 
@@ -144,7 +179,7 @@ public/tldraw-assets/         # self-hosted tldraw assets (gitignored)
 
 ---
 
-## 9. Environment & Configuration
+## 10. Environment & Configuration
 
 - **Local dev**: `wrangler` provides miniflare D1/KV emulation. No real Cloudflare resources needed.
 - **Auth in dev**: Middleware uses dev stub (`import.meta.env.DEV`), injecting a mock admin user.
@@ -153,7 +188,7 @@ public/tldraw-assets/         # self-hosted tldraw assets (gitignored)
 
 ---
 
-## 10. Phase Execution Checklist
+## 11. Phase Execution Checklist
 
 Before marking any phase complete, verify:
 
