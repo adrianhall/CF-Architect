@@ -84,7 +84,8 @@ For any other npm package, check `https://www.npmjs.com/package/<package-name>` 
 - **All queries go through Kysely.** No raw SQL strings outside of migration files in `src/lib/db/migrations/`.
 - **Migrations** use Wrangler D1 format: plain `.sql` files, sequential numbering (`0001_`, `0002_`, ...).
 - **Schema types** in `src/lib/db/schema.ts` must stay in sync with migration files.
-- **Transactions** use `db.transaction().execute()` for multi-statement atomic operations.
+- **Atomic operations** use D1's native `batch()` API instead of Kysely transactions. The `kysely-d1` dialect does **not** support `db.transaction().execute()` (it throws at runtime). Use Kysely's `.compile()` to build typed queries, then pass the compiled SQL to `env.DB.prepare(sql).bind(...params)` and execute via `env.DB.batch([...stmts])`. D1 batch executes statements as an implicit SQL transaction — if any statement fails, the entire batch is rolled back.
+  Ref: https://developers.cloudflare.com/d1/worker-api/d1-database/#batch
 - **UUIDs** generated via `crypto.randomUUID()`.
 - **Timestamps** stored as ISO 8601 TEXT in D1, using `datetime('now')` as default.
 

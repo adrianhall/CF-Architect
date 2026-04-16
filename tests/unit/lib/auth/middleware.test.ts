@@ -104,8 +104,13 @@ async function buildJwt(privateKey: CryptoKey, opts: BuildJwtOptions = {}): Prom
   let sigB64 = bytesToB64url(signatureBuffer)
 
   if (opts.corruptSignature) {
-    // Flip one character to invalidate the signature
-    sigB64 = sigB64.slice(0, -1) + (sigB64.endsWith('A') ? 'B' : 'A')
+    // Flip a character in the MIDDLE of the signature to guarantee the decoded
+    // bytes change. The last base64url character only encodes 2 significant bits
+    // (the rest are padding zeros) so flipping it may not alter the binary — see
+    // https://en.wikipedia.org/wiki/Base64#Output_padding
+    const mid = Math.floor(sigB64.length / 2)
+    const replacement = sigB64[mid] === 'A' ? 'B' : 'A'
+    sigB64 = sigB64.slice(0, mid) + replacement + sigB64.slice(mid + 1)
   }
 
   return `${headerB64}.${payloadB64}.${sigB64}`
