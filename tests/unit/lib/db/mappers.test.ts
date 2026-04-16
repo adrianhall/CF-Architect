@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import type { Selectable } from 'kysely'
 
 import {
   mapDiagramToResponse,
@@ -7,8 +8,11 @@ import {
 } from '../../../../src/lib/db/mappers'
 import type { DiagramsTable, UsersTable } from '../../../../src/lib/db/schema'
 
+// Fixtures use Selectable<T> which resolves Generated<X> → X, matching
+// what Kysely actually returns from D1 select queries at runtime.
+
 /** Sample diagram row fixture (snake_case, as returned by D1). */
-const DIAGRAM_ROW: DiagramsTable = {
+const DIAGRAM_ROW: Selectable<DiagramsTable> = {
   id: 'diag-001',
   owner_id: 'user-001',
   title: 'My Diagram',
@@ -21,7 +25,7 @@ const DIAGRAM_ROW: DiagramsTable = {
 }
 
 /** Sample user row fixture (snake_case, as returned by D1). */
-const USER_ROW: UsersTable = {
+const USER_ROW: Selectable<UsersTable> = {
   id: 'user-001',
   github_id: '12345',
   github_username: 'testuser',

@@ -1,4 +1,6 @@
-import type { DiagramsTable, UsersTable } from './schema'
+import type { Selectable } from 'kysely'
+
+import type { DiagramsTable, User, UsersTable } from './schema'
 
 /**
  * API response shape for a single diagram (includes canvasData and thumbnailSvg).
@@ -73,7 +75,10 @@ export interface UserResponse {
  * @param tags - Optional array of tag labels associated with the diagram.
  * @returns A {@link DiagramResponse} suitable for API responses.
  */
-export function mapDiagramToResponse(row: DiagramsTable, tags: string[] = []): DiagramResponse {
+export function mapDiagramToResponse(
+  row: Selectable<DiagramsTable>,
+  tags: string[] = [],
+): DiagramResponse {
   return {
     id: row.id,
     title: row.title,
@@ -95,7 +100,10 @@ export function mapDiagramToResponse(row: DiagramsTable, tags: string[] = []): D
  * @param tags - Optional array of tag labels associated with the diagram.
  * @returns A {@link DiagramListItem} suitable for paginated list responses.
  */
-export function mapDiagramToListItem(row: DiagramsTable, tags: string[] = []): DiagramListItem {
+export function mapDiagramToListItem(
+  row: Selectable<DiagramsTable>,
+  tags: string[] = [],
+): DiagramListItem {
   return {
     id: row.id,
     title: row.title,
@@ -113,7 +121,7 @@ export function mapDiagramToListItem(row: DiagramsTable, tags: string[] = []): D
  * @param row - A raw row from the `users` table.
  * @returns A {@link UserResponse} suitable for API responses.
  */
-export function mapUserToResponse(row: UsersTable): UserResponse {
+export function mapUserToResponse(row: Selectable<UsersTable>): UserResponse {
   return {
     id: row.id,
     githubUsername: row.github_username,
@@ -122,5 +130,26 @@ export function mapUserToResponse(row: UsersTable): UserResponse {
     avatarUrl: row.avatar_url,
     role: row.role,
     createdAt: row.created_at,
+  }
+}
+
+/**
+ * Strip timestamp columns from a D1 select result to produce a {@link User}.
+ *
+ * `Selectable<UsersTable>` resolves `Generated<string>` back to `string`,
+ * matching what Kysely actually returns at runtime from a `selectAll()` query.
+ *
+ * @param row - A row returned by a `selectAll()` query on the `users` table.
+ * @returns The row without `created_at` and `updated_at`.
+ */
+export function mapUserRow(row: Selectable<UsersTable>): User {
+  return {
+    id: row.id,
+    github_id: row.github_id,
+    github_username: row.github_username,
+    email: row.email,
+    display_name: row.display_name,
+    avatar_url: row.avatar_url,
+    role: row.role,
   }
 }
