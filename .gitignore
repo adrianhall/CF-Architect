@@ -40,3 +40,4 @@ worker-configuration.d.ts
 
 # test coverage output
 coverage/
+test-results/
