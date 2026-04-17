@@ -1,0 +1,21 @@
+---
+/**
+ * Skeleton component — an animated loading placeholder using Tailwind's
+ * `animate-pulse` utility. Use to indicate content is loading.
+ *
+ * @example
+ * <Skeleton class="h-6 w-48" />
+ * <Skeleton class="h-40 w-full rounded-md" />
+ */
+
+interface Props {
+  /** Extra Tailwind classes for sizing and shape (required to be useful). */
+  class?: string
+}
+
+const { class: extraClass, ...rest } = Astro.props
+
+const className = ['animate-pulse bg-cf-gray-100 rounded', extraClass].filter(Boolean).join(' ')
+---
+
+<div class={className} {...rest}></div>

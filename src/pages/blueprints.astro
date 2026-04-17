@@ -1,0 +1,280 @@
+---
+/**
+ * Blueprint browser page — lists all diagrams marked as blueprints (spec §4.7).
+ *
+ * Supports search via a native HTML form (no JavaScript required).
+ * Clicking a blueprint navigates to the canvas with that blueprint pre-loaded.
+ *
+ * Route: /blueprints
+ * Auth: required — middleware populates Astro.locals.user.
+ *
+ * Bindings accessed via `cloudflare:workers` (Astro Cloudflare adapter v13+).
+ * Ref: https://docs.astro.build/en/guides/integrations-guide/cloudflare/
+ */
+
+export const prerender = false
+
+import { env } from 'cloudflare:workers'
+
+import Layout from '../layouts/Layout.astro'
+import Button from '../components/ui/Button.astro'
+import Card from '../components/ui/Card.astro'
+import Badge from '../components/ui/Badge.astro'
+import EmptyState from '../components/ui/EmptyState.astro'
+import Input from '../components/ui/Input.astro'
+import Pagination from '../components/ui/Pagination.astro'
+import { UserMenu } from '../components/ui/UserMenu'
+
+import { createDb } from '../lib/db/client'
+import { mapDiagramToListItem } from '../lib/db/mappers'
+import { parsePagination } from '../lib/api'
+
+// ---------------------------------------------------------------------------
+// Auth guard
+// ---------------------------------------------------------------------------
+const user = Astro.locals.user
+// Redirect to / (not /blueprints) to avoid an infinite loop if middleware
+// ever passes user = null for this protected route.
+if (!user) {
+  return Astro.redirect('/', 302)
+}
+
+// ---------------------------------------------------------------------------
+// Query params
+// ---------------------------------------------------------------------------
+const search = Astro.url.searchParams.get('search') ?? undefined
+const { page, limit, offset } = parsePagination(Astro.url)
+
+// ---------------------------------------------------------------------------
+// Database queries
+// ---------------------------------------------------------------------------
+const db = createDb(env.DB)
+
+let query = db.selectFrom('diagrams').where('is_blueprint', '=', 1)
+let countQuery = db.selectFrom('diagrams').where('is_blueprint', '=', 1)
+
+if (search) {
+  const term = `%${search}%`
+  query = query.where((eb) => eb.or([eb('title', 'like', term), eb('description', 'like', term)]))
+  countQuery = countQuery.where((eb) =>
+    eb.or([eb('title', 'like', term), eb('description', 'like', term)]),
+  )
+}
+
+const [countResult, rows] = await Promise.all([
+  countQuery.select((eb) => eb.fn.countAll<number>().as('count')).executeTakeFirstOrThrow(),
+  query.selectAll('diagrams').orderBy('title', 'asc').limit(limit).offset(offset).execute(),
+])
+
+const total = countResult.count
+const totalPages = Math.ceil(total / limit)
+
+// Batch-fetch tags
+const blueprintIds = rows.map((r) => r.id)
+const tagRows =
+  blueprintIds.length > 0
+    ? await db
+        .selectFrom('diagram_tags')
+        .select(['diagram_id', 'tag'])
+        .where('diagram_id', 'in', blueprintIds)
+        .execute()
+    : []
+
+const tagMap = new Map<string, string[]>()
+for (const row of tagRows) {
+  const existing = tagMap.get(row.diagram_id)
+  if (existing) {
+    existing.push(row.tag)
+  } else {
+    tagMap.set(row.diagram_id, [row.tag])
+  }
+}
+
+const blueprints = rows.map((row) => mapDiagramToListItem(row, tagMap.get(row.id) ?? []))
+
+const extraParams = search ? { search } : undefined
+---
+
+<Layout title="Blueprints — Cloudflare Architect">
+  <div class="bg-cf-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="border-cf-gray-100 border-b bg-white">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="flex h-16 items-center justify-between">
+          <a href="/dashboard" class="flex items-center gap-3 transition-opacity hover:opacity-80">
+            <svg
+              class="text-cf-orange h-7 w-7"
+              viewBox="0 0 109 41"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                d="M82.3 18.6c-.4-5.3-4.8-9.6-10.2-9.6-3.9 0-7.3 2.2-9.1 5.4-.9-.6-1.9-.9-3-.9-2.9 0-5.3 2.1-5.7 4.9-3.2.7-5.6 3.5-5.6 6.9 0 3.9 3.1 7 7 7h26.1c3.4 0 6.2-2.8 6.2-6.2 0-3.1-2.2-5.7-5.7-7.5z"
+              ></path>
+            </svg>
+            <span class="text-cf-gray-900 hidden text-lg font-bold sm:block"
+              >Cloudflare Architect</span
+            >
+          </a>
+
+          <UserMenu
+            client:load
+            userName={user.display_name}
+            avatarUrl={user.avatar_url}
+            isAdmin={user.role === 'admin'}
+          />
+        </div>
+      </div>
+    </header>
+
+    <!-- Page content -->
+    <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <!-- Back link + page title -->
+      <div class="mb-6">
+        <a
+          href="/dashboard"
+          class="text-cf-gray-500 hover:text-cf-orange mb-4 inline-flex items-center gap-1 text-sm transition-colors"
+        >
+          <svg
+            class="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
+          </svg>
+          Back to Dashboard
+        </a>
+
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 class="text-cf-gray-900 text-2xl font-bold">Blueprint Library</h1>
+            <p class="text-cf-gray-500 mt-1 text-sm">
+              {
+                total === 0
+                  ? 'No blueprints available'
+                  : `${total} blueprint${total === 1 ? '' : 's'} — click one to start a new diagram`
+              }
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search form -->
+      <form method="GET" class="mb-6">
+        <div class="flex max-w-sm gap-2">
+          <Input
+            type="search"
+            name="search"
+            value={search ?? ''}
+            placeholder="Search blueprints…"
+          />
+          <Button type="submit" variant="outline" size="sm">Search</Button>
+          {
+            search && (
+              <Button href="/blueprints" variant="ghost" size="sm">
+                Clear
+              </Button>
+            )
+          }
+        </div>
+      </form>
+
+      <!-- Blueprint grid or empty state -->
+      {
+        blueprints.length === 0 ? (
+          <EmptyState
+            title={search ? `No blueprints matching "${search}"` : 'No blueprints available yet'}
+            description={
+              search
+                ? 'Try a different search term.'
+                : 'Blueprints are architecture templates promoted by admins. Check back later.'
+            }
+          />
+        ) : (
+          <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {blueprints.map((blueprint) => (
+              <a
+                href={`/canvas/new?blueprint=${blueprint.id}`}
+                class="group focus-visible:ring-cf-orange/50 block rounded-lg focus-visible:ring-2 focus-visible:outline-none"
+              >
+                <Card class="h-full transition-shadow group-hover:shadow-md">
+                  <div slot="header">
+                    <div class="bg-cf-gray-50 border-cf-gray-100 -mx-4 -mt-4 mb-0 flex h-36 items-center justify-center overflow-hidden rounded-t-lg border-b">
+                      <img
+                        src={`/api/diagrams/${blueprint.id}/thumbnail`}
+                        loading="lazy"
+                        alt={`Blueprint thumbnail for ${blueprint.title}`}
+                        class="h-full w-full object-contain"
+                        onerror="this.style.display='none'"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <h2
+                      class="text-cf-gray-900 group-hover:text-cf-orange truncate font-semibold transition-colors"
+                      title={blueprint.title}
+                    >
+                      {blueprint.title}
+                    </h2>
+
+                    {blueprint.description && (
+                      <p class="text-cf-gray-500 mt-1 line-clamp-2 text-sm">
+                        {blueprint.description.length > 100
+                          ? blueprint.description.slice(0, 100) + '…'
+                          : blueprint.description}
+                      </p>
+                    )}
+
+                    {blueprint.tags.length > 0 && (
+                      <div class="mt-2 flex flex-wrap gap-1">
+                        {blueprint.tags.map((tag) => (
+                          <Badge variant="secondary">{tag}</Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div slot="footer">
+                    <span class="text-cf-orange inline-flex items-center gap-1.5 text-xs font-medium">
+                      <svg
+                        class="h-3.5 w-3.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        aria-hidden="true"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M12 4.5v15m7.5-7.5h-15"
+                        />
+                      </svg>
+                      Use this blueprint
+                    </span>
+                  </div>
+                </Card>
+              </a>
+            ))}
+          </div>
+        )
+      }
+
+      <!-- Pagination -->
+      {
+        totalPages > 1 && (
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            baseUrl="/blueprints"
+            extraParams={extraParams}
+          />
+        )
+      }
+    </main>
+  </div>
+</Layout>

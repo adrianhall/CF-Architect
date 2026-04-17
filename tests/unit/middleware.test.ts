@@ -51,13 +51,7 @@ async function nextOk(): Promise<Response> {
 // ---------------------------------------------------------------------------
 
 describe('handleRequest — public routes', () => {
-  it('passes through GET / with user: null', async () => {
-    const args = makeArgs({ pathname: '/' })
-    const res = await handleRequest(args, nextOk, true)
-    expect(res.status).toBe(200)
-    expect(args.locals.user).toBeNull()
-  })
-
+  // /share/* is fully public — no auth attempt, user always null
   it('passes through GET /share/abc123 with user: null', async () => {
     const args = makeArgs({ pathname: '/share/abc123' })
     const res = await handleRequest(args, nextOk, true)
@@ -68,6 +62,29 @@ describe('handleRequest — public routes', () => {
   it('passes through POST /share/abc123 with user: null (public)', async () => {
     const args = makeArgs({ pathname: '/share/abc123', method: 'POST' })
     const res = await handleRequest(args, nextOk, true)
+    expect(res.status).toBe(200)
+    expect(args.locals.user).toBeNull()
+  })
+})
+
+describe('handleRequest — landing page redirect', () => {
+  it('redirects GET / to /dashboard in dev mode (always authenticated)', async () => {
+    const args = makeArgs({ pathname: '/' })
+    const res = await handleRequest(args, nextOk, true)
+    expect(res.status).toBe(302)
+    expect(res.headers.get('location')).toContain('/dashboard')
+  })
+
+  it('redirects GET / to /dashboard when CF_Authorization cookie is present (prod mode)', async () => {
+    const args = makeArgs({ pathname: '/', cfAuthCookie: 'some-token' })
+    const res = await handleRequest(args, nextOk, false)
+    expect(res.status).toBe(302)
+    expect(res.headers.get('location')).toContain('/dashboard')
+  })
+
+  it('passes through GET / with user: null when no cookie and not dev mode (landing page)', async () => {
+    const args = makeArgs({ pathname: '/' })
+    const res = await handleRequest(args, nextOk, false)
     expect(res.status).toBe(200)
     expect(args.locals.user).toBeNull()
   })

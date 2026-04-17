@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 
 @theme {
+  /* ── Cloudflare brand tokens ── */
   --color-cf-orange: #f6821f;
   --color-cf-orange-dark: #e87516;
   --color-cf-dark: #1a1a2e;
@@ -10,4 +11,44 @@
   --color-cf-gray-100: #f3f4f6;
   --color-cf-gray-500: #6b7280;
   --color-cf-gray-900: #111827;
+
+  /*
+   * ── shadcn/ui design tokens ──
+   *
+   * Mapped to the CF brand palette so that the shadcn-generated components
+   * (button.tsx, dropdown-menu.tsx, alert-dialog.tsx) render correctly.
+   * These token names match what Tailwind v4 generates utility classes from
+   * (e.g. `bg-primary` → `background-color: var(--color-primary)`).
+   *
+   * Ref: https://ui.shadcn.com/docs/theming
+   */
+
+  /* Surfaces */
+  --color-background: #ffffff;
+  --color-foreground: #111827; /* cf-gray-900 */
+  --color-card: #ffffff;
+  --color-card-foreground: #111827;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #111827;
+
+  /* Brand / interactive */
+  --color-primary: #f6821f; /* cf-orange */
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #f3f4f6; /* cf-gray-100 */
+  --color-secondary-foreground: #111827;
+
+  /* Semantic */
+  --color-destructive: #dc2626; /* red-600 */
+  --color-destructive-foreground: #ffffff;
+
+  /* Neutral chrome */
+  --color-muted: #f3f4f6; /* cf-gray-100 */
+  --color-muted-foreground: #6b7280; /* cf-gray-500 */
+  --color-accent: #f9fafb; /* cf-gray-50 */
+  --color-accent-foreground: #111827;
+
+  /* Form / focus */
+  --color-border: #f3f4f6; /* cf-gray-100 */
+  --color-input: #f3f4f6;
+  --color-ring: #f6821f; /* cf-orange — focus rings match brand */
 }

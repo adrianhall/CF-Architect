@@ -345,21 +345,56 @@ A custom sidebar panel (not replacing tldraw's toolbar) that lists available Clo
 2. Passes `blueprintData` as prop (same canvas_data, but no diagram ID).
 3. On first save, `POST /api/diagrams` creates a new diagram (cloned data, new ID).
 
-### 4.7 Dashboard Page
+### 4.7 Landing Page & Dashboard
 
-Route: `/` (for authenticated users, redirects to canvas dashboard)
+#### Landing Page
+
+Route: `/`
 
 File: `src/pages/index.astro`
 
 **Behavior:**
-- If user is authenticated: show dashboard with their diagrams.
-- If user is not authenticated: show a public landing page with a "Sign in" button (redirects to CF Access login).
+- Always public. The middleware redirects authenticated users (detected via `CF_Authorization` cookie presence or dev mode) to `/dashboard` before this page renders.
+- Unauthenticated visitors see a branded hero page with a "Sign In with GitHub" button that links to `/dashboard` (which triggers the CF Access OAuth flow).
+
+#### Dashboard Page
+
+Route: `/dashboard`
+
+File: `src/pages/dashboard.astro`
+
+**Behavior:**
+- Protected route — middleware requires authentication.
+- SSR frontmatter queries the DB for the user's diagrams (latest 20, ordered by `updated_at desc`), fetches associated tags, and computes total count for pagination.
 
 **Dashboard content:**
-- Grid of diagram cards showing: title, description snippet, last updated date, and a lazy-loaded thumbnail (`<img src="/api/diagrams/{id}/thumbnail" loading="lazy" alt={`Diagram thumbnail for ${diagram.title}`}>`).
+- Header with logo/title on left and UserMenu island on right.
+- Grid of diagram cards showing: title, description snippet, last updated date (relative), and a lazy-loaded thumbnail (`<img src="/api/diagrams/{id}/thumbnail" loading="lazy" alt={`Diagram thumbnail for ${diagram.title}`}>`).
 - "New Diagram" button (goes to `/canvas/new`).
-- "Browse Blueprints" button (opens blueprint selection modal/page).
-- Each card has actions: Edit, Share, Delete.
+- "Browse Blueprints" button (goes to `/blueprints`).
+- Each card has actions: Edit, Delete.
+- Empty state when user has no diagrams.
+- Pagination when total > 20.
+
+#### Blueprint Browser Page
+
+Route: `/blueprints`
+
+File: `src/pages/blueprints.astro`
+
+**Behavior:**
+- Protected route — middleware requires authentication.
+- SSR frontmatter queries the DB for all blueprints (`is_blueprint = 1`), supports search via query param, ordered by title ascending.
+- Search form uses native HTML `<form method="GET">` — no JavaScript.
+- Blueprint cards link to `/canvas/new?blueprint={id}`.
+- Pagination when total > 20.
+
+#### Middleware Auth Redirect
+
+The middleware (`src/lib/middleware-handler.ts`) handles the redirect logic:
+- `/share/*` — Fully public, no auth attempt, `locals.user = null`.
+- `/` — Checks for authentication signal (dev mode OR `CF_Authorization` cookie present). If authenticated: 302 redirect to `/dashboard`. If not: render landing page with `locals.user = null`.
+- All other routes — Normal auth flow (unchanged).
 
 ---
 
@@ -1205,7 +1240,8 @@ Tailwind theme extension in `tailwind.config` (or CSS `@theme` in Tailwind v4):
 - **Canvas pages** (`/canvas/*`): Full-viewport layout. No header/footer. tldraw fills the screen. Custom toolbar overlay at top.
 - **Share pages** (`/share/*`): Minimal header with title + export buttons. Canvas fills remaining space.
 - **Admin pages** (`/admin/*`): Standard layout with sidebar navigation, header with user info, main content area.
-- **Dashboard** (`/`): Header with logo + user menu, main content area with diagram grid.
+- **Dashboard** (`/dashboard`): Header with logo + user menu, main content area with diagram grid.
+- **Blueprint browser** (`/blueprints`): Consistent header, search form, blueprint grid.
 
 ### 11.3 Component Strategy
 
@@ -1229,19 +1265,20 @@ Build these as Astro components (`.astro` files) in `src/components/ui/` using o
 
 Install these via `npx shadcn@latest add` and use them inside React islands:
 
-- `dialog` - Share URL dialog, delete confirmation, blueprint selection (`client:load`)
+- `dialog` - Share URL dialog (`client:load`)
 - `dropdown-menu` - User menu, diagram card actions (`client:load`)
-- `alert-dialog` - Destructive action confirmations (`client:load`)
-- `toast` - Success/error notifications (`client:load`)
+- `alert-dialog` - Destructive action confirmations, delete diagram (`client:load`)
+- `sonner` (npm, direct) - Toast success/error notifications. Import `{ Toaster }` and `{ toast }` directly from `'sonner'`; do **not** use the shadcn-generated wrapper (it requires `next-themes`). (`client:load`)
 - `tooltip` - Service toolbar tooltips (canvas editor island only)
 - `select` - Role selector in admin user table (`client:idle`)
-- `tabs` - Blueprint category browser (`client:idle`)
 
 #### Where each type is used
 
 | Page | Rendering | Component approach |
 |------|-----------|-------------------|
-| Dashboard (`/`) | SSR | Tailwind HTML cards/badges/buttons. User menu dropdown is a small React island (`client:load`). |
+| Landing (`/`) | SSR | Static Tailwind HTML only. No JavaScript. |
+| Dashboard (`/dashboard`) | SSR | Tailwind HTML cards/badges/buttons. UserMenu and DeleteDiagramDialog are small React islands (`client:load`). |
+| Blueprint browser (`/blueprints`) | SSR | Tailwind HTML cards/badges. UserMenu React island. Search via native HTML form (no JS). |
 | Canvas editor (`/canvas/*`) | React island | Full shadcn/ui React inside the tldraw island (toolbar, dialogs, toasts, tooltips). |
 | Share viewer (`/share/*`) | SSR + React island | Tailwind HTML header. tldraw read-only island for canvas. Export buttons are plain HTML `<button>` elements that call into the island's editor ref. |
 | Admin pages (`/admin/*`) | SSR | Tailwind HTML tables/cards/badges. Role selector and delete confirmation are small React islands (`client:idle`). |

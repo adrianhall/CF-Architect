@@ -113,10 +113,25 @@ export async function handleRequest(
 
   // ------------------------------------------------------------------
   // 1. Public route passthrough — no auth required
-  //    Exact `/` (landing) or any path starting with `/share/` (viewer).
+  //    Paths starting with `/share/` are fully public (anonymous viewer).
   // ------------------------------------------------------------------
-  const isPublic = pathname === '/' || pathname.startsWith('/share/')
-  if (isPublic) {
+  if (pathname.startsWith('/share/')) {
+    locals.user = null
+    return next()
+  }
+
+  // ------------------------------------------------------------------
+  // 1b. Landing page (`/`) — redirect authenticated users to /dashboard.
+  //     Authentication is detected by dev mode or the presence of the
+  //     CF_Authorization cookie. We do NOT attempt to validate the cookie
+  //     here — the redirect itself is sufficient; /dashboard will perform
+  //     full validation. Unauthenticated visitors see the landing page.
+  // ------------------------------------------------------------------
+  if (pathname === '/') {
+    const isAuthenticated = isDevMode || Boolean(cfAuthCookie)
+    if (isAuthenticated) {
+      return Response.redirect(new URL('/dashboard', url.origin).href, 302)
+    }
     locals.user = null
     return next()
   }

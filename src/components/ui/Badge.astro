@@ -1,0 +1,37 @@
+---
+/**
+ * Badge component — a small inline pill for tags, roles, and status indicators.
+ *
+ * @example
+ * <Badge>networking</Badge>
+ * <Badge variant="secondary">admin</Badge>
+ * <Badge variant="outline">beta</Badge>
+ */
+
+/** Supported visual variants. */
+type Variant = 'default' | 'secondary' | 'outline'
+
+interface Props {
+  /** Visual style variant (default: `'default'` — CF orange). */
+  variant?: Variant
+  /** Extra Tailwind classes appended to the element's class list. */
+  class?: string
+}
+
+const { variant = 'default', class: extraClass, ...rest } = Astro.props
+
+const base =
+  'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors'
+
+const variantClasses: Record<Variant, string> = {
+  default: 'bg-cf-orange text-white',
+  secondary: 'bg-cf-gray-100 text-cf-gray-900',
+  outline: 'border border-cf-gray-100 text-cf-gray-900 bg-transparent',
+}
+
+const className = [base, variantClasses[variant], extraClass].filter(Boolean).join(' ')
+---
+
+<span class={className} {...rest}>
+  <slot />
+</span>

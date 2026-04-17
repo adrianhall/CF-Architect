@@ -1,0 +1,49 @@
+---
+/**
+ * Card component — a rounded, shadowed container with optional named slots
+ * for `header`, body (default slot), and `footer`.
+ *
+ * @example
+ * <Card>
+ *   <span slot="header">My Diagram</span>
+ *   <p>Description goes here.</p>
+ *   <a slot="footer" href="/canvas/123">Edit</a>
+ * </Card>
+ */
+
+interface Props {
+  /** Extra Tailwind classes appended to the card's outer `<div>`. */
+  class?: string
+}
+
+const { class: extraClass, ...rest } = Astro.props
+
+const className = [
+  'bg-white rounded-lg border border-cf-gray-100 shadow-sm overflow-hidden',
+  extraClass,
+]
+  .filter(Boolean)
+  .join(' ')
+---
+
+<div class={className} {...rest}>
+  {
+    Astro.slots.has('header') && (
+      <div class="border-cf-gray-100 border-b px-4 pt-4 pb-3">
+        <slot name="header" />
+      </div>
+    )
+  }
+
+  <div class="p-4">
+    <slot />
+  </div>
+
+  {
+    Astro.slots.has('footer') && (
+      <div class="border-cf-gray-100 border-t px-4 pt-3 pb-4">
+        <slot name="footer" />
+      </div>
+    )
+  }
+</div>

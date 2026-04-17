@@ -2,11 +2,19 @@
 
 ## Goal
 
-Build the landing page / user dashboard that displays the authenticated user's diagrams in a card grid, provides navigation to create new diagrams or browse blueprints, and includes the user menu. Also create all reusable Astro UI components used across the app.
+Build the landing page, user dashboard, and blueprint browser. The landing page (`/`) is public and shows a branded hero with sign-in CTA. Authenticated users are redirected from `/` to `/dashboard`. The dashboard (`/dashboard`) displays the authenticated user's diagrams in a card grid. The blueprint browser (`/blueprints`) is a dedicated SSR page. Also create all reusable Astro UI components used across the app.
 
 ## Prerequisites
 
 - Phase 005 complete (canvas editor and API endpoints working).
+
+## Architecture Decisions
+
+| Decision | Choice | Rationale |
+|---|---|---|
+| Dashboard route | `/dashboard` (new page) | Clean separation from public landing page |
+| Auth redirect | Middleware redirects `/` → `/dashboard` when authenticated | Server-side, no content flash |
+| Blueprint browser | `/blueprints` (new SSR page) | Bookmarkable, full-page real estate, SSR-consistent |
 
 ## Deliverables
 
@@ -96,6 +104,7 @@ interface Props {
 - Renders prev/next links and page numbers as `<a>` tags with query params.
 - No JavaScript — pure server-rendered navigation.
 - Shows "Previous", page numbers (with ellipsis for large ranges), "Next".
+- Delegates page number computation to `src/lib/pagination.ts`.
 
 #### `src/components/ui/Skeleton.astro`
 
@@ -140,33 +149,44 @@ interface UserMenuProps {
 ```
 
 **Menu items:**
-- "Dashboard" → `/`
+- "Dashboard" → `/dashboard`
 - "New Diagram" → `/canvas/new`
 - If admin: "Admin Panel" → `/admin`
 - Separator
 - "Sign Out" → redirect to CF Access logout URL
 
-### 3. Dashboard Page
+### 3. Landing Page
 
 #### `src/pages/index.astro`
 
-Rewrite the placeholder page to implement the full dashboard per spec §4.7.
+Rewrite the placeholder page to implement a clean public landing page.
 
-**SSR frontmatter:**
-1. Check `Astro.locals.user`:
-   - If authenticated: fetch user's diagrams from DB (latest 20, ordered by `updated_at desc`).
-   - Also fetch diagram tags for the results.
-   - If not authenticated: render landing page.
+**Behavior:**
+- Always public — middleware redirects authenticated users to `/dashboard` before this page renders.
+- No SSR data fetching needed — static content only.
 
-**Landing page (unauthenticated):**
+**Content:**
 - Hero section with "Cloudflare Architect" heading.
 - Brief description of the tool.
-- "Sign In with GitHub" button that links to the CF Access-protected route (`/canvas/new`), which triggers the OAuth flow.
+- "Sign In with GitHub" button that links to `/dashboard` (which triggers the CF Access OAuth flow for unauthenticated visitors).
 - Clean, branded design with CF orange accents.
 
-**Dashboard (authenticated):**
+### 4. Dashboard Page
+
+#### `src/pages/dashboard.astro`
+
+New authenticated page at `/dashboard`.
+
+**SSR frontmatter:**
+1. Read `Astro.locals.user` (guaranteed non-null by middleware).
+2. Parse query params: `page` (default 1), `search`, `tag`.
+3. Query DB directly via Kysely: `WHERE owner_id = user.id`, `ORDER BY updated_at DESC`, `LIMIT 20`.
+4. Batch-fetch tags for returned diagrams.
+5. Compute total count for pagination.
+
+**Dashboard content:**
 - **Header**: Logo/title on left, UserMenu island on right (with avatar, name).
-- **Action bar**: "New Diagram" button → `/canvas/new`, "Browse Blueprints" button (opens blueprint list).
+- **Action bar**: "New Diagram" button → `/canvas/new`, "Browse Blueprints" button → `/blueprints`.
 - **Diagram grid**: Cards for each diagram showing:
   - Title
   - Description snippet (truncated to ~100 chars)
@@ -174,31 +194,32 @@ Rewrite the placeholder page to implement the full dashboard per spec §4.7.
   - Last updated date (formatted as relative time e.g., "2 hours ago")
   - Lazy-loaded thumbnail: `<img src="/api/diagrams/{id}/thumbnail" loading="lazy" alt="...">`
   - On card click → navigate to `/canvas/{id}`
-  - Card actions: Edit (pencil icon link to `/canvas/{id}`), Share (link icon — placeholder), Delete (trash icon — triggers confirmation)
+  - Card actions: Edit (pencil icon link to `/canvas/{id}`), Delete (trash icon — triggers confirmation)
 - **Empty state**: If no diagrams, show "No diagrams yet" with "Create your first diagram" CTA.
 - **Pagination**: If more than 20 diagrams, show pagination links at the bottom.
 
-### 4. Blueprint Browser
+### 5. Blueprint Browser Page
 
-#### `src/components/BlueprintBrowser.tsx`
+#### `src/pages/blueprints.astro`
 
-A React island (`client:load`) for browsing and selecting blueprints.
+New authenticated SSR page at `/blueprints`. Replaces the original `BlueprintBrowser.tsx` React island.
 
-**Props:**
-```typescript
-interface BlueprintBrowserProps {
-  onSelect?: (blueprintId: string) => void
-}
-```
+**SSR frontmatter:**
+1. Read `Astro.locals.user`.
+2. Parse query params: `page` (default 1), `search`.
+3. Query DB: `WHERE is_blueprint = 1`, optional search filter, `ORDER BY title ASC`, `LIMIT 20`.
+4. Batch-fetch tags for returned blueprints.
+5. Compute total count for pagination.
 
-**Behavior:**
-- Fetches `GET /api/blueprints` on mount.
-- Displays blueprints in a grid with title, description, tags.
-- Clicking a blueprint navigates to `/canvas/new?blueprint={id}`.
-- Search input to filter blueprints.
-- If no blueprints exist, show a message: "No blueprints available yet."
+**Content:**
+- **Header**: Logo/title + UserMenu island (consistent with dashboard).
+- **Back link**: "← Back to Dashboard" → `/dashboard`.
+- **Search form**: `<form method="GET">` with `<Input.astro name="search">` — pure HTML, no JS.
+- **Blueprint grid**: Cards showing title, description, tags. Click → `/canvas/new?blueprint={id}`.
+- **Empty state**: "No blueprints available yet."
+- **Pagination**: `<Pagination.astro>` at bottom when totalPages > 1.
 
-### 5. Delete Confirmation Dialog
+### 6. Delete Confirmation Dialog
 
 #### `src/components/ui/DeleteDiagramDialog.tsx`
 
@@ -218,16 +239,49 @@ interface DeleteDiagramDialogProps {
 - Renders a button (trash icon).
 - On click, opens an alert dialog: "Delete {title}? This action cannot be undone."
 - On confirm, calls `DELETE /api/diagrams/{id}`.
-- On success, refreshes the page (or removes the card from DOM).
+- On success, refreshes the page.
 - On error, shows error toast.
 
-### 6. Toast Notifications
+### 7. Toast Notifications
 
-Install shadcn component: `toast` (and its `toaster`, `use-toast` hook).
+The `sonner` npm package is installed as a dependency of shadcn. The shadcn-generated `sonner.tsx` wrapper is **not used** — it depends on `next-themes` (not installed) and contains a circular import bug. Instead, import directly from the `sonner` package everywhere:
 
-Create a `ToastProvider` that wraps interactive islands and provides toast notifications for success/error feedback on save, delete, share operations.
+```tsx
+// Placing the Toaster in Layout.astro:
+import { Toaster } from 'sonner'
 
-### 7. Relative Time Formatting
+// Triggering toasts inside React islands:
+import { toast } from 'sonner'
+toast.error('Failed to delete diagram')
+toast.success('Diagram deleted')
+```
+
+Add `<Toaster position="bottom-right" />` to `src/layouts/Layout.astro` as a React island (`client:load`).
+
+### 8. Pagination Utility
+
+#### `src/lib/pagination.ts`
+
+Pure utility extracted from the Pagination component so page number logic can be unit-tested independently.
+
+```typescript
+export interface PageItem {
+  type: 'page' | 'ellipsis'
+  page?: number
+}
+
+/** Compute the list of page items (numbers and ellipsis markers) to display. */
+export function computePageItems(current: number, total: number): PageItem[]
+
+/** Build a URL for a given page number, preserving extra query params. */
+export function buildPageUrl(
+  baseUrl: string,
+  page: number,
+  extraParams?: Record<string, string>
+): string
+```
+
+### 9. Relative Time Formatting
 
 #### `src/lib/format.ts`
 
@@ -241,16 +295,21 @@ export function formatDate(isoDate: string): string
 
 Use `Intl.RelativeTimeFormat` for locale-aware relative formatting without external dependencies.
 
+### 10. Middleware Change
+
+#### `src/lib/middleware-handler.ts`
+
+Modify the public route passthrough to redirect authenticated users from `/` to `/dashboard`:
+
+- `/share/*` stays fully public (no auth attempt, pass through with `user = null`).
+- `/` checks for authentication signals: dev mode OR presence of `CF_Authorization` cookie.
+  - If authenticated: return `302 redirect` to `/dashboard`.
+  - If not authenticated: set `user = null`, call `next()` (render landing page).
+- `/dashboard` and all other non-public routes go through the existing auth flow unchanged.
+
 ---
 
 ## Testing Requirements
-
-### `tests/unit/components/ui/*.test.ts`
-
-Test Astro UI components where feasible (testing rendered HTML output):
-- Test `Pagination` generates correct links for various page/totalPages combinations.
-- Test `Pagination` preserves extra query params.
-- Test edge cases: page 1 (no previous), last page (no next), single page (no pagination).
 
 ### `tests/unit/lib/format.test.ts`
 - Test `formatRelativeTime` for "just now" (< 1 minute).
@@ -259,19 +318,25 @@ Test Astro UI components where feasible (testing rendered HTML output):
 - Test `formatRelativeTime` for "3 days ago".
 - Test `formatDate` formats correctly.
 
-### `tests/unit/components/BlueprintBrowser.test.tsx`
-- Test renders loading state.
-- Test renders blueprint cards after fetch.
-- Test renders empty state when no blueprints.
-- Test search filter works.
+### `tests/unit/lib/pagination.test.ts`
+- Test `computePageItems` generates correct items for various page/totalPages combinations.
+- Test ellipsis placement for large ranges (e.g., page 5 of 20).
+- Test edge cases: page 1, last page, single page (empty result).
+- Test `buildPageUrl` preserves extra query params.
+
+### `tests/unit/middleware.test.ts` (updates)
+- Update "GET / with user: null" test → in dev mode, GET `/` returns 302 redirect to `/dashboard`.
+- Add: GET `/` without CF_Authorization cookie (prod mode) returns 200 (landing page).
+- Add: GET `/` with CF_Authorization cookie present returns 302 redirect to `/dashboard`.
+- Keep all `/share/*` tests unchanged.
 
 ---
 
 ## Testable Features
 
-1. **Landing page**: In an incognito window (no auth), navigate to `http://localhost:4321`. See the branded landing page with "Sign In" button.
+1. **Landing page**: Navigate to `http://localhost:4321`. See the branded landing page with "Sign In" button. (In dev mode, you are immediately redirected to `/dashboard`.)
 
-2. **Dashboard loads**: When authenticated (dev mode), navigate to `/`. See the dashboard with action buttons and diagram grid.
+2. **Dashboard loads**: Navigate to `/dashboard`. See the dashboard with action buttons and diagram grid.
 
 3. **Empty state**: With no diagrams, see "No diagrams yet" message with CTA.
 
@@ -287,25 +352,30 @@ Test Astro UI components where feasible (testing rendered HTML output):
 
 9. **Delete diagram**: Click the delete icon on a card. Confirmation dialog should appear. Confirm to delete.
 
-10. **Blueprint browser**: Click "Browse Blueprints". Modal/panel shows available blueprints (or empty state if none).
+10. **Blueprint browser**: Navigate to `/blueprints`. See blueprint cards (or empty state if none). Search input filters results. Clicking a blueprint navigates to `/canvas/new?blueprint={id}`.
 
 11. **Pagination**: Create many diagrams, verify pagination links appear and navigate correctly.
+
+12. **Auth redirect**: Visit `/` when authenticated (dev mode). Should be redirected to `/dashboard`.
 
 ---
 
 ## Acceptance Criteria
 
 - [ ] All Astro UI components exist in `src/components/ui/` with Tailwind styling
-- [ ] `src/pages/index.astro` shows landing page (unauthed) or dashboard (authed)
-- [ ] Dashboard displays diagram cards with title, description, tags, date
+- [ ] `src/pages/index.astro` shows branded landing page (always — authenticated users are redirected by middleware)
+- [ ] `src/pages/dashboard.astro` shows diagram cards with title, description, tags, date
+- [ ] `src/pages/blueprints.astro` shows blueprint grid with search and pagination
+- [ ] Middleware redirects authenticated users from `/` to `/dashboard`
 - [ ] Thumbnails lazy-load via `<img loading="lazy">`
 - [ ] "New Diagram" button navigates to `/canvas/new`
+- [ ] "Browse Blueprints" button navigates to `/blueprints`
 - [ ] User menu dropdown works as React island
 - [ ] Delete confirmation dialog works
-- [ ] Blueprint browser fetches and displays blueprints
 - [ ] Empty state shown when no diagrams
 - [ ] Pagination works for large diagram lists
 - [ ] `src/lib/format.ts` provides relative time formatting
+- [ ] `src/lib/pagination.ts` provides page computation utilities
 - [ ] All exports have JSDoc documentation
 - [ ] Unit tests pass
 - [ ] `npm run check` exits 0

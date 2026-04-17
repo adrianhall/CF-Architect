@@ -61,6 +61,8 @@
 
 **Note on shadcn/ui:** shadcn/ui is not an npm dependency. Components are scaffolded into `src/components/ui/` via the `npx shadcn@latest add` CLI and then owned by the project.
 
+**Note on sonner:** The `sonner` npm package is used directly — import `{ Toaster }` and `{ toast }` from `'sonner'`. The shadcn-generated `sonner.tsx` wrapper is intentionally **not used** because it depends on `next-themes` (not installed in this project) and contained a circular import bug in the generated output. Ref: https://sonner.emilkowal.ski/
+
 **UI notes:**
 - Cloudflare brand colors as Tailwind theme tokens (orange `#F6821F`, dark `#1A1A2E`, etc.).
 - Official Cloudflare Developer Platform SVG icons stored in `public/icons/cf/`.
@@ -174,12 +176,24 @@ CF-Architect/
 │   │   │   └── shapes/            # Custom tldraw shape definitions
 │   │   │       ├── CfServiceShapeUtil.tsx
 │   │   │       └── cf-services.ts  # Service registry (names, icons, metadata)
-│   │   ├── ui/                     # shadcn/ui components
+│   │   ├── ui/                     # Astro + shadcn/ui components
+│   │   │   ├── Button.astro        # Astro: primary/secondary/outline/ghost/destructive
+│   │   │   ├── Card.astro          # Astro: rounded card with header/body/footer slots
+│   │   │   ├── Badge.astro         # Astro: inline tag/role indicator
+│   │   │   ├── Avatar.astro        # Astro: rounded image with initials fallback
+│   │   │   ├── Input.astro         # Astro: styled native input
+│   │   │   ├── Pagination.astro    # Astro: server-rendered prev/page/next links
+│   │   │   ├── Skeleton.astro      # Astro: animate-pulse loading placeholder
+│   │   │   ├── EmptyState.astro    # Astro: centered empty state with optional CTA
+│   │   │   ├── UserMenu.tsx        # React island: dropdown user menu (client:load)
+│   │   │   └── DeleteDiagramDialog.tsx  # React island: delete confirmation (client:load)
 │   │   └── admin/                  # Admin interface components
 │   ├── layouts/
-│   │   └── Layout.astro            # Base HTML layout
+│   │   └── Layout.astro            # Base HTML layout (includes Toaster)
 │   ├── pages/
-│   │   ├── index.astro             # Landing / dashboard
+│   │   ├── index.astro             # Public landing page (unauthenticated only)
+│   │   ├── dashboard.astro         # Authenticated diagram dashboard (/dashboard)
+│   │   ├── blueprints.astro        # Blueprint browser (/blueprints)
 │   │   ├── canvas/
 │   │   │   ├── new.astro           # New architecture
 │   │   │   └── [id].astro          # Edit architecture
@@ -189,7 +203,7 @@ CF-Architect/
 │   │   │   ├── index.astro         # Admin dashboard (Side 3)
 │   │   │   └── users.astro         # User management
 │   │   └── api/                    # API endpoints
-│   │       ├── architectures/
+│   │       ├── diagrams/
 │   │       ├── blueprints/
 │   │       ├── share/
 │   │       └── admin/
@@ -201,9 +215,17 @@ CF-Architect/
 │   │   ├── auth/
 │   │   │   ├── middleware.ts        # CF Access JWT validation
 │   │   │   └── roles.ts            # Role checking utilities
+│   │   ├── api.ts                  # API response helpers
+│   │   ├── api-client.ts           # Client-side fetch wrapper
 │   │   ├── cache.ts                # KV cache helpers
-│   │   └── share.ts                # Share token generation/validation
-│   ├── middleware.ts                # Astro middleware (auth, locals)
+│   │   ├── format.ts               # Relative time & date formatting utilities
+│   │   ├── pagination.ts           # Page number computation utilities
+│   │   ├── share.ts                # Share token generation/validation
+│   │   ├── utils.ts                # cn() Tailwind merge utility
+│   │   └── validators.ts           # Input validation helpers
+│   ├── styles/
+│   │   └── global.css              # Tailwind v4 import + CF brand theme tokens
+│   ├── middleware.ts                # Astro middleware (auth, locals, / redirect)
 │   └── env.d.ts                    # Astro + Cloudflare type declarations
 ├── terraform/
 │   ├── main.tf                     # Provider config + resources
@@ -211,6 +233,9 @@ CF-Architect/
 │   └── outputs.tf                  # Output values
 ├── tests/
 │   ├── unit/                       # Vitest server-side tests (workerd pool)
+│   │   └── lib/
+│   │       ├── format.test.ts      # formatRelativeTime + formatDate tests
+│   │       └── pagination.test.ts  # computePageItems + buildPageUrl tests
 │   ├── component/                  # Vitest React component tests (jsdom)
 │   └── e2e/                        # Playwright tests
 ├── astro.config.mjs

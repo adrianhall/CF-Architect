@@ -1,16 +1,150 @@
 ---
 /**
- * Landing page placeholder.
- * Will be fully implemented in phase 006 as the dashboard.
+ * Public landing page — rendered only for unauthenticated visitors.
+ *
+ * Authenticated users are redirected to `/dashboard` by the middleware
+ * before this page is rendered (spec §4.7).
+ *
+ * This page is intentionally static: no SSR data fetching, no JavaScript,
+ * no React islands. It is fully prerenderable as pure HTML.
  */
+
 import Layout from '../layouts/Layout.astro'
+import Button from '../components/ui/Button.astro'
 ---
 
-<Layout title="CF Architect">
-  <main class="bg-cf-dark text-cf-white flex min-h-screen flex-col items-center justify-center">
-    <h1 class="text-cf-orange text-4xl font-bold">CF Architect</h1>
-    <p class="text-cf-gray-500 mt-4">
-      Architecture diagram editor for the Cloudflare Developer Platform.
-    </p>
+<Layout title="Cloudflare Architect — Visual Architecture Diagramming">
+  <main class="bg-cf-dark flex min-h-screen flex-col">
+    <!-- Header bar -->
+    <header class="flex items-center justify-between border-b border-white/10 px-6 py-4">
+      <div class="flex items-center gap-3">
+        <svg
+          class="text-cf-orange h-7 w-7"
+          viewBox="0 0 109 41"
+          fill="currentColor"
+          aria-hidden="true"
+        >
+          <path
+            d="M82.3 18.6c-.4-5.3-4.8-9.6-10.2-9.6-3.9 0-7.3 2.2-9.1 5.4-.9-.6-1.9-.9-3-.9-2.9 0-5.3 2.1-5.7 4.9-3.2.7-5.6 3.5-5.6 6.9 0 3.9 3.1 7 7 7h26.1c3.4 0 6.2-2.8 6.2-6.2 0-3.1-2.2-5.7-5.7-7.5z"
+          ></path>
+        </svg>
+        <span class="text-cf-white text-lg font-bold tracking-tight">Cloudflare Architect</span>
+      </div>
+    </header>
+
+    <!-- Hero -->
+    <div class="flex flex-1 flex-col items-center justify-center px-4 py-20 text-center">
+      <div class="max-w-2xl">
+        <!-- Badge -->
+        <div
+          class="border-cf-orange/30 bg-cf-orange/10 text-cf-orange mb-6 inline-flex items-center rounded-full border px-4 py-1.5 text-sm font-medium"
+        >
+          Cloudflare Developer Platform
+        </div>
+
+        <!-- Heading -->
+        <h1 class="text-cf-white text-5xl font-extrabold tracking-tight sm:text-6xl">
+          Architecture<br />
+          <span class="text-cf-orange">Diagrams</span>, simplified.
+        </h1>
+
+        <!-- Description -->
+        <p class="text-cf-gray-500 mx-auto mt-6 max-w-xl text-lg leading-8">
+          Design, document, and share your Cloudflare service architecture with an interactive
+          canvas built around the full Cloudflare Developer Platform. Workers, D1, KV, R2, Pages —
+          all the services you know, in one place.
+        </p>
+
+        <!-- CTA -->
+        <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
+          <!--
+            Linking to /dashboard triggers CF Access OAuth for unauthenticated visitors
+            since /dashboard is a protected route. After login they land on the dashboard.
+          -->
+          <Button href="/dashboard" size="lg"> Sign In with GitHub </Button>
+          <Button href="https://developers.cloudflare.com/workers/" variant="ghost" size="lg">
+            Learn about Cloudflare →
+          </Button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature highlights -->
+    <section class="bg-cf-dark-alt border-t border-white/10 px-4 py-16">
+      <div class="mx-auto grid max-w-4xl grid-cols-1 gap-8 text-center sm:grid-cols-3">
+        <div class="flex flex-col items-center gap-3">
+          <div class="bg-cf-orange/20 flex h-12 w-12 items-center justify-center rounded-lg">
+            <svg
+              class="text-cf-orange h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.5"
+              aria-hidden="true"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"
+              ></path>
+            </svg>
+          </div>
+          <h3 class="text-cf-white font-semibold">18+ CF Services</h3>
+          <p class="text-cf-gray-500 text-sm">
+            Workers, D1, KV, R2, Pages, Queues and more — purpose-built shapes for every service.
+          </p>
+        </div>
+
+        <div class="flex flex-col items-center gap-3">
+          <div class="bg-cf-orange/20 flex h-12 w-12 items-center justify-center rounded-lg">
+            <svg
+              class="text-cf-orange h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.5"
+              aria-hidden="true"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"
+              ></path>
+            </svg>
+          </div>
+          <h3 class="text-cf-white font-semibold">Shareable Links</h3>
+          <p class="text-cf-gray-500 text-sm">
+            Share read-only diagram views with teammates via a secure token URL — no login required.
+          </p>
+        </div>
+
+        <div class="flex flex-col items-center gap-3">
+          <div class="bg-cf-orange/20 flex h-12 w-12 items-center justify-center rounded-lg">
+            <svg
+              class="text-cf-orange h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="1.5"
+              aria-hidden="true"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"></path>
+            </svg>
+          </div>
+          <h3 class="text-cf-white font-semibold">Edge-native</h3>
+          <p class="text-cf-gray-500 text-sm">
+            Runs on Cloudflare Workers with D1 and KV. Fast everywhere, zero cold starts.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="text-cf-gray-500 border-t border-white/10 px-6 py-6 text-center text-sm">
+      Built on the Cloudflare Developer Platform
+    </footer>
   </main>
 </Layout>

@@ -1,0 +1,78 @@
+---
+/**
+ * Button component — renders as an `<a>` tag when `href` is provided,
+ * otherwise as a `<button>` element. Styled with Tailwind utility classes
+ * to match shadcn/ui visual conventions using CF brand colours.
+ *
+ * @example
+ * <Button href="/canvas/new">New Diagram</Button>
+ * <Button variant="outline" size="sm" type="submit">Save</Button>
+ */
+
+/** Supported visual variants. */
+type Variant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive'
+
+/** Supported size tokens. */
+type Size = 'sm' | 'md' | 'lg'
+
+interface Props {
+  /** Visual style variant (default: `'primary'`). */
+  variant?: Variant
+  /** Size token controlling padding and text size (default: `'md'`). */
+  size?: Size
+  /** When provided the element renders as `<a href={href}>`. */
+  href?: string
+  /** Button `type` attribute — only used when rendering as `<button>`. */
+  type?: 'button' | 'submit'
+  /** Disables the button (adds `disabled` attribute and reduces opacity). */
+  disabled?: boolean
+  /** Extra Tailwind classes appended to the element's class list. */
+  class?: string
+}
+
+const {
+  variant = 'primary',
+  size = 'md',
+  href,
+  type = 'button',
+  disabled = false,
+  class: extraClass,
+  ...rest
+} = Astro.props
+
+/** Base classes shared by all variants and sizes. */
+const base =
+  'inline-flex items-center justify-center font-medium rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50'
+
+const variantClasses: Record<Variant, string> = {
+  primary: 'bg-cf-orange text-white hover:bg-cf-orange-dark focus-visible:ring-cf-orange',
+  secondary:
+    'bg-cf-gray-100 text-cf-gray-900 hover:bg-cf-gray-100/80 focus-visible:ring-cf-gray-500',
+  outline:
+    'border border-cf-gray-100 bg-white text-cf-gray-900 hover:bg-cf-gray-50 focus-visible:ring-cf-gray-500',
+  ghost: 'text-cf-gray-900 hover:bg-cf-gray-50 focus-visible:ring-cf-gray-500',
+  destructive: 'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600',
+}
+
+const sizeClasses: Record<Size, string> = {
+  sm: 'h-8 px-3 text-xs gap-1.5',
+  md: 'h-9 px-4 text-sm gap-2',
+  lg: 'h-11 px-6 text-base gap-2',
+}
+
+const className = [base, variantClasses[variant], sizeClasses[size], extraClass]
+  .filter(Boolean)
+  .join(' ')
+---
+
+{
+  href ? (
+    <a href={href} class={className} {...rest}>
+      <slot />
+    </a>
+  ) : (
+    <button type={type} disabled={disabled} class={className} {...rest}>
+      <slot />
+    </button>
+  )
+}

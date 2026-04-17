@@ -1,0 +1,138 @@
+---
+/**
+ * Pagination component — server-rendered previous/page-numbers/next navigation.
+ * No JavaScript required. Page number computation is delegated to
+ * `src/lib/pagination.ts` so the logic is independently unit-testable.
+ *
+ * @example
+ * <Pagination page={2} totalPages={10} baseUrl="/dashboard" />
+ * <Pagination page={3} totalPages={8} baseUrl="/blueprints" extraParams={{ search: "vpc" }} />
+ */
+
+import { computePageItems, buildPageUrl } from '../../lib/pagination'
+
+interface Props {
+  /** Current page number (1-indexed). */
+  page: number
+  /** Total number of pages. */
+  totalPages: number
+  /**
+   * Base URL path used to construct page links
+   * (e.g. `"/dashboard"` or `"/blueprints"`).
+   */
+  baseUrl: string
+  /**
+   * Additional query parameters to preserve across page links.
+   * Values may be a single string or an array of strings for multi-value
+   * params such as `tag` (e.g. `{ search: "vpc", tag: ["workers", "kv"] }`).
+   */
+  extraParams?: Record<string, string | string[]>
+}
+
+const { page, totalPages, baseUrl, extraParams } = Astro.props
+
+// Nothing to render when there is only one page.
+const items = computePageItems(page, totalPages)
+const showPagination = items.length > 0
+
+const prevUrl = showPagination && page > 1 ? buildPageUrl(baseUrl, page - 1, extraParams) : null
+const nextUrl =
+  showPagination && page < totalPages ? buildPageUrl(baseUrl, page + 1, extraParams) : null
+
+/** Shared class for all page-number link buttons. */
+const linkBase =
+  'inline-flex h-9 min-w-9 items-center justify-center rounded-md border px-2 text-sm font-medium transition-colors'
+const linkActive = 'border-cf-orange bg-cf-orange text-white pointer-events-none'
+const linkInactive = 'border-cf-gray-100 bg-white text-cf-gray-900 hover:bg-cf-gray-50'
+const linkDisabled = 'border-cf-gray-100 bg-white text-cf-gray-500 opacity-50 pointer-events-none'
+---
+
+{
+  showPagination && (
+    <nav aria-label="Pagination" class="mt-8 flex items-center justify-center gap-1">
+      {prevUrl ? (
+        <a href={prevUrl} class={`${linkBase} ${linkInactive} px-3`} aria-label="Previous page">
+          <svg
+            class="h-4 w-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          <span class="ml-1 hidden sm:inline">Previous</span>
+        </a>
+      ) : (
+        <span class={`${linkBase} ${linkDisabled} px-3`} aria-disabled="true">
+          <svg
+            class="h-4 w-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          <span class="ml-1 hidden sm:inline">Previous</span>
+        </span>
+      )}
+
+      {items.map((item) =>
+        item.type === 'ellipsis' ? (
+          <span class={`${linkBase} ${linkDisabled}`} aria-hidden="true">
+            &hellip;
+          </span>
+        ) : item.page === page ? (
+          <span
+            class={`${linkBase} ${linkActive}`}
+            aria-current="page"
+            aria-label={`Page ${item.page}`}
+          >
+            {item.page}
+          </span>
+        ) : (
+          <a
+            href={buildPageUrl(baseUrl, item.page!, extraParams)}
+            class={`${linkBase} ${linkInactive}`}
+            aria-label={`Page ${item.page}`}
+          >
+            {item.page}
+          </a>
+        ),
+      )}
+
+      {nextUrl ? (
+        <a href={nextUrl} class={`${linkBase} ${linkInactive} px-3`} aria-label="Next page">
+          <span class="mr-1 hidden sm:inline">Next</span>
+          <svg
+            class="h-4 w-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+      ) : (
+        <span class={`${linkBase} ${linkDisabled} px-3`} aria-disabled="true">
+          <span class="mr-1 hidden sm:inline">Next</span>
+          <svg
+            class="h-4 w-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </span>
+      )}
+    </nav>
+  )
+}

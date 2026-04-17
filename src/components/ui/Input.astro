@@ -1,0 +1,80 @@
+---
+/**
+ * Input component — a styled native `<input>` element with CF-brand focus ring.
+ * Use for form fields in SSR pages where no client-side interactivity is needed.
+ *
+ * @example
+ * <Input name="search" placeholder="Search diagrams…" value={search} />
+ * <Input name="email" type="email" required />
+ */
+
+interface Props {
+  /**
+   * HTML input type (default: `'text'`).
+   * Matches the full set of valid HTML input type attribute values.
+   */
+  type?:
+    | 'button'
+    | 'checkbox'
+    | 'color'
+    | 'date'
+    | 'datetime-local'
+    | 'email'
+    | 'file'
+    | 'hidden'
+    | 'image'
+    | 'month'
+    | 'number'
+    | 'password'
+    | 'radio'
+    | 'range'
+    | 'reset'
+    | 'search'
+    | 'submit'
+    | 'tel'
+    | 'text'
+    | 'time'
+    | 'url'
+    | 'week'
+  /** `name` attribute — required for form submission. */
+  name: string
+  /** Placeholder text shown when the field is empty. */
+  placeholder?: string
+  /** Pre-filled value. */
+  value?: string
+  /** Whether the field is required. */
+  required?: boolean
+  /** Extra Tailwind classes appended to the `<input>` element. */
+  class?: string
+}
+
+const {
+  type = 'text',
+  name,
+  placeholder,
+  value,
+  required,
+  class: extraClass,
+  ...rest
+} = Astro.props
+
+const className = [
+  'flex h-9 w-full rounded-md border border-cf-gray-100 bg-white px-3 py-1 text-sm text-cf-gray-900',
+  'placeholder:text-cf-gray-500',
+  'focus:outline-none focus:ring-2 focus:ring-cf-orange/50 focus:border-cf-orange',
+  'disabled:cursor-not-allowed disabled:opacity-50',
+  extraClass,
+]
+  .filter(Boolean)
+  .join(' ')
+---
+
+<input
+  type={type}
+  name={name}
+  placeholder={placeholder}
+  value={value}
+  required={required}
+  class={className}
+  {...rest}
+/>

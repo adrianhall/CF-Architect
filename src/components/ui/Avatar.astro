@@ -1,0 +1,56 @@
+---
+/**
+ * Avatar component — displays a rounded user avatar image. Falls back to a
+ * coloured circle containing the user's initials when `src` is absent or null.
+ *
+ * @example
+ * <Avatar src={user.avatar_url} alt={user.display_name} size="md" fallback="AB" />
+ */
+
+/** Supported size tokens. */
+type Size = 'sm' | 'md' | 'lg'
+
+interface Props {
+  /** Image URL. When absent or `null` the initials fallback is rendered. */
+  src?: string | null
+  /** Alt text for the image (always required for accessibility). */
+  alt: string
+  /** Size token (default: `'md'`). */
+  size?: Size
+  /** Initials to display when no image is available (up to 2 characters). */
+  fallback?: string
+}
+
+const { src, alt, size = 'md', fallback, ...rest } = Astro.props
+
+const sizeClasses: Record<Size, string> = {
+  sm: 'h-8 w-8 text-xs',
+  md: 'h-10 w-10 text-sm',
+  lg: 'h-12 w-12 text-base',
+}
+
+const containerClass = [
+  'inline-flex items-center justify-center rounded-full overflow-hidden flex-shrink-0',
+  sizeClasses[size],
+]
+  .filter(Boolean)
+  .join(' ')
+
+/** Trim fallback text to 2 characters. */
+const initials = fallback?.slice(0, 2).toUpperCase() ?? ''
+---
+
+<span class={containerClass} {...rest}>
+  {
+    src ? (
+      <img src={src} alt={alt} class="h-full w-full object-cover" />
+    ) : (
+      <span
+        class="bg-cf-orange flex h-full w-full items-center justify-center rounded-full font-medium text-white"
+        aria-label={alt}
+      >
+        {initials}
+      </span>
+    )
+  }
+</span>

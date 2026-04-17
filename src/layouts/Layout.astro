@@ -1,16 +1,24 @@
 ---
 /**
  * Base HTML layout for all pages.
- * Provides the document shell with proper meta tags, Tailwind CSS, and a content slot.
+ *
+ * Provides the document shell with proper meta tags, Tailwind CSS, a content
+ * slot, and a globally-mounted sonner `<Toaster>` for toast notifications.
+ *
+ * The Toaster is imported directly from the `sonner` npm package rather than
+ * the shadcn-generated wrapper (which requires `next-themes`).
+ * Ref: https://sonner.emilkowal.ski/
  */
+
+import { Toaster } from 'sonner'
+import '../styles/global.css'
+
 interface Props {
   /** The page title displayed in the browser tab. */
   title: string
 }
 
 const { title } = Astro.props
-
-import '../styles/global.css'
 ---
 
 <!doctype html>
@@ -25,5 +33,7 @@ import '../styles/global.css'
   </head>
   <body>
     <slot />
+    <!-- Global toast container — hydrated immediately so toasts work on any page -->
+    <Toaster client:load position="bottom-right" richColors />
   </body>
 </html>

@@ -1,0 +1,333 @@
+---
+/**
+ * Dashboard page — the authenticated user's diagram management hub (spec §4.7).
+ *
+ * Queries the database directly (same Kysely pattern as the API endpoints)
+ * rather than calling the API over HTTP, avoiding a loopback round-trip.
+ *
+ * Route: /dashboard
+ * Auth: required — middleware populates Astro.locals.user.
+ *
+ * Bindings accessed via `cloudflare:workers` (Astro Cloudflare adapter v13+).
+ * Ref: https://docs.astro.build/en/guides/integrations-guide/cloudflare/
+ */
+
+export const prerender = false
+
+import { env } from 'cloudflare:workers'
+
+import Layout from '../layouts/Layout.astro'
+import Button from '../components/ui/Button.astro'
+import Card from '../components/ui/Card.astro'
+import Badge from '../components/ui/Badge.astro'
+import EmptyState from '../components/ui/EmptyState.astro'
+import Pagination from '../components/ui/Pagination.astro'
+import { UserMenu } from '../components/ui/UserMenu'
+import { DeleteDiagramDialog } from '../components/ui/DeleteDiagramDialog'
+
+import type { Selectable } from 'kysely'
+
+import { createDb } from '../lib/db/client'
+import type { DiagramsTable } from '../lib/db/schema'
+import { mapDiagramToListItem } from '../lib/db/mappers'
+import { formatRelativeTime } from '../lib/format'
+import { parsePagination } from '../lib/api'
+
+// ---------------------------------------------------------------------------
+// Auth guard — middleware always sets locals.user for /dashboard.
+// Redirect to / (not /dashboard) to avoid an infinite redirect loop if the
+// middleware ever passes user = null for this route.
+// ---------------------------------------------------------------------------
+const user = Astro.locals.user
+if (!user) {
+  return Astro.redirect('/', 302)
+}
+
+// ---------------------------------------------------------------------------
+// Query params — page, search, and tag (multi-value, AND semantics)
+// ---------------------------------------------------------------------------
+const search = Astro.url.searchParams.get('search') ?? undefined
+const tags = [...new Set(Astro.url.searchParams.getAll('tag').filter((t) => t.length > 0))]
+const { page, limit, offset } = parsePagination(Astro.url)
+
+// ---------------------------------------------------------------------------
+// Database queries
+// Mirror the tag-filtering logic from src/pages/api/diagrams/index.ts so
+// the SSR page and the API endpoint stay in sync.
+// Ref: https://developers.cloudflare.com/d1/worker-api/d1-database/#batch
+// ---------------------------------------------------------------------------
+const db = createDb(env.DB)
+
+let query = db.selectFrom('diagrams').where('owner_id', '=', user.id)
+let countQuery = db.selectFrom('diagrams').where('owner_id', '=', user.id)
+
+if (search) {
+  const term = `%${search}%`
+  query = query.where((eb) => eb.or([eb('title', 'like', term), eb('description', 'like', term)]))
+  countQuery = countQuery.where((eb) =>
+    eb.or([eb('title', 'like', term), eb('description', 'like', term)]),
+  )
+}
+
+// Tag filter — AND semantics: diagram must have ALL specified tags.
+// Uses the same inner-join + GROUP BY + HAVING pattern as the API endpoint.
+if (tags.length > 0) {
+  query = query
+    .innerJoin('diagram_tags', 'diagrams.id', 'diagram_tags.diagram_id')
+    .where('diagram_tags.tag', 'in', tags)
+    .groupBy('diagrams.id')
+    .having((eb) => eb.fn.count<number>('diagram_tags.tag').distinct(), '=', tags.length)
+  countQuery = countQuery
+    .innerJoin('diagram_tags', 'diagrams.id', 'diagram_tags.diagram_id')
+    .where('diagram_tags.tag', 'in', tags)
+    .groupBy('diagrams.id')
+    .having((eb) => eb.fn.count<number>('diagram_tags.tag').distinct(), '=', tags.length)
+}
+
+// Execute count query. When GROUP BY is active (tag filter), wrap in a subquery
+// so SQLite counts matched rows rather than groups — same pattern as the API.
+let total: number
+if (tags.length > 0) {
+  const countResult = await db
+    .selectFrom(countQuery.select('diagrams.id').as('matched'))
+    .select((eb) => eb.fn.countAll<number>().as('count'))
+    .executeTakeFirstOrThrow()
+  total = countResult.count
+} else {
+  const countResult = await countQuery
+    .select((eb) => eb.fn.countAll<number>().as('count'))
+    .executeTakeFirstOrThrow()
+  total = countResult.count
+}
+
+// Execute data query (type is unaffected by the tag-filter branch above)
+const rows: Selectable<DiagramsTable>[] = await query
+  .selectAll('diagrams')
+  .orderBy('updated_at', 'desc')
+  .limit(limit)
+  .offset(offset)
+  .execute()
+
+const totalPages = Math.ceil(total / limit)
+
+// Batch-fetch tags for all returned diagrams to avoid N+1
+const diagramIds = rows.map((r) => r.id)
+const tagRows =
+  diagramIds.length > 0
+    ? await db
+        .selectFrom('diagram_tags')
+        .select(['diagram_id', 'tag'])
+        .where('diagram_id', 'in', diagramIds)
+        .execute()
+    : []
+
+const tagMap = new Map<string, string[]>()
+for (const row of tagRows) {
+  const existing = tagMap.get(row.diagram_id)
+  if (existing) {
+    existing.push(row.tag)
+  } else {
+    tagMap.set(row.diagram_id, [row.tag])
+  }
+}
+
+const diagrams = rows.map((row) => mapDiagramToListItem(row, tagMap.get(row.id) ?? []))
+
+// Preserve search and tag params in pagination links
+const extraParams: Record<string, string | string[]> | undefined =
+  search || tags.length > 0
+    ? {
+        ...(search ? { search } : {}),
+        ...(tags.length > 0 ? { tag: tags } : {}),
+      }
+    : undefined
+---
+
+<Layout title="Dashboard — Cloudflare Architect">
+  <div class="bg-cf-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="border-cf-gray-100 border-b bg-white">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="flex h-16 items-center justify-between">
+          <!-- Logo / title -->
+          <a href="/dashboard" class="flex items-center gap-3 transition-opacity hover:opacity-80">
+            <svg
+              class="text-cf-orange h-7 w-7"
+              viewBox="0 0 109 41"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                d="M82.3 18.6c-.4-5.3-4.8-9.6-10.2-9.6-3.9 0-7.3 2.2-9.1 5.4-.9-.6-1.9-.9-3-.9-2.9 0-5.3 2.1-5.7 4.9-3.2.7-5.6 3.5-5.6 6.9 0 3.9 3.1 7 7 7h26.1c3.4 0 6.2-2.8 6.2-6.2 0-3.1-2.2-5.7-5.7-7.5z"
+              ></path>
+            </svg>
+            <span class="text-cf-gray-900 hidden text-lg font-bold sm:block"
+              >Cloudflare Architect</span
+            >
+          </a>
+
+          <!-- User menu island -->
+          <UserMenu
+            client:load
+            userName={user.display_name}
+            avatarUrl={user.avatar_url}
+            isAdmin={user.role === 'admin'}
+          />
+        </div>
+      </div>
+    </header>
+
+    <!-- Page content -->
+    <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <!-- Page title + action bar -->
+      <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 class="text-cf-gray-900 text-2xl font-bold">My Diagrams</h1>
+          <p class="text-cf-gray-500 mt-1 text-sm">
+            {total === 0 ? 'No diagrams yet' : `${total} diagram${total === 1 ? '' : 's'}`}
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <Button href="/blueprints" variant="outline" size="sm"> Browse Blueprints </Button>
+          <Button href="/canvas/new" size="sm"> + New Diagram </Button>
+        </div>
+      </div>
+
+      <!-- Search form -->
+      <form method="GET" class="mb-6">
+        <div class="flex max-w-sm gap-2">
+          <input
+            type="search"
+            name="search"
+            value={search ?? ''}
+            placeholder="Search diagrams…"
+            class="border-cf-gray-100 text-cf-gray-900 placeholder:text-cf-gray-500 focus:ring-cf-orange/50 focus:border-cf-orange flex h-9 w-full rounded-md border bg-white px-3 py-1 text-sm focus:ring-2 focus:outline-none"
+          />
+          <Button type="submit" variant="outline" size="sm">Search</Button>
+          {
+            search && (
+              <Button href="/dashboard" variant="ghost" size="sm">
+                Clear
+              </Button>
+            )
+          }
+        </div>
+      </form>
+
+      <!-- Diagram grid or empty state -->
+      {
+        diagrams.length === 0 ? (
+          <EmptyState
+            title={search ? `No diagrams matching "${search}"` : 'No diagrams yet'}
+            description={
+              search
+                ? 'Try a different search term.'
+                : 'Get started by creating your first architecture diagram.'
+            }
+            actionLabel={search ? undefined : 'Create your first diagram'}
+            actionHref={search ? undefined : '/canvas/new'}
+          />
+        ) : (
+          <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {diagrams.map((diagram) => (
+              <div class="group relative">
+                <Card>
+                  <div slot="header">
+                    <a
+                      href={`/canvas/${diagram.id}`}
+                      class="bg-cf-gray-50 border-cf-gray-100 -mx-4 -mt-4 mb-0 block h-36 overflow-hidden rounded-t-lg border-b"
+                    >
+                      <img
+                        src={`/api/diagrams/${diagram.id}/thumbnail`}
+                        loading="lazy"
+                        alt={`Diagram thumbnail for ${diagram.title}`}
+                        class="h-full w-full object-contain"
+                        onerror="this.style.display='none'"
+                      />
+                    </a>
+                  </div>
+
+                  <div>
+                    <a
+                      href={`/canvas/${diagram.id}`}
+                      class="hover:text-cf-orange block transition-colors"
+                    >
+                      <h2 class="text-cf-gray-900 truncate font-semibold" title={diagram.title}>
+                        {diagram.title}
+                      </h2>
+                    </a>
+
+                    {diagram.description && (
+                      <p class="text-cf-gray-500 mt-1 line-clamp-2 text-sm">
+                        {diagram.description.length > 100
+                          ? diagram.description.slice(0, 100) + '…'
+                          : diagram.description}
+                      </p>
+                    )}
+
+                    {diagram.tags.length > 0 && (
+                      <div class="mt-2 flex flex-wrap gap-1">
+                        {diagram.tags.map((tag) => (
+                          <Badge variant="secondary">{tag}</Badge>
+                        ))}
+                      </div>
+                    )}
+
+                    <p class="text-cf-gray-500 mt-2 text-xs">
+                      Updated {formatRelativeTime(diagram.updatedAt)}
+                    </p>
+                  </div>
+
+                  <div slot="footer">
+                    <div class="flex items-center justify-between">
+                      <a
+                        href={`/canvas/${diagram.id}`}
+                        class="text-cf-gray-500 hover:text-cf-orange inline-flex items-center gap-1.5 text-xs font-medium transition-colors"
+                        title="Edit diagram"
+                      >
+                        <svg
+                          class="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          stroke-width="1.5"
+                          aria-hidden="true"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125"
+                          />
+                        </svg>
+                        Edit
+                      </a>
+
+                      <DeleteDiagramDialog
+                        client:load
+                        diagramId={diagram.id}
+                        diagramTitle={diagram.title}
+                      />
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            ))}
+          </div>
+        )
+      }
+
+      <!-- Pagination -->
+      {
+        totalPages > 1 && (
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            baseUrl="/dashboard"
+            extraParams={extraParams}
+          />
+        )
+      }
+    </main>
+  </div>
+</Layout>
