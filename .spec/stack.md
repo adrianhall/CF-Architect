@@ -28,13 +28,13 @@
 
 **tldraw integration notes:**
 - Rendered as a React island using `client:only="react"` (no SSR - tldraw requires DOM APIs).
-- Custom `ShapeUtil` subclasses define Cloudflare service node shapes.
+- Custom shapes use `BaseBoxShapeUtil` with `TLGlobalShapePropsMap` module augmentation and `RecordProps` + `T` validators (tldraw v4 pattern). Ref: https://tldraw.dev/docs/shapes
 - Built-in arrow shapes and bindings system handle service connections.
 - Export via `editor.getSvgString()` and `editor.toImage()` for SVG/PNG.
 - Read-only mode via `editor.updateInstanceState({ isReadonly: true })` for shared views.
-- Persistence via `editor.store.getStoreSnapshot()` serialized to D1 as JSON.
-- Blueprints are pre-built store snapshots loaded via `store.loadStoreSnapshot()`.
-- tldraw v4 bundles its own UI assets (fonts, icons, translations) internally. The `@tldraw/assets` package no longer exists as a standalone copy target. If corporate network restrictions block tldraw's default CDN loads, configure asset URLs via tldraw's `assetUrls` prop at the component level. The `public/tldraw-assets/` directory and `copy:tldraw-assets` script remain as placeholders for this purpose.
+- Persistence via `getSnapshot(editor.store)` / `loadSnapshot(editor.store, { document })` standalone functions from the `tldraw` package (tldraw v4 API). Ref: https://tldraw.dev/docs/persistence
+- Blueprints are pre-built store snapshots loaded via `loadSnapshot(editor.store, { document })`.
+- tldraw v4 bundles its own UI assets (fonts, icons, translations) internally. The `@tldraw/assets` package no longer exists as a standalone copy target. If corporate network restrictions block tldraw's default CDN loads, configure asset URLs via tldraw's `assetUrls` prop at the component level. The `public/tldraw-assets/` directory remains as a placeholder for this purpose.
 
 ## Database & ORM
 
@@ -100,27 +100,38 @@
 | `vitest` | ^4.1.4 | Unit/integration test runner |
 | `@cloudflare/vitest-pool-workers` | ^0.14.6 | Miniflare-backed test pool for Workers APIs |
 | `@testing-library/react` | ^16.3.2 | React component testing utilities |
+| `@testing-library/jest-dom` | ^6.x | Custom DOM matchers for testing-library |
+| `jsdom` | ^26.x | DOM environment for component tests |
 | `@playwright/test` | ^1.59.1 | End-to-end browser testing |
 
-**Testing notes:**
-- Vitest runs unit tests with miniflare pool for D1/KV access in tests.
-- Istanbul coverage provider (V8 is not supported by `@cloudflare/vitest-pool-workers`), targeting 80% threshold.
+**Testing architecture:**
+
+The test suite uses **two Vitest projects** running in a single process via `test.projects` in the root `vitest.config.ts`. Coverage is collected globally across both projects with Istanbul.
+
+| Project | Config file | Environment | Test directory | Purpose |
+|---------|-------------|-------------|----------------|---------|
+| `workerd` | `vitest.config.workerd.ts` | Cloudflare workerd (miniflare) | `tests/unit/` | Server-side logic needing D1/KV bindings |
+| `dom` | `vitest.config.dom.ts` | jsdom | `tests/component/` | React component tests needing DOM APIs |
+
+- A single `npm run test:coverage` invocation runs **both** projects and reports **combined** coverage against 80% thresholds.
+- Istanbul coverage provider (V8 is not supported by `@cloudflare/vitest-pool-workers`).
+- Component tests mock the `Tldraw` component and `useEditor()` hook. Full tldraw integration is covered by Playwright E2E tests.
 - Playwright tests cover all three "sides" (canvas, share view, admin).
 
 ## npm Scripts
 
 | Script | Command | Purpose |
 |--------|---------|---------|
-| `dev` | `npm run copy:tldraw-assets && astro dev` | Local development with Wrangler emulation |
-| `build` | `npm run copy:tldraw-assets && astro build` | Production build |
+| `dev` | `astro dev` | Local development with Wrangler emulation |
+| `build` | `astro build` | Production build |
 | `preview` | `astro preview` | Preview production build locally |
 | `deploy` | `npm run build && wrangler deploy` | Build and deploy to Cloudflare |
-| `copy:tldraw-assets` | `mkdir -p public/tldraw-assets && if [ -d node_modules/@tldraw/assets ]; then cp -r node_modules/@tldraw/assets/* public/tldraw-assets/; fi` | Copy tldraw UI assets for self-hosting (no-op in tldraw v4) |
 | `firstrun` | `cd terraform && terraform init && terraform apply` | Provision infrastructure |
-| `check` | `tsc --noEmit && eslint . && prettier --check .` | Type check + lint + format check |
-| `test` | `vitest run` | Run unit tests |
-| `test:watch` | `vitest` | Run unit tests in watch mode |
-| `test:coverage` | `vitest run --coverage` | Unit tests with Istanbul coverage (80% threshold) |
+| `check` | `run-p check:*` | Type check + lint + format check (parallel) |
+| `fullcheck` | `run-s check test:coverage` | Full CI gate: check + tests with 80% coverage |
+| `test` | `vitest run` | Run all unit + component tests (both projects) |
+| `test:watch` | `vitest` | Run tests in watch mode |
+| `test:coverage` | `vitest run --coverage` | Tests with Istanbul coverage (80% threshold, combined) |
 | `test:e2e` | `playwright test` | End-to-end tests |
 | `generate-types` | `wrangler types` | Generate Cloudflare binding types |
 | `db:migrate` | `wrangler d1 migrations apply cf-architect-db` | Run D1 migrations (production) |
@@ -199,14 +210,17 @@ CF-Architect/
 │   ├── variables.tf                # Input variables
 │   └── outputs.tf                  # Output values
 ├── tests/
-│   ├── unit/                       # Vitest unit tests
+│   ├── unit/                       # Vitest server-side tests (workerd pool)
+│   ├── component/                  # Vitest React component tests (jsdom)
 │   └── e2e/                        # Playwright tests
 ├── astro.config.mjs
 ├── tsconfig.json
 ├── wrangler.jsonc
 ├── eslint.config.js
 ├── prettier.config.js
-├── vitest.config.ts
+├── vitest.config.ts                # Root config: projects + global coverage
+├── vitest.config.workerd.ts        # Workerd project config (D1/KV tests)
+├── vitest.config.dom.ts            # DOM project config (component tests)
 ├── playwright.config.ts
 └── package.json
 ```

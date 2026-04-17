@@ -10,6 +10,32 @@ Build the interactive tldraw-based canvas editor with custom Cloudflare service 
 
 ## Deliverables
 
+### 0. Dual Vitest Project Setup
+
+Set up the **two Vitest projects** architecture (workerd + jsdom) described in AGENTS.md §7 and `.spec/stack.md`. This is a prerequisite for component testing in this phase.
+
+#### Dependencies to install
+
+```bash
+npm i -D jsdom @testing-library/jest-dom
+```
+
+#### Config files to create/modify
+
+| File | Purpose |
+|------|---------|
+| `vitest.config.ts` | Root config: `test.projects` array + global Istanbul coverage (80% thresholds) |
+| `vitest.config.workerd.ts` | Extracted from current config: `cloudflareTest()` plugin, workerd pool, `tests/unit/` |
+| `vitest.config.dom.ts` | New: jsdom environment, `@testing-library/react`, `tests/component/` |
+| `tests/component-setup.ts` | Setup file for DOM project: imports `@testing-library/jest-dom/vitest` |
+
+#### Verification
+
+- `npm run test:coverage` runs **both** projects and reports combined coverage.
+- Existing workerd tests in `tests/unit/` continue to pass unchanged.
+- `vitest run --project dom` runs only component tests.
+- `vitest run --project workerd` runs only server-side tests.
+
 ### 1. Cloudflare Service SVG Icons
 
 #### `public/icons/cf/*.svg`
@@ -100,9 +126,22 @@ interface CfServiceShapeProps {
 }
 ```
 
+**tldraw v4 type registration (module augmentation):**
+```typescript
+declare module 'tldraw' {
+  export interface TLGlobalShapePropsMap {
+    'cf-service': CfServiceShapeProps
+  }
+}
+
+type CfServiceShape = TLShape<'cf-service'>
+```
+Ref: https://tldraw.dev/docs/shapes
+
 **ShapeUtil class (`CfServiceShapeUtil`):**
 - Extends `BaseBoxShapeUtil<CfServiceShape>`.
 - `static type = 'cf-service'` as the shape type identifier.
+- `static props: RecordProps<CfServiceShape>` with `T` validators (`T.number`, `T.string`).
 - `getDefaultProps()`: returns default w/h/serviceType/label.
 - `component()`: renders the shape as a React component:
   - Container div with Cloudflare dark background (`#1A1A2E`), rounded corners, border.
@@ -115,8 +154,8 @@ interface CfServiceShapeProps {
 - `onDoubleClick()`: enters label editing mode.
 - `canResize()`: returns true.
 
-**Register shape tools:**
-Create the shape tool and custom tool setup needed for tldraw to recognize `cf-service` shapes. Export `cfServiceShapeUtils` array and `cfServiceTools` for use in the Tldraw component.
+**Register shape:**
+Export `CfServiceShapeUtil` for use in the Tldraw component's `shapeUtils` prop. No custom tool class is needed — shapes are created programmatically via `editor.createShape()` from the ServiceToolbar drag-and-drop interaction.
 
 ### 4. Canvas Editor Component
 
@@ -140,15 +179,18 @@ interface CanvasEditorProps {
    - Custom shape utils: `[CfServiceShapeUtil]`.
    - tldraw v4 bundles its own UI assets internally. If corporate network restrictions block default CDN loads, configure asset URLs via tldraw's `assetUrls` prop.
    - Asset restrictions: `acceptedImageMimeTypes: []`, `acceptedVideoMimeTypes: []`.
+   - `components: { InFrontOfTheCanvas: ServiceToolbar }` to overlay the service toolbar.
 2. On mount (`onMount` callback from tldraw):
-   - If `initialData`, call `store.loadStoreSnapshot(JSON.parse(initialData))`.
-   - If `blueprintData`, call `store.loadStoreSnapshot(JSON.parse(blueprintData))`.
-3. **Auto-save** (debounced, 30-second interval):
-   - Listen to store changes.
+   - If `initialData`, call `loadSnapshot(editor.store, { document: JSON.parse(initialData) })` (tldraw v4 standalone function).
+   - If `blueprintData`, call `loadSnapshot(editor.store, { document: JSON.parse(blueprintData) })`.
+   - Ref: https://tldraw.dev/docs/persistence
+3. **Auto-save** (debounced, 30-second interval) — extracted into a `useAutoSave` custom hook for testability:
+   - Listen to store changes via `editor.store.listen()`.
    - On change, start/reset a 30-second debounce timer.
-   - On timer fire: call `PUT /api/diagrams/{diagramId}` with current snapshot.
+   - On timer fire: serialize via `getSnapshot(editor.store)` (tldraw v4 API), then call `PUT /api/diagrams/{diagramId}` with `document` portion.
    - If no `diagramId` yet (new diagram), first `POST /api/diagrams` to create, then store the returned ID for subsequent saves.
    - Show save status indicator (saving/saved/error).
+   - The `useAutoSave` hook is independently testable with fake timers and mock fetch.
 4. **Manual save**: Button that immediately triggers save.
 5. **Custom top bar overlay** with:
    - Title input field (editable).
@@ -182,10 +224,11 @@ export class ApiError extends Error {
 
 Implement per spec §4.5:
 
-- Collapsible left sidebar panel overlaying the canvas.
+- Collapsible left sidebar panel overlaying the canvas, registered as tldraw's `InFrontOfTheCanvas` component.
 - Services grouped by category with headings.
 - Each service shows icon, name, description tooltip.
-- **Drag to canvas**: Use HTML5 drag-and-drop. On drag start, set drag data with service type. On drop onto canvas, use `editor.createShape()` to create a `cf-service` shape at the drop position.
+- **Drag to canvas**: Use tldraw's pointer-capture drag pattern (per the official drag-and-drop tray example). On pointer down, capture the pointer and track drag state. On pointer up over the canvas, convert screen coordinates via `editor.screenToPage()` and call `editor.createShape()` to create a `cf-service` shape at the drop position. This integrates cleanly with tldraw's coordinate system.
+  Ref: https://tldraw.dev/examples/drag-and-drop-tray
 - **Search/filter**: Text input filters services by name (case-insensitive substring match).
 - Styled with Cloudflare brand colors.
 - Toggle button to collapse/expand the sidebar.
@@ -216,8 +259,8 @@ Implement per spec §4.5:
 
 ### 7. tldraw UI Assets
 
-tldraw v4 bundles its own UI assets (fonts, icons, translations) internally. The `@tldraw/assets` package no longer exists as a standalone copy target. The `copy:tldraw-assets` script (set up in phase 001) is a no-op placeholder. Verify that:
-- `npm run dev` and `npm run build` succeed (the copy script runs without error).
+tldraw v4 bundles its own UI assets (fonts, icons, translations) internally. The `@tldraw/assets` package no longer exists as a standalone copy target. Verify that:
+- `npm run dev` and `npm run build` succeed.
 - `public/tldraw-assets/` is in `.gitignore`.
 - If corporate network restrictions block tldraw's default CDN loads, configure asset URLs via tldraw's `assetUrls` prop at the component level.
 
@@ -225,7 +268,9 @@ tldraw v4 bundles its own UI assets (fonts, icons, translations) internally. The
 
 ## Testing Requirements
 
-### `tests/unit/components/canvas/shapes/cf-services.test.ts`
+### Server-side tests (workerd pool — `tests/unit/`)
+
+#### `tests/unit/components/canvas/shapes/cf-services.test.ts`
 - Test `CF_SERVICES` contains all 19 services.
 - Test each service has all required fields (type, displayName, category, iconPath, description).
 - Test `getServiceByType` returns correct service.
@@ -234,17 +279,31 @@ tldraw v4 bundles its own UI assets (fonts, icons, translations) internally. The
 - Test `getCategories` returns all unique categories.
 - Test no duplicate service types.
 
-### `tests/unit/components/canvas/shapes/CfServiceShapeUtil.test.ts`
-- Test `CfServiceShapeUtil` has correct static type.
-- Test `getDefaultProps` returns valid defaults.
-- Test shape creation with all Cloudflare service types produces valid shapes.
-
-### `tests/unit/lib/api-client.test.ts`
+#### `tests/unit/lib/api-client.test.ts`
 - Test `fetchApi` parses successful JSON response.
 - Test `fetchApi` throws `ApiError` on error response.
 - Test `ApiError` has correct code and status.
 
-**Note:** React component rendering tests for `CanvasEditor` and `ServiceToolbar` are difficult without a full DOM environment (tldraw requires a real browser). Focus unit tests on the data layer (registry, shape utils, API client). E2E tests in phase 009 will cover the full canvas interaction.
+### Component tests (jsdom — `tests/component/`)
+
+#### `tests/component/canvas/shapes/CfServiceShapeUtil.test.tsx`
+- Test `CfServiceShapeUtil` has correct static type.
+- Test `getDefaultProps` returns valid defaults.
+- Test shape creation with all Cloudflare service types produces valid shapes.
+
+#### `tests/component/canvas/ServiceToolbar.test.tsx`
+- Test all 19 services render grouped by category.
+- Test search/filter reduces displayed services.
+- Test collapse/expand toggle hides/shows the panel.
+- Mock `useEditor()` — verify `editor.createShape()` is called on drop.
+
+#### `tests/component/canvas/CanvasEditor.test.tsx`
+- Test top bar overlay renders (title input, save/back buttons).
+- Test save status indicator states (idle, saving, saved, error).
+- Test auto-save debounce fires after 30s of inactivity (via `useAutoSave` hook with fake timers).
+- Test error banner appears on save failure.
+
+**Note:** The `Tldraw` component and `useEditor()` hook are mocked in component tests. Full tldraw canvas integration is covered by E2E tests in phase 009.
 
 ---
 
@@ -274,21 +333,23 @@ tldraw v4 bundles its own UI assets (fonts, icons, translations) internally. The
 
 ## Acceptance Criteria
 
+- [ ] Dual vitest project setup (workerd + jsdom) with combined coverage reporting
 - [ ] All 19 Cloudflare service SVG icons exist in `public/icons/cf/`
 - [ ] `src/components/canvas/shapes/cf-services.ts` exports the full service registry
-- [ ] `src/components/canvas/shapes/CfServiceShapeUtil.tsx` implements the custom shape
+- [ ] `src/components/canvas/shapes/CfServiceShapeUtil.tsx` implements the custom shape (tldraw v4 API)
 - [ ] `src/components/canvas/CanvasEditor.tsx` renders tldraw with custom shapes
-- [ ] `src/components/canvas/ServiceToolbar.tsx` provides drag-to-canvas functionality
+- [ ] `src/components/canvas/ServiceToolbar.tsx` provides drag-to-canvas functionality (pointer-capture pattern)
 - [ ] `src/pages/canvas/new.astro` creates new diagrams (blank or from blueprint)
 - [ ] `src/pages/canvas/[id].astro` edits existing diagrams
-- [ ] Auto-save works (debounced 30s)
+- [ ] Auto-save works (debounced 30s) via `useAutoSave` custom hook
 - [ ] Manual save works
 - [ ] tldraw editor loads and renders correctly (assets bundled internally in v4)
 - [ ] Image/video embedding is disabled
 - [ ] `src/lib/api-client.ts` provides typed fetch wrapper
 - [ ] All exports have JSDoc documentation
-- [ ] Unit tests cover service registry and shape utils
+- [ ] Server-side unit tests cover service registry and API client (workerd pool)
+- [ ] Component tests cover shape util, toolbar, and editor (jsdom)
 - [ ] `npm run check` exits 0
-- [ ] `npm run test:coverage` exits 0 with 80%+ coverage
+- [ ] `npm run test:coverage` exits 0 with 80%+ coverage (combined across both projects)
 - [ ] `npm run dev` starts and canvas pages work
 - [ ] `npm run build` succeeds

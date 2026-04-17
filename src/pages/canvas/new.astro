@@ -1,0 +1,61 @@
+---
+/**
+ * New canvas page — creates a blank diagram or clones from a blueprint.
+ *
+ * Full-viewport layout (no header/footer per spec §11.2).
+ * Optionally loads a blueprint via `?blueprint=:id` query param.
+ *
+ * Requires authentication — middleware sets `Astro.locals.user`.
+ */
+export const prerender = false
+
+import { env } from 'cloudflare:workers'
+
+import { createDb } from '../../lib/db/client'
+import { CanvasEditor } from '../../components/canvas/CanvasEditor'
+
+const user = Astro.locals.user
+if (!user) {
+  return Astro.redirect('/')
+}
+
+// Check for blueprint query parameter
+let blueprintData: string | undefined
+const blueprintId = Astro.url.searchParams.get('blueprint')
+if (blueprintId) {
+  const db = createDb(env.DB)
+  const blueprint = await db
+    .selectFrom('diagrams')
+    .selectAll()
+    .where('id', '=', blueprintId)
+    .where('is_blueprint', '=', 1)
+    .executeTakeFirst()
+
+  if (blueprint) {
+    blueprintData = blueprint.canvas_data
+  }
+  // If blueprint not found, ignore and start blank
+}
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>New Diagram — CF Architect</title>
+    <style>
+      /* Full-viewport canvas layout — no scrollbars, no body margin */
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <CanvasEditor client:only="react" blueprintData={blueprintData} />
+  </body>
+</html>

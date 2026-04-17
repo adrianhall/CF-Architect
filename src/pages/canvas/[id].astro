@@ -1,0 +1,67 @@
+---
+/**
+ * Edit canvas page — loads an existing diagram by ID.
+ *
+ * Full-viewport layout (no header/footer per spec §11.2).
+ * Verifies diagram ownership — returns 404 if the diagram
+ * does not exist or is not owned by the current user.
+ *
+ * Requires authentication — middleware sets `Astro.locals.user`.
+ */
+export const prerender = false
+
+import { env } from 'cloudflare:workers'
+
+import { createDb } from '../../lib/db/client'
+import { CanvasEditor } from '../../components/canvas/CanvasEditor'
+
+const user = Astro.locals.user
+if (!user) {
+  return Astro.redirect('/')
+}
+
+const { id } = Astro.params
+if (!id) {
+  return new Response('Not found', { status: 404 })
+}
+
+const db = createDb(env.DB)
+const diagram = await db
+  .selectFrom('diagrams')
+  .selectAll()
+  .where('id', '=', id)
+  .where('owner_id', '=', user.id)
+  .executeTakeFirst()
+
+if (!diagram) {
+  return new Response('Not found', { status: 404 })
+}
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{diagram.title} — CF Architect</title>
+    <style>
+      /* Full-viewport canvas layout — no scrollbars, no body margin */
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <CanvasEditor
+      client:only="react"
+      diagramId={diagram.id}
+      initialData={diagram.canvas_data}
+      title={diagram.title}
+      description={diagram.description}
+    />
+  </body>
+</html>

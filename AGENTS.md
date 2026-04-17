@@ -118,13 +118,39 @@ For any other npm package, check `https://www.npmjs.com/package/<package-name>` 
 
 ## 7. Testing Rules
 
-- **Unit tests** in `tests/unit/` mirror the `src/` directory structure.
+### Dual Vitest Projects
+
+The test suite uses **two Vitest projects** running in a single process via `test.projects` in the root `vitest.config.ts`. Coverage is collected globally across both projects with Istanbul.
+
+| Project   | Config file                | Environment                    | Test directory     | Purpose                                  |
+| --------- | -------------------------- | ------------------------------ | ------------------ | ---------------------------------------- |
+| `workerd` | `vitest.config.workerd.ts` | Cloudflare workerd (miniflare) | `tests/unit/`      | Server-side logic needing D1/KV bindings |
+| `dom`     | `vitest.config.dom.ts`     | jsdom                          | `tests/component/` | React component tests needing DOM APIs   |
+
+- A single `npm run test:coverage` invocation runs **both** projects and reports **combined** coverage against 80% thresholds.
+- Run a single project with `vitest run --project workerd` or `vitest run --project dom`.
+
+### Server-side tests (`tests/unit/`)
+
+- **Mirror the `src/` directory structure** (e.g., `tests/unit/lib/api.test.ts` tests `src/lib/api.ts`).
 - **Test file naming**: `*.test.ts` or `*.test.tsx`.
 - **Use miniflare** (via `@cloudflare/vitest-pool-workers`) for tests that need D1/KV.
 - **Test isolation**: Each test file sets up and tears down its own data. No shared mutable state between tests.
-- **Coverage**: Istanbul provider (V8 is not supported by `@cloudflare/vitest-pool-workers`), 80% threshold on statements, branches, functions, and lines.
-- **E2E tests** in `tests/e2e/` use Playwright.
 - **Mocking**: Mock external HTTP calls (CF Access endpoints). Never make real external calls in tests.
+- **Assertions**: Test both success and error paths for every API endpoint.
+
+### Component tests (`tests/component/`)
+
+- **Mirror the `src/` directory structure** (e.g., `tests/component/canvas/ServiceToolbar.test.tsx` tests `src/components/canvas/ServiceToolbar.tsx`).
+- **Test file naming**: `*.test.ts` or `*.test.tsx`.
+- **Use `@testing-library/react`** for rendering and querying React components.
+- **Mock tldraw**: The `Tldraw` component and `useEditor()` hook should be mocked in component tests. Full tldraw integration is covered by E2E tests.
+- **Extract testable logic**: Complex logic (e.g., auto-save debounce) should be extracted into custom hooks or utility functions that can be tested independently.
+
+### General rules
+
+- **Coverage**: Istanbul provider (V8 is not supported by `@cloudflare/vitest-pool-workers`), 80% threshold on statements, branches, functions, and lines. Combined across both projects.
+- **E2E tests** in `tests/e2e/` use Playwright.
 - **Assertions**: Test both success and error paths for every API endpoint.
 
 ---
@@ -147,10 +173,11 @@ For any other npm package, check `https://www.npmjs.com/package/<package-name>` 
 
 ### tldraw
 
-- tldraw v4 bundles its own UI assets (fonts, icons, translations) internally. The `@tldraw/assets` package no longer exists as a standalone copy target. If corporate network restrictions block tldraw's default CDN loads, configure asset URLs via tldraw's `assetUrls` prop at the component level. The `public/tldraw-assets/` directory and `copy:tldraw-assets` script remain as placeholders for this purpose.
+- tldraw v4 bundles its own UI assets (fonts, icons, translations) internally. The `@tldraw/assets` package no longer exists as a standalone copy target. If corporate network restrictions block tldraw's default CDN loads, configure asset URLs via tldraw's `assetUrls` prop at the component level. The `public/tldraw-assets/` directory remains as a placeholder for this purpose.
 - Disable image/video embedding (`acceptedImageMimeTypes: []`, `acceptedVideoMimeTypes: []`).
-- Custom shapes use `BaseBoxShapeUtil`.
-- Persistence via `store.getStoreSnapshot()` / `store.loadStoreSnapshot()`.
+- Custom shapes use `BaseBoxShapeUtil` with `TLGlobalShapePropsMap` module augmentation and `RecordProps` + `T` validators (tldraw v4 pattern).
+- Persistence via `getSnapshot(editor.store)` / `loadSnapshot(editor.store, { document })` standalone functions from the `tldraw` package (tldraw v4 API).
+  Ref: https://tldraw.dev/docs/persistence
 
 ---
 

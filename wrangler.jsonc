@@ -1,7 +1,17 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "compatibility_date": "2026-04-14",
-  "compatibility_flags": ["global_fetch_strictly_public"],
+  "compatibility_flags": [
+    "global_fetch_strictly_public",
+    // The following flags are required by the Vitest pool-workers runner.
+    // Declaring them here prevents noisy [vpw:debug] log lines during tests.
+    "enable_nodejs_tty_module",
+    "enable_nodejs_fs_module",
+    "enable_nodejs_http_modules",
+    "enable_nodejs_perf_hooks_module",
+    "enable_nodejs_v8_module",
+    "enable_nodejs_process_v2",
+  ],
   "name": "cf-architect",
   "main": "@astrojs/cloudflare/entrypoints/server",
   "assets": {

@@ -1,5 +1,5 @@
 /// <reference types="@cloudflare/vitest-pool-workers/types" />
-import { describe, it, expect } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { env } from 'cloudflare:workers'
 
 import {
@@ -101,6 +101,16 @@ function brokenCache(): KVNamespace {
 }
 
 describe('error handling', () => {
+  // Suppress expected console.error output from the cache functions'
+  // intentional error-swallowing behaviour.
+  let errorSpy: ReturnType<typeof vi.spyOn>
+  beforeEach(() => {
+    errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+  })
+  afterEach(() => {
+    errorSpy.mockRestore()
+  })
+
   it('getCachedUser returns null when KV.get throws', async () => {
     const result = await getCachedUser(brokenCache(), 'test@example.com')
     expect(result).toBeNull()
