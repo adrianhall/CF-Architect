@@ -271,6 +271,64 @@ describe("DiagramCanvas", () => {
       expect(useDiagramStore.getState().redoStack).toHaveLength(0);
     });
 
+    it("Delete key inside an input element does not call removeSelected", () => {
+      useDiagramStore.setState({
+        diagramId: "diag-1",
+        nodes: [
+          {
+            id: "n1",
+            type: "cf-node",
+            position: { x: 0, y: 0 },
+            data: { typeId: "worker", label: "W" },
+            selected: true,
+          },
+        ] as any,
+        edges: [],
+      });
+
+      render(
+        <DiagramCanvas diagramId="diag-1" initialData={sampleInitialData} />,
+      );
+
+      const input = document.createElement("input");
+      const editor = document.querySelector(".diagram-editor")!;
+      editor.appendChild(input);
+
+      fireEvent.keyDown(input, { key: "Delete", bubbles: true });
+
+      // Node should still be present — removeSelected must not have fired.
+      expect(useDiagramStore.getState().nodes).toHaveLength(1);
+    });
+
+    it("Backspace key inside a textarea element does not call removeSelected", () => {
+      useDiagramStore.setState({
+        diagramId: "diag-1",
+        nodes: [
+          {
+            id: "n1",
+            type: "cf-node",
+            position: { x: 0, y: 0 },
+            data: { typeId: "worker", label: "W" },
+            selected: true,
+          },
+        ] as any,
+        edges: [],
+      });
+
+      render(
+        <DiagramCanvas diagramId="diag-1" initialData={sampleInitialData} />,
+      );
+
+      const textarea = document.createElement("textarea");
+      const editor = document.querySelector(".diagram-editor")!;
+      editor.appendChild(textarea);
+
+      fireEvent.keyDown(textarea, { key: "Backspace", bubbles: true });
+
+      // Node should still be present — removeSelected must not have fired.
+      expect(useDiagramStore.getState().nodes).toHaveLength(1);
+    });
+
     it("keyboard shortcuts are no-ops in read-only mode", () => {
       render(
         <DiagramCanvas

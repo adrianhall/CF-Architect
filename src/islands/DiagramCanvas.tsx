@@ -296,7 +296,13 @@ export default function DiagramCanvas({
     (event: KeyboardEvent) => {
       if (readOnly) return;
 
-      if (event.key === "Delete" || event.key === "Backspace") {
+      const target = event.target as HTMLElement;
+      const isEditing =
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable;
+
+      if ((event.key === "Delete" || event.key === "Backspace") && !isEditing) {
         removeSelected();
       }
       if (event.ctrlKey && event.key === "z" && !event.shiftKey) {
