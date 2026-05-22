@@ -1,17 +1,21 @@
 # ---------------------------------------------------------------------------
-# Worker script resource — placeholder.
-# wrangler manages the actual script content and all binding configurations.
-# Terraform only provisions the named Worker slot so that the Worker exists
-# in the Cloudflare account before wrangler deploys code into it.
+# Worker definition resource.
+#
+# `cloudflare_worker` registers the named Worker in the Cloudflare account.
+# Unlike `cloudflare_workers_script`, this resource represents the worker
+# entity itself (not just its script content), so `terraform destroy` will
+# fully remove the Worker from the account.
+#
+# wrangler manages the actual script content and all binding configurations
+# on every `npm run deploy`. The name here must match the `name` field in
+# wrangler.template.jsonc so that wrangler targets the same Worker.
 # ---------------------------------------------------------------------------
-# NOTE: cloudflare/cloudflare v5 uses cloudflare_workers_script (not
-# cloudflare_worker_script). The name here must match the `name` field in
-# wrangler.template.jsonc so wrangler deploy targets the same Worker.
-resource "cloudflare_workers_script" "app" {
-  account_id  = data.dotenv.env.env["CLOUDFLARE_ACCOUNT_ID"]
-  script_name = "cf-architect-${var.environment}"
-  # Placeholder module Worker content.
-  # wrangler manages the real script body on every deploy.
-  main_module = "placeholder.mjs"
-  content     = "export default { async fetch() { return new Response('placeholder'); } };"
+resource "cloudflare_worker" "app" {
+  account_id = data.dotenv.env.env["CLOUDFLARE_ACCOUNT_ID"]
+  name       = "cf-architect-${var.environment}"
+  logpush    = false
+
+  observability = {
+    enabled = true
+  }
 }

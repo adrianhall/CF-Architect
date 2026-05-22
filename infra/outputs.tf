@@ -33,8 +33,8 @@ output "r2_bucket_name" {
 }
 
 output "worker_name" {
-  description = "Cloudflare Worker script name"
-  value       = cloudflare_workers_script.app.script_name
+  description = "Cloudflare Worker name"
+  value       = cloudflare_worker.app.name
 }
 
 output "cloudflare_account_id" {
@@ -54,7 +54,7 @@ resource "local_file" "tf_outputs" {
     TF_OUTPUT_KV_SHARES_ID         = cloudflare_workers_kv_namespace.shares.id
     TF_OUTPUT_KV_CATALOG_ID        = cloudflare_workers_kv_namespace.catalog.id
     TF_OUTPUT_R2_BUCKET_NAME       = cloudflare_r2_bucket.assets.name
-    TF_OUTPUT_WORKER_NAME          = cloudflare_workers_script.app.script_name
+    TF_OUTPUT_WORKER_NAME          = cloudflare_worker.app.name
     TF_OUTPUT_CLOUDFLARE_ACCOUNT_ID = data.dotenv.env.env["CLOUDFLARE_ACCOUNT_ID"]
   })
   file_permission = "0600"
