@@ -160,3 +160,54 @@ its first mutating request.
 attempting their first POST. Setting it on every response (not just auth responses) is safe —
 the cookie is not secret, just random; it is `SameSite=Strict` so it cannot be set by a
 cross-origin attacker.
+
+---
+
+## 2026-05-22 — Phase 01 follow-up: CI supply-chain gates
+
+### D08 — OSV-Scanner removed from CI gate
+
+**Status:** Accepted; re-evaluation deferred to Phase 12
+**Phase:** 01 (follow-up)
+
+**Decision:** Remove the `OSV Scanner` step from `.github/workflows/ci.yml`. Rely on
+`npm audit --audit-level=high` and `npm audit signatures` as the sole CVE and integrity
+gates until Phase 12 re-evaluates whether OSV-Scanner adds enough marginal value to
+justify reinstatement.
+
+**Context:** The step at `ci.yml:77-82` used `google/osv-scanner-action@v2`, but no
+such tag exists on `google/osv-scanner-action` — the repo publishes only semver tags
+(latest: `v2.3.8`). The root `action.yml` in that repository is metadata-only (name,
+description, branding) with no `runs:` block; the action is designed to be consumed as
+a reusable workflow at the job level (with `security-events: write` permission), not as
+a step inside another job. As a result the scanner has never actually executed in CI;
+every CI run failed at action resolution before any scan occurred.
+
+**Alternatives considered:**
+
+- _Fix via reusable workflow_: Add a parallel `osv-scan` job invoking
+  `google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@v2.3.8`.
+  Officially supported, uploads SARIF to GitHub Security → Code scanning, but requires
+  granting `security-events: write` to the workflow and adds a parallel job.
+- _Fix via CLI step_: Curl-install the `osv-scanner` binary pinned to a release and run
+  `osv-scanner --recursive .`. Simpler, no permission changes, but loses SARIF integration
+  and pins to an installer URL.
+- _Remove entirely (chosen)_: Drop the Layer 4 second-opinion scanner for now. `npm audit`
+  continues to cover the GitHub Advisory Database; `npm audit signatures` continues to
+  verify sigstore integrity. Accepts the residual risk that an OSV-only CVE may slip
+  through until Phase 12.
+
+**Rationale:** The scanner has been a no-op since Phase 01 due to the broken action
+reference, so removing it does not reduce real-world coverage — it only corrects the CI
+configuration to match reality. Phase 12 is the appropriate place to decide whether to
+reinstate OSV-Scanner with the correct reusable-workflow integration, keep it removed,
+or substitute a different second-opinion scanner.
+
+**Follow-ups:**
+
+- Phase 12 task added: decide whether to reinstate OSV-Scanner as a CI gate.
+- Phase 01 `Deviations from original spec` table updated to reference D08.
+- `docs/SUPPLY_CHAIN_SECURITY.md` created as the authoritative supply-chain reference;
+  the OSV-Scanner deferral is documented there under "Phase 12 deferred tasks".
+- `docs/PLAN.md` §9 Layer 4 and `README.md` supply-chain section updated to link to
+  the new doc.

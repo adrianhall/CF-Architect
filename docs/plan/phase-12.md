@@ -17,6 +17,15 @@ systematically works through the OWASP Top 10. No new product features are added
 here; the goal is to make what exists safe to run in production under adversarial
 conditions.
 
+## Deviations from original spec
+
+The following decisions affect this phase. Full rationale in
+[`docs/DECISION_LOG.md`](../DECISION_LOG.md).
+
+| #   | Original spec                                                            | Decision                                                                                                                                                              |
+| --- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D08 | OSV-Scanner running as a CI gate (inherited from Phase 01 original spec) | Step never functioned (broken action reference); removed from `ci.yml` in a Phase 01 follow-up. Phase 12 decides whether to reinstate or retire permanently. See D08. |
+
 ## Scope
 
 ### In Scope
@@ -46,7 +55,7 @@ conditions.
 
 - All Phases 01–11 complete and deployed to production
 - Clean `npm audit --audit-level=high` baseline
-- OSV-Scanner passing in CI
+- OSV-Scanner CI gate decision (D08) resolved — either reinstated and green, or formally retired
 
 ## Tasks
 
@@ -83,7 +92,15 @@ conditions.
 - [ ] Verify `@adrianhall/cloudflare-auth` SHA is pinned to a current, reviewed
       commit; update if a newer reviewed commit exists
 - [ ] Run `npm audit signatures` — all packages must have valid sigstore signatures
-- [ ] Run OSV-Scanner and confirm zero findings
+- [ ] Decide whether to reinstate OSV-Scanner as a CI gate (see D08 in
+      `docs/DECISION_LOG.md` and `docs/SUPPLY_CHAIN_SECURITY.md` Layer 4 deferred section):
+  - **If reinstating:** integrate via the official reusable workflow
+    (`google/osv-scanner-action/.github/workflows/osv-scanner-reusable.yml@<pinned-version>`),
+    grant the workflow `security-events: write`, confirm SARIF results land in
+    GitHub Security → Code scanning, and verify zero findings.
+  - **If retiring permanently:** update D08 status to `Accepted (permanent)`, document
+    the residual-risk acceptance, and remove OSV-Scanner references from `docs/PLAN.md`
+    §9 Layer 4 and `docs/SUPPLY_CHAIN_SECURITY.md`.
 - [ ] Generate SBOM: `npm sbom --sbom-format spdx` and store as a release artefact
 - [ ] Confirm `lockfile-lint` passes: every `resolved` URL is
       `https://registry.npmjs.org/`
@@ -297,7 +314,7 @@ owner_id = $userId`)
 ### CI gates
 
 - [ ] `npm run check:audit` exits 0 (`--audit-level=high`)
-- [ ] OSV-Scanner exits 0
+- [ ] OSV-Scanner exits 0 (only applicable if reinstated per D08; otherwise N/A)
 - [ ] `npm audit signatures` exits 0
 - [ ] `lockfile-lint` exits 0
 - [ ] Security headers present on all Playwright-tested routes
@@ -313,7 +330,7 @@ owner_id = $userId`)
 | No unauthenticated access to protected routes | All auth bypass tests pass                                                                                     |
 | No stack traces in production 500 responses   | Error handling test confirms response body matches error envelope only                                         |
 | `SECURITY.md` published                       | File exists at repo root with vulnerability disclosure policy                                                  |
-| Dependency audit clean                        | `npm audit --audit-level=moderate` exits 0; OSV-Scanner clean; all licenses compatible                         |
+| Dependency audit clean                        | `npm audit --audit-level=moderate` exits 0; all licenses compatible; OSV-Scanner clean iff reinstated per D08. |
 
 ## Rollout / Rollback
 

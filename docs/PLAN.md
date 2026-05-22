@@ -52,7 +52,7 @@ Cloudflare developer platform.
 - Keep TanStack Router and TanStack Query (no known compromise; hardening mitigates the class of risk).
 - `ignore-scripts=true` globally; tiny postinstall allowlist in `scripts/postinstall.mjs`.
 - Renovate with `minimumReleaseAge: "14d"` cooldown.
-- `npm audit --audit-level=high` + `npm audit signatures` + OSV-Scanner in CI.
+- `npm audit --audit-level=high` + `npm audit signatures` in CI (OSV-Scanner removed; under re-evaluation in Phase 12 — see D08 and `docs/SUPPLY_CHAIN_SECURITY.md`).
 - GitHub Dependabot security alerts enabled.
 - No paid third-party scanning tools (Dependabot + npm audit is sufficient for this project).
 - Supply-chain detail: see §9 below.
@@ -350,77 +350,21 @@ the admin UI with full audit-log entries.
 
 ## 9. Supply-Chain Security
 
-Supply-chain hardening is foundational, implemented in Phase 01. Layer 1
-(`ignore-scripts=true`) is **suspended during active development (Phases 01–11)** and will be
-fully re-instated and audited in Phase 12. See `docs/plan/phase-12.md`.
+Supply-chain hardening is foundational, implemented in Phase 01. This section summarises the
+eight-layer model. Full layer-by-layer details, current status of each layer, and deferred Phase 12
+hardening tasks are in **[`docs/SUPPLY_CHAIN_SECURITY.md`](./SUPPLY_CHAIN_SECURITY.md)**.
 
-### Layer 1 — Reproducible installs _(Layer 1a suspended until Phase 12)_
-
-- `.npmrc`: `engine-strict=true` (active); `ignore-scripts=true` suspended — see Phase 12.
-- `npm ci` everywhere (CI, Husky pre-commit, docs). Never `npm install` in automated contexts.
-- `lockfile-lint` in CI: verifies every resolved URL is `https://registry.npmjs.org/`; fails on
-  missing integrity hashes; fails on `git+` URLs unless explicitly allowlisted.
-
-### Layer 2 — Postinstall allowlist
-
-`scripts/postinstall.mjs` maintains an explicit allowlist of packages permitted to run build
-steps (`npm rebuild <pkg>`). The initial allowlist contains only `esbuild`. The script runs
-automatically as the root `postinstall` npm lifecycle hook. Any addition to the allowlist
-requires a code-reviewed PR with written justification.
-
-When `ignore-scripts=true` is re-instated in Phase 12, the allowlist runner must be called
-explicitly after `npm ci` (documented in the Phase 12 tasks). Until then, it runs automatically.
-
-### Layer 3 — Dependency update cooldown
-
-Renovate is configured with:
-
-- `minimumReleaseAge: "14d"` — a version published today is invisible to Renovate PRs for 14 days.
-- Minor/patch updates grouped into a single weekly PR.
-- Major updates get individual PRs with mandatory manual review.
-- Dependabot security-advisory patches bypass the cooldown window and are expedited.
-
-### Layer 4 — Automated scanning in CI
-
-- `npm audit --audit-level=high` — blocks on high/critical CVEs.
-- `npm audit signatures` — verifies sigstore-signed packages; rejects tampered packages not yet
-  in the CVE database.
-- GitHub Dependabot security alerts — enabled on the repository; free.
-- OSV-Scanner — cross-checks the OSV.dev database as a second opinion.
-
-### Layer 5 — GitHub-sourced dependency pinning
-
-`@adrianhall/cloudflare-auth` is installed directly from GitHub and is pinned to a specific commit
-SHA in `apps/worker/package.json`:
-
-```json
-"@adrianhall/cloudflare-auth": "github:adrianhall/cloudflare-auth#<sha>"
-```
-
-The SHA is bumped deliberately via a Renovate PR with manual review. Wildcards (`main`, `latest`,
-branch names) are not used for any GitHub-sourced dependency.
-
-### Layer 6 — SBOM + provenance evidence
-
-- `npm sbom --sbom-format spdx` runs on every release build and is stored as a CI artefact.
-- Deploy logs record `sha256sum package-lock.json` so any post-incident review can answer "which
-  exact lockfile was active for deploy X?"
-
-### Layer 7 — Runtime hardening (Worker)
-
-- **Strict CSP**: `default-src 'self'; script-src 'self'; connect-src 'self'` (extended in Phase 11
-  to include AI Gateway). A compromised bundled dependency cannot beacon out.
-- **No CDN-loaded JS**: every third-party library goes through the Vite bundler. No
-  `<script src="cdn.example.com/…">` ever.
-- **Separate API tokens**: the `provision` token has broad Terraform permissions; the `deploy`
-  token is scoped to `Workers Scripts:Edit` only. A build-time token leak cannot mutate
-  infrastructure.
-
-### Layer 8 — Developer hygiene (documented in README)
-
-- Run `npm ci` inside a devcontainer or clean shell to prevent postinstall scripts touching
-  developer home directories.
-- Store `.env` secrets in a secrets manager (1Password, etc.), not in dotfiles or shell history.
+| Layer | Name                         | Status                                                                                         |
+| ----- | ---------------------------- | ---------------------------------------------------------------------------------------------- |
+| 1a    | Reproducible installs        | Active (`engine-strict`, `npm ci`, lockfile-lint)                                              |
+| 1b    | `ignore-scripts=true`        | Suspended until Phase 12                                                                       |
+| 2     | Postinstall allowlist        | Active (auto-runs; esbuild only)                                                               |
+| 3     | Dependency update cooldown   | Active (Renovate 14-day minimum age)                                                           |
+| 4     | Automated CI scanning        | Partially active (`npm audit`, `npm audit signatures`, Dependabot; OSV-Scanner deferred — D08) |
+| 5     | SHA-pinned GitHub dependency | Active (`@adrianhall/cloudflare-auth`)                                                         |
+| 6     | SBOM + provenance evidence   | Active (deploy lockfile checksum; formal SBOM generation in Phase 12)                          |
+| 7     | Runtime hardening (Worker)   | Active (CSP, no CDN JS, separate tokens)                                                       |
+| 8     | Developer hygiene            | Active (documented)                                                                            |
 
 ---
 

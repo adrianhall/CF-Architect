@@ -14,6 +14,15 @@ Establish the complete build, test, and deploy facility: a working monorepo, Ter
 Cloudflare infrastructure, a Hono Worker serving a React SPA via ASSETS, all npm scripts, and
 supply-chain hardening — so every subsequent phase has a reliable, repeatable deployment target.
 
+## Deviations from original spec
+
+The following decisions deviate from the spec below. Full rationale in
+[`docs/DECISION_LOG.md`](../DECISION_LOG.md).
+
+| #   | Original spec                                                                    | Decision                                                                                                                      |
+| --- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| D08 | `OSV-Scanner` runs as a CI gate alongside `npm audit` and `npm audit signatures` | Step never functioned (broken action reference); removed from `ci.yml`; reinstatement decision deferred to Phase 12. See D08. |
+
 ## Scope
 
 ### In Scope
@@ -34,7 +43,7 @@ supply-chain hardening — so every subsequent phase has a reliable, repeatable 
 - ESLint 10 flat config: `@eslint/js` + `typescript-eslint` + `@eslint-react/eslint-plugin`
   (`recommended-typescript`); `parserOptions.projectService: true`
 - Prettier, Husky + lint-staged, commitlint (Conventional Commits)
-- `lockfile-lint`, `npm audit --audit-level=high`, `npm audit signatures`, OSV-Scanner in CI
+- `lockfile-lint`, `npm audit --audit-level=high`, `npm audit signatures` in CI (OSV-Scanner deferred — see D08)
 - Vitest workspace config (web + worker-pool); one passing test per project
 - Playwright config + one smoke spec; axe-core helper
 - GitHub Actions: `ci.yml` (check + test:ci + build) and `deploy.yml` (manual + on main merge)
@@ -148,7 +157,7 @@ supply-chain hardening — so every subsequent phase has a reliable, repeatable 
 
 ### CI / CD
 
-- [ ] `.github/workflows/ci.yml`: trigger on push + PR; steps: `npm ci`, `npm run check`, `npm run test:ci` (runs all Vitest projects with Istanbul coverage; uploads `./coverage/lcov.info` as a CI artefact), `npm run build`, `lockfile-lint`, `osv-scanner`, `npm audit signatures`
+- [ ] `.github/workflows/ci.yml`: trigger on push + PR; steps: `npm ci`, `npm run check`, `npm run test:ci` (runs all Vitest projects with Istanbul coverage; uploads `./coverage/lcov.info` as a CI artefact), `npm run build`, `lockfile-lint`, `npm audit signatures` (OSV-Scanner deferred — see D08)
 - [ ] `.github/workflows/deploy.yml`: trigger on `workflow_dispatch` + push to `main`; reuses ci steps; then `npm run deploy` (which internally chains `generate:wrangler → migrate:remote → deploy:worker`)
 - [ ] Add GitHub repository secrets documentation to README: `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` (deploy-scoped)
 
@@ -227,7 +236,7 @@ creating any tables.
 - [ ] `npm run check:format` clean
 - [ ] `npm run check:audit` — no high/critical CVEs; signatures verified
 - [ ] `lockfile-lint` — all `resolved` URLs are `https://registry.npmjs.org/`
-- [ ] OSV-Scanner — zero findings
+- [ ] OSV-Scanner — deferred to Phase 12 (see D08)
 - [ ] `npm run test:ci` exits 0 and `./coverage/lcov.info` is written
 - [ ] `npm run build` succeeds
 

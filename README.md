@@ -24,7 +24,6 @@ Visual architecture design tool purpose-built for Cloudflare.
 ```bash
 git clone https://github.com/adrianhall/CF-Architect.git
 cd CF-Architect
-git checkout v2
 cp .env.example .env
 ```
 
@@ -143,59 +142,14 @@ the user to admin (first-INSERT-only behaviour — see `docs/DECISION_LOG.md` D0
 
 ---
 
-## Supply-chain security
+## Supply Chain Security
 
-This project implements layered supply-chain hardening. Seven of the eight planned
-layers are active. Layer 1 (`ignore-scripts=true`) is **suspended during active
-development (Phases 01–11)** and will be re-instated in Phase 12 (Security
-Hardening). See [docs/plan/phase-12.md](./docs/plan/phase-12.md).
+This project implements an eight-layer supply-chain defence. Active CI gates today:
+`npm audit --audit-level=high`, `npm audit signatures`, `lockfile-lint`, and GitHub Dependabot
+alerts. Layer 1b (`ignore-scripts=true`) and OSV-Scanner are deferred to Phase 12.
 
-### Layer 1 — `ignore-scripts=true` _(suspended until Phase 12)_
-
-When active, `.npmrc` sets `ignore-scripts=true` so no package lifecycle script
-(postinstall, prepare, etc.) runs automatically during `npm ci`. This eliminates the
-Shai-Hulud class of attacks where a compromised package exfiltrates tokens via
-postinstall. Currently suspended to keep the dev loop frictionless; will be
-re-instated and the postinstall allowlist fully audited in Phase 12.
-
-### Layer 2 — Postinstall allowlist
-
-`scripts/postinstall.mjs` runs a hand-maintained allowlist. Currently only `esbuild`
-is listed (it needs to select a platform-specific binary). The script runs
-automatically via npm's `postinstall` lifecycle hook. Adding a package to the
-allowlist **requires a code-reviewed PR with written justification**.
-
-### Layer 3 — Renovate 14-day cooldown
-
-`.renovaterc.json` sets `minimumReleaseAge: "14d"`. A version published today is
-invisible to Renovate for 14 days, giving time for typosquatting and
-supply-chain attacks to be detected. Security advisory patches bypass this
-cooldown and are expedited.
-
-### Layer 4 — CI scanning
-
-- `npm audit --audit-level=high` — blocks on high/critical CVEs
-- `npm audit signatures` — verifies sigstore signatures; rejects tampered packages
-- OSV-Scanner — second-opinion CVE scan from the OSV.dev database
-- GitHub Dependabot security alerts — enabled on the repository
-
-### Layer 5 — SHA-pinned GitHub dependency
-
-`@adrianhall/cloudflare-auth` is installed directly from GitHub pinned to a
-specific commit SHA:
-
-```json
-"@adrianhall/cloudflare-auth": "github:adrianhall/cloudflare-auth#447daa60bc3a0c4b72a9c2aa7f2ab2ac06013139"
-```
-
-Wildcards (`main`, branch names) are **never** used for GitHub-sourced deps.
-
-### Lockfile registry check
-
-Every `resolved` URL in `package-lock.json` must begin with
-`https://registry.npmjs.org/`. The `lockfile-lint` step in CI enforces this.
-The one exception is the `@adrianhall/cloudflare-auth` GitHub SHA URL, which
-must be explicitly allowlisted if required.
+Full layer-by-layer details, current status of each layer, and Phase 12 deferred hardening tasks
+are documented in **[docs/SUPPLY_CHAIN_SECURITY.md](./docs/SUPPLY_CHAIN_SECURITY.md)**.
 
 ---
 
@@ -229,7 +183,7 @@ and does not need to be set as a separate secret.
 See [docs/PLAN.md §3](./docs/PLAN.md#3-repository-layout) for the full layout
 reference.
 
-```
+```text
 /
 ├── .env.example              # Required environment variable documentation
 ├── .dev.vars.example         # Local-only variable documentation
