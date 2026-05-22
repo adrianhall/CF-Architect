@@ -7,8 +7,8 @@ import type { Config } from "drizzle-kit";
  * Remote D1 is the production database.
  *
  * Usage:
- *   npm run migrate          # local (default)
- *   npm run migrate -- --remote  # remote (production)
+ *   npm run migrate:local    # local miniflare D1
+ *   npm run migrate:remote   # remote (production) D1
  *
  * Note: The database name must match `database_name` in wrangler.*.jsonc.
  */

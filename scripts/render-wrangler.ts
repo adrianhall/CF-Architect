@@ -5,8 +5,8 @@
  * all ${TF_OUTPUT_*} tokens in wrangler.template.jsonc to produce
  * wrangler.jsonc.
  *
- * Run via: npm run render-wrangler
- * Runs automatically as a postprovision hook after: npm run provision
+ * Run via: npm run generate:wrangler
+ * Also runs as the first step of: npm run provision, npm run deploy
  *
  * Exits with code 1 and a clear error message if:
  *   - .terraform-outputs.json is missing (run `npm run provision` first)

@@ -29,6 +29,8 @@
       "binding": "DB",
       "database_name": "cf-arch-test",
       "database_id": "00000000-0000-0000-0000-000000000001",
+      // Migrations live under apps/worker, not at repo root where this config lives
+      "migrations_dir": "./apps/worker/src/db/migrations",
     },
   ],
 

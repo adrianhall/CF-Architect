@@ -54,11 +54,11 @@ output "access_aud" {
 resource "local_file" "tf_outputs" {
   filename = "${path.module}/../.terraform-outputs.json"
   content = jsonencode({
-    TF_OUTPUT_D1_DATABASE_ID       = cloudflare_d1_database.main.id
-    TF_OUTPUT_D1_DATABASE_NAME     = cloudflare_d1_database.main.name
-    TF_OUTPUT_KV_SHARES_ID         = cloudflare_workers_kv_namespace.shares.id
-    TF_OUTPUT_KV_CATALOG_ID        = cloudflare_workers_kv_namespace.catalog.id
-    TF_OUTPUT_R2_BUCKET_NAME       = cloudflare_r2_bucket.assets.name
+    TF_OUTPUT_D1_DATABASE_ID        = cloudflare_d1_database.main.id
+    TF_OUTPUT_D1_DATABASE_NAME      = cloudflare_d1_database.main.name
+    TF_OUTPUT_KV_SHARES_ID          = cloudflare_workers_kv_namespace.shares.id
+    TF_OUTPUT_KV_CATALOG_ID         = cloudflare_workers_kv_namespace.catalog.id
+    TF_OUTPUT_R2_BUCKET_NAME        = cloudflare_r2_bucket.assets.name
     TF_OUTPUT_WORKER_NAME           = cloudflare_worker.app.name
     TF_OUTPUT_ACCESS_AUD            = cloudflare_zero_trust_access_application.app.aud
     TF_OUTPUT_CLOUDFLARE_ACCOUNT_ID = local.account_id

@@ -25,7 +25,7 @@ supply-chain hardening — so every subsequent phase has a reliable, repeatable 
 - Terraform infrastructure with `cloudflare/cloudflare` v5 + `jrhouston/dotenv` providers
   (D1 database, two KV namespaces, one R2 bucket, Worker resource)
 - `scripts/render-wrangler.ts` — substitutes TF outputs into `wrangler.template.jsonc`
-- `scripts/migrate.ts` — applies Drizzle migrations to local and remote D1
+- `migrate:local` / `migrate:remote` npm scripts — apply Drizzle migrations via `wrangler d1 migrations apply` (no custom script; wrangler handles idempotency natively)
 - Hono Worker: `/api/health`, `/api/version`, structured JSON logging, rate-limit middleware stub,
   consistent response envelope, 404 handler, ASSETS fallback
 - Vite + React 19 SPA: one route showing "CF-Architect" + health-check status
@@ -63,11 +63,11 @@ supply-chain hardening — so every subsequent phase has a reliable, repeatable 
 - [ ] Create workspace directories with minimal `package.json` in each: `apps/web/`, `apps/worker/`, `packages/shared/`, `infra/`, `scripts/`, `e2e/`
 - [ ] Create `tsconfig.base.json`: `"strict": true`, `"exactOptionalPropertyTypes": true`, `"noUncheckedIndexedAccess": true`, path aliases
 - [ ] Create `.nvmrc` / `.node-version` pinning Node 22
-- [ ] Create `.gitignore` (node_modules, dist, wrangler.jsonc, .env, .dev.vars, .terraform, .terraform-outputs.json)
+- [ ] Create `.gitignore` (node_modules, dist, wrangler.jsonc, .wrangler, .env, .dev.vars, .terraform, .terraform-outputs.json)
 
 ### Supply-chain hardening
 
-- [ ] Write `.npmrc`: `ignore-scripts=true`, `engine-strict=true`, `fund=false`, `audit-level=high`
+- [ ] Write `.npmrc`: `engine-strict=true`, `fund=false`, `audit-level=high` (`ignore-scripts=true` is deferred to Phase 12 — see Design Notes)
 - [ ] Write `scripts/postinstall.mjs`: reads allowlist from a `POSTINSTALL_ALLOWLIST` constant (initially `["esbuild"]`); calls `npm rebuild <pkg>` for each; logs what ran and what was skipped; add comment explaining the security rationale
 - [ ] Add `lockfile-lint` config (`.lockfile-lintrc.json`): `allowed-hosts: ["registry.npmjs.org"]`, `validate-https: true`
 - [ ] Write `.renovaterc.json`: `minimumReleaseAge: "14d"`, `groupName: "dependencies"` for minor/patch, `separateMajorMinor: true`, `prCreation: "not-pending"`, security PRs bypass cooldown
@@ -92,7 +92,7 @@ supply-chain hardening — so every subsequent phase has a reliable, repeatable 
 
 ### Wrangler template and render script
 
-- [ ] `wrangler.template.jsonc`: full Wrangler config with SPA ASSETS setup (`not_found_handling: "single-page-application"`, `run_worker_first: ["/api/*", "/_auth/*"]`); D1/KV/R2 bindings using `${TF_OUTPUT_D1_DATABASE_ID}` etc. placeholders
+- [ ] `wrangler.template.jsonc`: full Wrangler config with SPA ASSETS setup (`not_found_handling: "single-page-application"`, `run_worker_first: ["/api/*", "/_auth/*"]`); D1/KV/R2 bindings using `${TF_OUTPUT_D1_DATABASE_ID}` etc. placeholders; D1 binding must include `migrations_dir: "./apps/worker/src/db/migrations"` (migrations are not co-located with the wrangler config at repo root)
 - [ ] `scripts/render-wrangler.ts`: reads `.terraform-outputs.json`; substitutes all `${TF_OUTPUT_*}` tokens in `wrangler.template.jsonc`; writes `wrangler.jsonc`; throws with a clear error if any placeholder is unresolved or if the outputs file is missing
 - [ ] Add `wrangler.jsonc` to `.gitignore`
 
@@ -112,7 +112,8 @@ supply-chain hardening — so every subsequent phase has a reliable, repeatable 
 - [ ] `apps/worker/drizzle.config.ts`: configure D1 local and remote targets
 - [ ] `apps/worker/src/db/schema.ts`: empty schema file (just exports a comment for Phase 02+)
 - [ ] `apps/worker/src/db/migrations/0000_init.sql`: empty migration (establishes migrations infrastructure)
-- [ ] `scripts/migrate.ts`: detects local vs remote via `--remote` flag; runs `wrangler d1 migrations apply` for both targets
+
+> **Note:** No `scripts/migrate.ts` is needed. Migrations are applied via `wrangler d1 migrations apply DB` directly — see `migrate:local` and `migrate:remote` scripts in root `package.json`. Wrangler tracks applied migrations in a `d1_migrations` table and skips already-applied ones, making repeated runs safe.
 
 ### Vite + React SPA
 
@@ -148,12 +149,12 @@ supply-chain hardening — so every subsequent phase has a reliable, repeatable 
 ### CI / CD
 
 - [ ] `.github/workflows/ci.yml`: trigger on push + PR; steps: `npm ci`, `npm run check`, `npm run test:ci` (runs all Vitest projects with Istanbul coverage; uploads `./coverage/lcov.info` as a CI artefact), `npm run build`, `lockfile-lint`, `osv-scanner`, `npm audit signatures`
-- [ ] `.github/workflows/deploy.yml`: trigger on `workflow_dispatch` + push to `main`; reuses ci steps; then `npm run migrate -- --remote` + `npm run deploy`
+- [ ] `.github/workflows/deploy.yml`: trigger on `workflow_dispatch` + push to `main`; reuses ci steps; then `npm run deploy` (which internally chains `generate:wrangler → migrate:remote → deploy:worker`)
 - [ ] Add GitHub repository secrets documentation to README: `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` (deploy-scoped)
 
 ### Documentation
 
-- [ ] `README.md`: prerequisites; quickstart (clone → .env → npm install → npm run provision → npm run migrate → npm run deploy); local dev (`npm start`); script reference table; postinstall allowlist explanation; supply-chain hygiene notes; link to PLAN.md
+- [ ] `README.md`: prerequisites; quickstart (clone → .env → npm install → npm run provision → npm run deploy); local dev (`npm start`); script reference table; postinstall allowlist explanation; supply-chain hygiene notes (including note that `ignore-scripts=true` disables npm `pre*`/`post*` auto-hooks — all sequencing uses explicit `run-s` chains); link to PLAN.md
 
 ## Schema Changes
 
@@ -242,8 +243,8 @@ Work through these after all automated checks pass. Tick each box when confirmed
       namespaces (`cf-arch-shares-production`, `cf-arch-catalog-production`), and one R2 bucket
       (`cf-arch-assets-production`) all exist.
 - [ ] **render-wrangler** — After provision, confirm `wrangler.jsonc` was auto-generated (the
-      `postprovision` hook ran `render-wrangler`). Open it. Confirm no `${TF_OUTPUT_*}` tokens remain
-      — all are replaced with real IDs/names from Terraform outputs.
+      `provision` script runs `generate:wrangler` as its final step via `run-s`). Open it. Confirm no
+      `${TF_OUTPUT_*}` tokens remain — all are replaced with real IDs/names from Terraform outputs.
 - [ ] **Local dev** — Run `npm start`. Open `http://localhost:8787`. Confirm the "CF-Architect"
       heading renders and the health status shows "ok".
 - [ ] **Health endpoint** — In a terminal: `curl -s http://localhost:8787/api/health | jq`. Confirm
@@ -264,8 +265,11 @@ Work through these after all automated checks pass. Tick each box when confirmed
 - [ ] **Lockfile registry check** — Open `package-lock.json`. Spot-check 10 different `"resolved"`
       entries across different packages. Confirm every one begins with `https://registry.npmjs.org/`.
       Confirm the `@adrianhall/cloudflare-auth` entry uses a GitHub SHA URL, not a branch name.
-- [ ] **Deploy to production** — Run `npm run migrate && npm run deploy`. Open the production URL
-      from wrangler output. Confirm the page loads and `GET /api/health` returns `{ status: "ok" }`.
+- [ ] **Deploy to production** — Run `npm run deploy`. Observe the output: `generate:wrangler` runs
+      first, then `migrate:remote` (wrangler reports each migration as applied or already-applied),
+      then `deploy:worker`. Open the production URL from wrangler output. Confirm the page loads and
+      `GET /api/health` returns `{ status: "ok" }`. Run `npm run deploy` a second time; confirm the
+      migration step shows all migrations already applied (idempotent).
 - [ ] **Coverage output** — Run `npm run test:unit` locally. Confirm a `./coverage/` directory is
       created containing `lcov.info`, an `html/` folder, and a text summary printed to the terminal
       showing per-file line/branch/function coverage percentages. Open `coverage/html/index.html` in a
@@ -276,20 +280,22 @@ Work through these after all automated checks pass. Tick each box when confirmed
 
 ## Acceptance Criteria
 
-| Story                                                                                 | How we verify                                                                                                                                       |
-| ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **F1-US4** — `npm run provision` provisions all Cloudflare resources with one command | `npm run provision` succeeds from scratch; D1/KV/R2/Worker all appear in the Cloudflare dashboard                                                   |
-| **F1-US5** — `npm run deploy` is idempotent; applies migrations before deploying      | Run `npm run migrate && npm run deploy` twice consecutively; both succeed; second run is a no-op for migrations and a clean redeploy for the Worker |
-| **F1-US6** — `npm start` runs the code locally                                        | `npm start` launches wrangler dev; app accessible at `localhost:8787`                                                                               |
-| **F1-US1** — Structured JSON logs on every request                                    | Manual logging test above: each request emits a JSON log with `method`, `path`, `status`, `duration_ms`, `requestId`                                |
+| Story                                                                                 | How we verify                                                                                                                                 |
+| ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| **F1-US4** — `npm run provision` provisions all Cloudflare resources with one command | `npm run provision` succeeds from scratch; D1/KV/R2/Worker all appear in the Cloudflare dashboard                                             |
+| **F1-US5** — `npm run deploy` is idempotent; applies migrations before deploying      | Run `npm run deploy` twice consecutively; both succeed; second run shows migrations already applied (no-op) and re-deploys the Worker cleanly |
+| **F1-US6** — `npm start` runs the code locally                                        | `npm start` launches wrangler dev; app accessible at `localhost:8787`                                                                         |
+| **F1-US1** — Structured JSON logs on every request                                    | Manual logging test above: each request emits a JSON log with `method`, `path`, `status`, `duration_ms`, `requestId`                          |
 
 ## Rollout / Rollback
 
-**Rollout:** `npm run provision` → `npm run migrate` → `npm run deploy`. Creates all infrastructure
-from scratch. Migration 0000 is a no-op so there is no risk.
+**Rollout:** `npm run provision` → `npm run deploy`. The `deploy` script chains
+`generate:wrangler → migrate:remote → deploy:worker` automatically. Migration 0000 is a no-op so
+there is no risk.
 
-**Rollback:** `terraform -chdir=infra destroy` tears down all created resources. No user data exists
-at this phase.
+**Rollback:** `npm run teardown` tears down all created Cloudflare resources (`terraform destroy`) and
+removes the now-stale `wrangler.jsonc` and `.terraform-outputs.json`. No user data exists at this
+phase. Use `npm run clean` to additionally remove build artefacts and local wrangler state.
 
 ## Open Questions
 
@@ -301,3 +307,18 @@ at this phase.
       Document this clearly in the README.
 - [ ] Confirm the exact commit SHA to pin for `@adrianhall/cloudflare-auth` before writing
       `apps/worker/package.json`.
+
+## Design Notes
+
+### Script sequencing with `run-s`
+
+All multi-step npm scripts in this project use explicit `run-s` chains (e.g. `provision`,
+`deploy`, `dev:worker`) rather than `pre*`/`post*` auto-hooks. This is intentional: explicit
+chains are easier to read, debug, and audit regardless of `ignore-scripts` state. Do not add
+`predeploy`-style hooks; add each step directly to the relevant `run-s` chain.
+
+### `ignore-scripts=true` status
+
+`ignore-scripts=true` is **suspended during Phases 01–11** to keep the development loop
+frictionless. It will be re-instated and the postinstall allowlist fully audited in Phase 12.
+See [phase-12.md](./phase-12.md).

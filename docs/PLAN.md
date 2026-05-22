@@ -89,7 +89,6 @@ Cloudflare developer platform.
 ├── scripts/
 │   ├── render-wrangler.ts        # Reads terraform output → substitutes wrangler.template.jsonc
 │   ├── postinstall.mjs           # Allowlist runner for ignore-scripts=true
-│   ├── migrate.ts                # Applies Drizzle migrations to local + remote D1
 │   └── preview-env.ts            # Per-PR environment provisioning/teardown (Phase 02+)
 │
 ├── packages/
@@ -150,18 +149,22 @@ Cloudflare developer platform.
 
 1. `cp .env.example .env` — Fill in `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, …
 2. `npm install` — Uses `npm ci` semantics; postinstall allowlist runs
-3. `npm run provision` — `terraform init + apply`
-4. `npm run render-wrangler` _(auto-runs via `postprovision` hook)_ — Substitutes TF outputs → `wrangler.jsonc`
-5. `npm run migrate` — Applies Drizzle migrations to remote D1
-6. `npm run deploy` — `wrangler deploy`
+3. `npm run provision` — `terraform init → terraform apply → generate:wrangler` (explicit `run-s` chain; generates `wrangler.jsonc`)
+4. `npm run deploy` — `generate:wrangler → migrate:remote → deploy:worker` (explicit `run-s` chain)
 
 ### Subsequent deploys
 
 ```bash
-npm run migrate && npm run deploy
+npm run deploy
 ```
 
-Schema migrations always run before deploy, satisfying F1-US5 (idempotent, migrations never skipped).
+`npm run deploy` always regenerates `wrangler.jsonc`, applies any unapplied remote migrations, then
+deploys the Worker. Migrations are idempotent — already-applied ones are skipped. This satisfies
+F1-US5 (migrations never skipped, deploys safe to run repeatedly).
+
+> **Note on `pre*`/`post*` hooks:** `.npmrc` sets `ignore-scripts=true` which also disables npm's
+> automatic `predeploy`, `postprovision`, etc. auto-hooks. All sequencing in this project uses
+> explicit `run-s` chains. Do not rely on npm lifecycle hooks.
 
 ### Local development
 
@@ -188,8 +191,7 @@ flowchart TD
     Push --> OSV["osv-scanner"]
 
     Merge --> Gate{"All CI checks pass?"}
-    Gate -- yes --> Migrate["npm run migrate<br/><i>remote D1</i>"]
-    Migrate --> Deploy["npm run deploy<br/><i>wrangler deploy</i>"]
+    Gate -- yes --> Deploy["npm run deploy<br/><i>generate:wrangler → migrate:remote → deploy:worker</i>"]
     Gate -- no --> Stop["fail"]
 ```
 
@@ -327,24 +329,26 @@ first login. All subsequent admin changes go through the admin UI with full audi
 
 ## 9. Supply-Chain Security
 
-Supply-chain hardening is foundational, implemented in Phase 01, and never downgraded.
+Supply-chain hardening is foundational, implemented in Phase 01. Layer 1
+(`ignore-scripts=true`) is **suspended during active development (Phases 01–11)** and will be
+fully re-instated and audited in Phase 12. See `docs/plan/phase-12.md`.
 
-### Layer 1 — Reproducible installs
+### Layer 1 — Reproducible installs _(Layer 1a suspended until Phase 12)_
 
-- `.npmrc`: `ignore-scripts=true`, `engine-strict=true`
+- `.npmrc`: `engine-strict=true` (active); `ignore-scripts=true` suspended — see Phase 12.
 - `npm ci` everywhere (CI, Husky pre-commit, docs). Never `npm install` in automated contexts.
 - `lockfile-lint` in CI: verifies every resolved URL is `https://registry.npmjs.org/`; fails on
   missing integrity hashes; fails on `git+` URLs unless explicitly allowlisted.
 
-### Layer 2 — Postinstall script lockdown
+### Layer 2 — Postinstall allowlist
 
-`ignore-scripts=true` prevents all postinstall scripts from running automatically. A hand-maintained
-allowlist in `scripts/postinstall.mjs` calls `npm rebuild` for packages that legitimately need
-native build steps. The initial allowlist contains only `esbuild`. Any addition to the allowlist
+`scripts/postinstall.mjs` maintains an explicit allowlist of packages permitted to run build
+steps (`npm rebuild <pkg>`). The initial allowlist contains only `esbuild`. The script runs
+automatically as the root `postinstall` npm lifecycle hook. Any addition to the allowlist
 requires a code-reviewed PR with written justification.
 
-This neutralises the Shai-Hulud worm class of attacks where malicious postinstall scripts
-exfiltrate tokens or environment variables.
+When `ignore-scripts=true` is re-instated in Phase 12, the allowlist runner must be called
+explicitly after `npm ci` (documented in the Phase 12 tasks). Until then, it runs automatically.
 
 ### Layer 3 — Dependency update cooldown
 
@@ -464,14 +468,23 @@ All npm scripts follow a consistent `{verb}:{scope}` pattern. `npm-run-all2` com
     "test:ci": "npm-run-all2 --sequential test:unit",
 
     // Dev / deploy
-    "start": "npm-run-all2 --sequential build:web dev:worker",
+    // All multi-step sequences use explicit run-s chains for transparency.
+    "start": "run-s build:web dev:worker",
     "dev:web": "npm run dev --workspace=apps/web",
-    "dev:worker": "wrangler dev",
-    "provision": "terraform -chdir=infra init && terraform -chdir=infra apply",
-    "postprovision": "npm run render-wrangler",
-    "render-wrangler": "tsx scripts/render-wrangler.ts",
-    "migrate": "tsx scripts/migrate.ts",
-    "deploy": "wrangler deploy",
+    "dev:worker": "run-s migrate:local dev:worker:serve",
+    "dev:worker:serve": "wrangler dev --config wrangler.test.jsonc",
+    "provision": "run-s provision:init provision:apply generate:wrangler",
+    "provision:init": "terraform -chdir=infra init",
+    "provision:apply": "terraform -chdir=infra apply",
+    "generate:wrangler": "tsx scripts/render-wrangler.ts",
+    "migrate:local": "wrangler d1 migrations apply DB --local --config wrangler.test.jsonc",
+    "migrate:remote": "wrangler d1 migrations apply DB --remote --config wrangler.jsonc",
+    "deploy": "run-s generate:wrangler migrate:remote deploy:worker",
+    "deploy:worker": "wrangler deploy --config wrangler.jsonc",
+    "teardown": "run-s teardown:destroy teardown:cleanup",
+    "teardown:destroy": "terraform -chdir=infra destroy",
+    "teardown:cleanup": "rimraf wrangler.jsonc .terraform-outputs.json",
+    "clean": "rimraf dist apps/web/dist apps/worker/dist coverage .wrangler playwright-report test-results",
   },
 }
 ```
@@ -508,35 +521,39 @@ root scripts can delegate via `--workspace=` flags or `vitest --project` selecto
 
 ### Verb semantics
 
-| Verb              | Meaning                                   | Destructive?                  |
-| ----------------- | ----------------------------------------- | ----------------------------- |
-| `build`           | Compile/bundle for production             | No                            |
-| `check`           | Non-destructive validation                | No                            |
-| `fix`             | Auto-correct lint + format                | Yes (modifies files)          |
-| `test`            | Run automated test suites                 | No                            |
-| `dev` / `start`   | Local development server                  | No                            |
-| `provision`       | Terraform apply                           | Yes (creates cloud resources) |
-| `render-wrangler` | Generate `wrangler.jsonc` from TF outputs | Yes (writes file)             |
-| `migrate`         | Apply Drizzle migrations to D1            | Yes (mutates database)        |
-| `deploy`          | Deploy Worker via wrangler                | Yes (mutates production)      |
+| Verb                | Meaning                                              | Destructive?                   |
+| ------------------- | ---------------------------------------------------- | ------------------------------ |
+| `build`             | Compile/bundle for production                        | No                             |
+| `check`             | Non-destructive validation                           | No                             |
+| `fix`               | Auto-correct lint + format                           | Yes (modifies files)           |
+| `test`              | Run automated test suites                            | No                             |
+| `dev` / `start`     | Local development server                             | No                             |
+| `provision`         | `terraform init → apply → generate:wrangler`         | Yes (creates cloud resources)  |
+| `generate:wrangler` | Generate `wrangler.jsonc` from TF outputs            | Yes (writes file)              |
+| `migrate:local`     | Apply Drizzle migrations to local D1                 | Yes (mutates local database)   |
+| `migrate:remote`    | Apply Drizzle migrations to remote D1                | Yes (mutates production DB)    |
+| `deploy`            | `generate:wrangler → migrate:remote → deploy:worker` | Yes (mutates production)       |
+| `teardown`          | `terraform destroy` + remove generated files         | Yes (destroys cloud resources) |
+| `clean`             | Remove all build artefacts and local state           | Yes (deletes local files/dirs) |
 
 ---
 
 ## 13. Phase Index
 
-| #                        | Title                                 | Source | Status  | Depends On |
-| ------------------------ | ------------------------------------- | ------ | ------- | ---------- |
-| [01](./plan/phase-01.md) | Platform Foundations                  | F1     | Planned | —          |
-| [02](./plan/phase-02.md) | Identity, Access & Multi-User         | F2     | Planned | 01         |
-| [03](./plan/phase-03.md) | Cloudflare Service Catalog            | F3     | Planned | 01         |
-| [04](./plan/phase-04.md) | Architecture Canvas                   | F4     | Planned | 02, 03     |
-| [05](./plan/phase-05.md) | Diagram Lifecycle                     | F5     | Planned | 04         |
-| [06](./plan/phase-06.md) | Blueprints & Templates                | F6     | Planned | 05         |
-| [07](./plan/phase-07.md) | Sharing & Read-Only View              | F7     | Planned | 05         |
-| [08](./plan/phase-08.md) | Export & Print                        | F8     | Planned | 04         |
-| [09](./plan/phase-09.md) | Project Scaffold Export               | F9     | Planned | 03, 08     |
-| [10](./plan/phase-10.md) | MCP Server _(post-MVP)_               | F10    | Planned | 09         |
-| [11](./plan/phase-11.md) | In-App AI Architect Chat _(post-MVP)_ | F11    | Planned | 10         |
+| #                        | Title                                     | Source | Status  | Depends On |
+| ------------------------ | ----------------------------------------- | ------ | ------- | ---------- |
+| [01](./plan/phase-01.md) | Platform Foundations                      | F1     | Planned | —          |
+| [02](./plan/phase-02.md) | Identity, Access & Multi-User             | F2     | Planned | 01         |
+| [03](./plan/phase-03.md) | Cloudflare Service Catalog                | F3     | Planned | 01         |
+| [04](./plan/phase-04.md) | Architecture Canvas                       | F4     | Planned | 02, 03     |
+| [05](./plan/phase-05.md) | Diagram Lifecycle                         | F5     | Planned | 04         |
+| [06](./plan/phase-06.md) | Blueprints & Templates                    | F6     | Planned | 05         |
+| [07](./plan/phase-07.md) | Sharing & Read-Only View                  | F7     | Planned | 05         |
+| [08](./plan/phase-08.md) | Export & Print                            | F8     | Planned | 04         |
+| [09](./plan/phase-09.md) | Project Scaffold Export                   | F9     | Planned | 03, 08     |
+| [10](./plan/phase-10.md) | MCP Server _(post-MVP)_                   | F10    | Planned | 09         |
+| [11](./plan/phase-11.md) | In-App AI Architect Chat _(post-MVP)_     | F11    | Planned | 10         |
+| [12](./plan/phase-12.md) | Security Hardening & Production Readiness | SEC    | Planned | 01–11      |
 
 ---
 

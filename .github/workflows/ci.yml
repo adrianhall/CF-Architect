@@ -24,17 +24,11 @@ jobs:
           node-version-file: ".nvmrc"
           cache: "npm"
 
-      # Clean install — respects .npmrc ignore-scripts=true.
-      # No package lifecycle scripts run automatically (supply-chain hardening).
+      # Clean install. The root package.json postinstall script (scripts/postinstall.mjs)
+      # runs automatically via npm lifecycle and rebuilds native deps (currently: esbuild).
+      # Note: ignore-scripts is suspended during Phases 01–11; see docs/plan/phase-12.md.
       - name: Install dependencies
         run: npm ci
-
-      # Rebuild native deps from the allowlist.
-      # npm ci with ignore-scripts=true skips all postinstall hooks including
-      # our own. We call the allowlist runner explicitly so CI has full control
-      # and visibility over what runs.
-      - name: Rebuild native deps (postinstall allowlist)
-        run: node scripts/postinstall.mjs
 
       # ---------------------------------------------------------------------------
       # Check

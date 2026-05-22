@@ -34,6 +34,8 @@
       "binding": "DB",
       "database_name": "${TF_OUTPUT_D1_DATABASE_NAME}",
       "database_id": "${TF_OUTPUT_D1_DATABASE_ID}",
+      // Migrations live under apps/worker, not at repo root where this config lives
+      "migrations_dir": "./apps/worker/src/db/migrations",
     },
   ],
 

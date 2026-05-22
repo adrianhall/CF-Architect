@@ -28,16 +28,25 @@ git checkout v2
 cp .env.example .env
 ```
 
-Edit `.env` and fill in:
+Edit `.env` and fill in all required values before running `npm run provision`:
 
-- `CLOUDFLARE_ACCOUNT_ID` — your Cloudflare account ID
-- `CLOUDFLARE_API_TOKEN` — a provisioning-scoped API token (see `.env.example`)
-- `SEED_ADMIN_EMAIL` — email of the first admin user
+| Variable                   | Required | Description                                                                                                      |
+| -------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------- |
+| `CLOUDFLARE_ACCOUNT_ID`    | Yes      | Your Cloudflare account ID — right sidebar at dash.cloudflare.com                                                |
+| `CLOUDFLARE_API_TOKEN`     | Yes      | Provisioning-scoped token: Workers, D1, KV, R2, Access permissions — see `.env.example` for exact scopes         |
+| `SEED_ADMIN_EMAIL`         | Yes      | Email of the first admin user; must be able to authenticate via Cloudflare Access                                |
+| `CLOUDFLARE_TEAM_DOMAIN`   | Yes      | Your Zero Trust team domain, e.g. `myteam.cloudflareaccess.com` — Zero Trust → Settings → Custom Pages           |
+| `WORKER_DOMAIN`            | Yes      | Domain Cloudflare Access will protect, e.g. `cf-architect-production.<subdomain>.workers.dev`                    |
+| `ALLOWED_EMAIL_DOMAIN`     | Yes      | Email domain to allow, e.g. `example.com` — any `@example.com` user authenticated via the IdP is permitted       |
+| `CLOUDFLARE_ACCESS_IDP_ID` | Yes      | UUID of the Cloudflare Access Identity Provider — Zero Trust → Integrations → Identity Providers → click the IdP |
+| `ENVIRONMENT`              | No       | Resource name suffix; defaults to `production`                                                                   |
+| `CLOUDFLARE_ACCESS_AUD`    | —        | **Auto-populated** by Terraform after provision; do not fill in manually                                         |
 
 ```bash
 npm ci
-node scripts/postinstall.mjs   # rebuilds esbuild; see Supply-chain section below
 ```
+
+> `npm ci` automatically runs the `postinstall` script which rebuilds native deps (currently: esbuild).
 
 ### 2. Provision Cloudflare resources
 
@@ -45,8 +54,8 @@ node scripts/postinstall.mjs   # rebuilds esbuild; see Supply-chain section belo
 npm run provision
 ```
 
-This runs `terraform init && terraform apply` inside `infra/` and then
-automatically runs `npm run render-wrangler` to generate `wrangler.jsonc`.
+This chains `terraform init → terraform apply → generate:wrangler` in one command and
+generates `wrangler.jsonc`.
 
 Confirm in the Cloudflare dashboard that the following resources were created:
 
@@ -55,19 +64,15 @@ Confirm in the Cloudflare dashboard that the following resources were created:
 - R2 bucket: `cf-arch-assets-production`
 - Worker: `cf-architect-production`
 
-### 3. Apply database migrations
-
-```bash
-npm run migrate
-```
-
-### 4. Deploy
+### 3. Deploy
 
 ```bash
 npm run deploy
 ```
 
-The Worker URL is printed by wrangler at the end of this step.
+`npm run deploy` chains `generate:wrangler → migrate:remote → deploy:worker` automatically.
+Migrations are idempotent — running deploy twice is safe. The Worker URL is printed by wrangler at
+the end of this step.
 
 ---
 
@@ -99,51 +104,58 @@ the interactive developer login bypass (no Cloudflare Access required locally).
 
 ## Script reference
 
-| Script                        | What it does                                 | Destructive? |
-| ----------------------------- | -------------------------------------------- | ------------ |
-| `npm run build`               | Build web + worker (sequential)              | No           |
-| `npm run build:web`           | Vite production build                        | No           |
-| `npm run build:worker`        | Wrangler dry-run build                       | No           |
-| `npm run check`               | types + lint + format + audit                | No           |
-| `npm run check:types`         | TypeScript type-check                        | No           |
-| `npm run check:lint`          | ESLint across all workspaces                 | No           |
-| `npm run check:format`        | Prettier format check                        | No           |
-| `npm run check:audit`         | `npm audit` high/critical + signatures       | No           |
-| `npm run fix`                 | Auto-fix lint + format issues                | Yes          |
-| `npm run fix:lint`            | ESLint `--fix`                               | Yes          |
-| `npm run fix:format`          | Prettier `--write`                           | Yes          |
-| `npm run test`                | Unit tests + E2E tests                       | No           |
-| `npm run test:unit`           | Vitest (all projects) with Istanbul coverage | No           |
-| `npm run test:e2e`            | Playwright E2E suite                         | No           |
-| `npm run test:a11y`           | Playwright `@a11y`-tagged specs only         | No           |
-| `npm run test:ci`             | Unit tests only (used in CI)                 | No           |
-| `npm start`                   | Build web then `wrangler dev`                | No           |
-| `npm run dev:web`             | Vite dev server                              | No           |
-| `npm run dev:worker`          | `wrangler dev`                               | No           |
-| `npm run provision`           | `terraform init && terraform apply`          | Yes          |
-| `npm run render-wrangler`     | Substitute TF outputs → `wrangler.jsonc`     | Yes          |
-| `npm run migrate`             | Apply Drizzle migrations (local)             | Yes          |
-| `npm run migrate -- --remote` | Apply Drizzle migrations (production D1)     | Yes          |
-| `npm run deploy`              | `wrangler deploy`                            | Yes          |
+| Script                      | What it does                                         | Destructive?                   |
+| --------------------------- | ---------------------------------------------------- | ------------------------------ |
+| `npm run build`             | Build web + worker (sequential)                      | No                             |
+| `npm run build:web`         | Vite production build                                | No                             |
+| `npm run build:worker`      | Wrangler dry-run build                               | No                             |
+| `npm run check`             | types + lint + format + audit                        | No                             |
+| `npm run check:types`       | TypeScript type-check                                | No                             |
+| `npm run check:lint`        | ESLint across all workspaces                         | No                             |
+| `npm run check:format`      | Prettier format check                                | No                             |
+| `npm run check:audit`       | `npm audit` high/critical + signatures               | No                             |
+| `npm run fix`               | Auto-fix lint + format issues                        | Yes                            |
+| `npm run fix:lint`          | ESLint `--fix`                                       | Yes                            |
+| `npm run fix:format`        | Prettier `--write`                                   | Yes                            |
+| `npm run test`              | Unit tests + E2E tests                               | No                             |
+| `npm run test:unit`         | Vitest (all projects) with Istanbul coverage         | No                             |
+| `npm run test:e2e`          | Playwright E2E suite                                 | No                             |
+| `npm run test:a11y`         | Playwright `@a11y`-tagged specs only                 | No                             |
+| `npm run test:ci`           | Unit tests only (used in CI)                         | No                             |
+| `npm start`                 | Build web then `wrangler dev`                        | No                             |
+| `npm run dev:web`           | Vite dev server                                      | No                             |
+| `npm run dev:worker`        | `wrangler dev`                                       | No                             |
+| `npm run provision`         | `terraform init → apply → generate:wrangler`         | Yes                            |
+| `npm run generate:wrangler` | Substitute TF outputs → `wrangler.jsonc`             | Yes                            |
+| `npm run migrate:local`     | Apply Drizzle migrations (local miniflare)           | Yes                            |
+| `npm run migrate:remote`    | Apply Drizzle migrations (production D1)             | Yes                            |
+| `npm run deploy`            | `generate:wrangler → migrate:remote → deploy:worker` | Yes                            |
+| `npm run teardown`          | `terraform destroy` + remove generated files         | **Yes — destroys cloud infra** |
+| `npm run clean`             | Remove dist, coverage, `.wrangler` state             | Yes (local files only)         |
 
 ---
 
 ## Supply-chain security
 
-This project implements layered supply-chain hardening. **All eight layers must
-remain in place.**
+This project implements layered supply-chain hardening. Seven of the eight planned
+layers are active. Layer 1 (`ignore-scripts=true`) is **suspended during active
+development (Phases 01–11)** and will be re-instated in Phase 12 (Security
+Hardening). See [docs/plan/phase-12.md](./docs/plan/phase-12.md).
 
-### Layer 1 — `ignore-scripts=true`
+### Layer 1 — `ignore-scripts=true` _(suspended until Phase 12)_
 
-`.npmrc` sets `ignore-scripts=true`. No package lifecycle script (postinstall,
-prepare, etc.) runs automatically during `npm ci`. This eliminates the Shai-Hulud
-class of attacks where a compromised package exfiltrates tokens via postinstall.
+When active, `.npmrc` sets `ignore-scripts=true` so no package lifecycle script
+(postinstall, prepare, etc.) runs automatically during `npm ci`. This eliminates the
+Shai-Hulud class of attacks where a compromised package exfiltrates tokens via
+postinstall. Currently suspended to keep the dev loop frictionless; will be
+re-instated and the postinstall allowlist fully audited in Phase 12.
 
 ### Layer 2 — Postinstall allowlist
 
-`scripts/postinstall.mjs` runs a hand-maintained allowlist. Currently only
-`esbuild` is listed (it needs to select a platform-specific binary). Adding a
-package to the allowlist **requires a code-reviewed PR with written justification**.
+`scripts/postinstall.mjs` runs a hand-maintained allowlist. Currently only `esbuild`
+is listed (it needs to select a platform-specific binary). The script runs
+automatically via npm's `postinstall` lifecycle hook. Adding a package to the
+allowlist **requires a code-reviewed PR with written justification**.
 
 ### Layer 3 — Renovate 14-day cooldown
 

@@ -9,6 +9,10 @@ apps/worker/dist/
 # Generated Wrangler config (produced by scripts/render-wrangler.ts after `npm run provision`)
 wrangler.jsonc
 
+# Wrangler local state — miniflare D1/KV/R2 databases, temp files created by
+# `wrangler dev` and `wrangler d1 migrations apply --local`
+.wrangler/
+
 # Local environment and secrets — never committed
 .env
 .dev.vars
