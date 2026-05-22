@@ -211,3 +211,115 @@ or substitute a different second-opinion scanner.
   the OSV-Scanner deferral is documented there under "Phase 12 deferred tasks".
 - `docs/PLAN.md` §9 Layer 4 and `README.md` supply-chain section updated to link to
   the new doc.
+
+---
+
+## 2026-05-22 — Phase 03: Cloudflare Service Catalog
+
+### D09 — Catalog schemas: Zod v3 instead of v4
+
+**Status:** Accepted
+**Phase:** 03
+
+**Decision:** Author all catalog Zod schemas in **Zod v3** (`^3.25.x`), consistent with every
+other schema in `packages/shared`.
+
+**Context:** The phase-03.md spec says "Zod v4 schemas", but AGENTS.md §5 is explicit:
+"The project uses Zod v3 … do not upgrade to v4 until all phases are complete and a migration
+is explicitly planned." Upgrading only the catalog module while keeping the rest of shared on v3
+is not viable (single `zod` dependency in `packages/shared/package.json`).
+
+**Alternatives considered:**
+
+- _Upgrade all of `packages/shared` to Zod v4 now_: Breaking change; `@hono/zod-validator@^0.7.6`
+  supports both v3 and v4 but the rest of the codebase uses v3 API syntax throughout.
+- _Use Zod v3 (chosen)_: Zero migration risk; consistent with entire existing codebase.
+
+**Rationale:** AGENTS.md mandate takes precedence over the phase spec. The catalog schemas are
+functionally identical between v3 and v4 for the types used here.
+
+---
+
+### D10 — Icon source: local sibling cloudflare-docs repo
+
+**Status:** Accepted
+**Phase:** 03
+
+**Decision:** Copy SVG icons from the local sibling repository at
+`../cloudflare-docs/src/icons/` into `apps/web/src/icons/src/`. Document the source and
+licence in `apps/web/src/icons/ICONS.md`.
+
+**Context:** Phase-03.md open question #1 asks whether the Cloudflare brand asset repository is
+publicly accessible. The cloudflare-docs repository at `../cloudflare-docs/src/icons/` contains
+123 production SVG icons and licence has been confirmed pre-cleared for this use.
+
+**Alternatives considered:**
+
+- _Wait for official brand assets_: Blocks Phase 03 and Phase 04.
+- _Derive icons from developers.cloudflare.com_: Same source, higher per-icon effort.
+
+**Rationale:** Unblocks Phase 03 immediately. The ICONS.md file documents the origin for
+auditability.
+
+---
+
+### D11 — otherLinks: deferred to Phase 12
+
+**Status:** Accepted
+**Phase:** 03
+
+**Decision:** `otherLinks` is an empty array (`[]`) for every service in Phase 03. The schema
+and the type are defined now; population is deferred. A follow-on task is added to
+`docs/plan/phase-12.md`.
+
+**Context:** Phase-03.md recommended seeding `otherLinks` for 6 well-known products. After
+discussion, the preference is to seed only `docLink` universally and keep `otherLinks`
+schema-complete but empty until Phase 12.
+
+**Rationale:** Avoids partial data (`6/37` services with links vs. the rest empty) and keeps
+the Phase 03 service data consistent. Doc links provide the majority of UX value.
+
+---
+
+### D12 — Icon sprite: generated once and committed
+
+**Status:** Accepted
+**Phase:** 03
+
+**Decision:** `scripts/build-icon-sprite.ts` generates `apps/web/public/icons/sprite.svg` and
+that file is **committed to git**. It is not re-generated on every `build:web` invocation.
+Re-run the script manually when icons change.
+
+**Context:** Phase-03.md specified the script "run as part of `build:web`". However:
+
+1. Regenerating the sprite on every CI build requires the `cloudflare-docs` sibling repo to be
+   present at the correct relative path — which is not available in CI.
+2. The sprite content is deterministic from the committed source SVGs in `apps/web/src/icons/src/`.
+3. Committing the sprite means CI always has a valid asset without needing to run the generator.
+
+**Alternatives considered:**
+
+- _Run as part of `build:web`_: Requires sibling repo in CI; adds complexity.
+- _Inline SVGs in React via Vite raw import_: More bundle overhead; harder to cache.
+
+**Rationale:** Committed artefact is simpler, auditable, and CI-friendly. The ICONS.md documents
+how to regenerate it when source icons change.
+
+---
+
+### D13 — Generic non-Cloudflare resources in catalog
+
+**Status:** Accepted
+**Phase:** 03
+
+**Decision:** Add a `generic` category (grey `#6B7280`) with 8 common architecture diagram
+primitives: user, agent, external-api, internet, mobile, browser, server, database. These use
+custom-authored SVG icons stored alongside the CF icons in `apps/web/src/icons/src/`.
+
+**Context:** Architecture diagrams always include non-Cloudflare actors (users, origin servers,
+third-party APIs, the internet). Without these primitives, Phase 04 diagrams cannot represent
+realistic architectures.
+
+**Rationale:** Adding them now (Phase 03) means Phase 04 canvas work can immediately draw
+real-looking diagrams. The custom icons are simple monochrome SVG paths matching the CF icon
+visual style.

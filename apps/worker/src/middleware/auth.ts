@@ -47,6 +47,8 @@ declare module "hono" {
 export const AUTH_POLICIES: PathPolicy[] = [
   { pattern: /^\/api\/health$/, authenticate: false },
   { pattern: /^\/api\/version$/, authenticate: false },
+  // Catalog endpoint is public — no auth required (Phase 03)
+  { pattern: /^\/api\/catalog$/, authenticate: false },
   // Share viewer (Phase 07) — read-only public access
   { pattern: /^\/share\//, authenticate: false },
   // Everything else under /api/ requires authentication

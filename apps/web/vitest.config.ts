@@ -13,6 +13,6 @@ export default defineConfig({
       exclude: ["src/**/*.test.ts", "src/**/*.test.tsx", "src/routeTree.gen.ts", "src/main.tsx"],
     },
     globals: true,
-    setupFiles: [],
+    setupFiles: ["./src/test-setup.ts"],
   },
 });

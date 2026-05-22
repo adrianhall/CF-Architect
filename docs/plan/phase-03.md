@@ -2,11 +2,21 @@
 phase: "03"
 title: "Cloudflare Service Catalog"
 feature: "F3"
-status: "Planned"
+status: "In Progress"
 depends_on: ["01"]
 ---
 
 # Phase 03 — Cloudflare Service Catalog
+
+## Deviations from original spec
+
+| #   | Original spec                                          | Decision                                                                                           |
+| --- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| D09 | "Zod v4 schemas"                                       | **Zod v3** used throughout (AGENTS.md §5 mandate; single `zod` dep in `packages/shared`). See D09. |
+| D10 | "Source icons from the official Cloudflare brand repo" | Copied from local sibling `../cloudflare-docs/src/icons/`; licence pre-cleared. See D10.           |
+| D11 | "Seed `otherLinks` for well-known services"            | `otherLinks: []` for all services; deferred to Phase 12. See D11.                                  |
+| D12 | "Build sprite as part of `build:web`"                  | Sprite generated once and **committed** to `apps/web/public/icons/`; CI-safe. See D12.             |
+| D13 | (not in original spec)                                 | Added `generic` category with 8 non-Cloudflare architecture primitives. See D13.                   |
 
 ## Goal
 

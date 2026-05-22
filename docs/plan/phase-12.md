@@ -30,6 +30,11 @@ The following decisions affect this phase. Full rationale in
 
 ### In Scope
 
+- **Catalog `otherLinks` population** — Seed `otherLinks` (video, audio, document, example
+  links) for marquee Cloudflare services (Workers, D1, R2, KV, Queues, Workers AI) in
+  `packages/shared/src/catalog/services.ts`. Schema and type already exist from Phase 03
+  (D11 in `docs/DECISION_LOG.md`). Update `CONTRIBUTING.md` after seeding.
+
 - Re-institute `ignore-scripts=true` in `.npmrc` with a fully audited postinstall
   allowlist
 - Full dependency audit: necessity, version freshness, license compliance, CVEs

@@ -30,6 +30,7 @@ import healthRoute from "./routes/health.js";
 import versionRoute from "./routes/version.js";
 import meRoute from "./routes/me.js";
 import adminRoute from "./routes/admin.js";
+import catalogRoute from "./routes/catalog.js";
 
 // ---------------------------------------------------------------------------
 // Bindings type
@@ -101,6 +102,7 @@ app.route("/", healthRoute);
 app.route("/", versionRoute);
 app.route("/", meRoute);
 app.route("/", adminRoute);
+app.route("/", catalogRoute);
 
 // ---------------------------------------------------------------------------
 // 404 handler — only reached for /api/* and /_auth/* mismatches.

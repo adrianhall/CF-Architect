@@ -56,3 +56,20 @@ export type {
   ListAuditQuery as ListAuditQueryType,
   ListAuditResponse as ListAuditResponseType,
 } from "./schemas/admin.js";
+
+// ---------------------------------------------------------------------------
+// Catalog — Cloudflare service registry (Phase 03)
+// ---------------------------------------------------------------------------
+
+export {
+  OtherLinkSchema,
+  ServiceSchema,
+  CategorySchema,
+  EdgeTypeSchema,
+  AliasMapSchema,
+  CatalogSchema,
+} from "./catalog/types.js";
+export type { OtherLink, Service, Category, EdgeType, AliasMap, Catalog } from "./catalog/types.js";
+
+export { getCatalog } from "./catalog/index.js";
+export { resolveTypeId } from "./catalog/aliases.js";
