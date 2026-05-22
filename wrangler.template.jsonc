@@ -66,6 +66,9 @@
   // ---------------------------------------------------------------------------
   "vars": {
     "ENVIRONMENT": "production",
+    // Cloudflare Access audience tag — used by cloudflareAccess middleware
+    // (Phase 02) to validate JWT `aud` claims.
+    "CLOUDFLARE_ACCESS_AUD": "${TF_OUTPUT_ACCESS_AUD}",
   },
 
   // ---------------------------------------------------------------------------
