@@ -30,5 +30,5 @@ data "dotenv" "env" {
 # Cloudflare provider — credentials sourced from .env
 # ---------------------------------------------------------------------------
 provider "cloudflare" {
-  api_token = data.dotenv.env.env["CLOUDFLARE_API_TOKEN"]
+  api_token = local.api_token
 }

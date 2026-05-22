@@ -1,5 +1,5 @@
 resource "cloudflare_r2_bucket" "assets" {
-  account_id = data.dotenv.env.env["CLOUDFLARE_ACCOUNT_ID"]
+  account_id = local.account_id
   name       = "cf-arch-assets-${var.environment}"
   location   = "WNAM"
 }

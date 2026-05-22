@@ -1,9 +1,9 @@
 resource "cloudflare_workers_kv_namespace" "shares" {
-  account_id = data.dotenv.env.env["CLOUDFLARE_ACCOUNT_ID"]
+  account_id = local.account_id
   title      = "cf-arch-shares-${var.environment}"
 }
 
 resource "cloudflare_workers_kv_namespace" "catalog" {
-  account_id = data.dotenv.env.env["CLOUDFLARE_ACCOUNT_ID"]
+  account_id = local.account_id
   title      = "cf-arch-catalog-${var.environment}"
 }

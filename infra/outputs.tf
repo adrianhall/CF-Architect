@@ -39,7 +39,7 @@ output "worker_name" {
 
 output "cloudflare_account_id" {
   description = "Cloudflare account ID (echoed for convenience)"
-  value       = data.dotenv.env.env["CLOUDFLARE_ACCOUNT_ID"]
+  value       = local.account_id
   sensitive   = true
 }
 
@@ -61,7 +61,7 @@ resource "local_file" "tf_outputs" {
     TF_OUTPUT_R2_BUCKET_NAME       = cloudflare_r2_bucket.assets.name
     TF_OUTPUT_WORKER_NAME           = cloudflare_worker.app.name
     TF_OUTPUT_ACCESS_AUD            = cloudflare_zero_trust_access_application.app.aud
-    TF_OUTPUT_CLOUDFLARE_ACCOUNT_ID = data.dotenv.env.env["CLOUDFLARE_ACCOUNT_ID"]
+    TF_OUTPUT_CLOUDFLARE_ACCOUNT_ID = local.account_id
   })
   file_permission = "0600"
 }

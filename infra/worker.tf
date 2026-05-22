@@ -11,7 +11,7 @@
 # wrangler.template.jsonc so that wrangler targets the same Worker.
 # ---------------------------------------------------------------------------
 resource "cloudflare_worker" "app" {
-  account_id = data.dotenv.env.env["CLOUDFLARE_ACCOUNT_ID"]
+  account_id = local.account_id
   name       = "cf-architect-${var.environment}"
   logpush    = false
 

@@ -1,5 +1,5 @@
 resource "cloudflare_d1_database" "main" {
-  account_id = data.dotenv.env.env["CLOUDFLARE_ACCOUNT_ID"]
+  account_id = local.account_id
   name       = "cf-arch-${var.environment}"
 
   # Explicitly disable read replication.

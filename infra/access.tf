@@ -15,13 +15,13 @@
 # ---------------------------------------------------------------------------
 
 resource "cloudflare_zero_trust_access_application" "app" {
-  account_id = data.dotenv.env.env["CLOUDFLARE_ACCOUNT_ID"]
+  account_id = local.account_id
   name       = "CF-Architect (${var.environment})"
   type       = "self_hosted"
 
   # Restrict authentication to the single configured IdP.
   # Prevents users from choosing an alternative IdP at login.
-  allowed_idps = [data.dotenv.env.env["CLOUDFLARE_ACCESS_IDP_ID"]]
+  allowed_idps = [local.access_idp_id]
 
   # Protect the Worker domain.
   # For workers.dev: <worker-name>.<account-workers-subdomain>.workers.dev
@@ -29,7 +29,7 @@ resource "cloudflare_zero_trust_access_application" "app" {
   destinations = [
     {
       type = "public"
-      uri  = data.dotenv.env.env["WORKER_DOMAIN"]
+      uri  = local.worker_domain
     }
   ]
 
@@ -54,14 +54,14 @@ resource "cloudflare_zero_trust_access_application" "app" {
   # ---------------------------------------------------------------------------
   policies = [
     {
-      name       = "Allow @${data.dotenv.env.env["ALLOWED_EMAIL_DOMAIN"]} via IdP"
+      name       = "Allow @${local.allowed_email_domain} via IdP"
       precedence = 1
       decision   = "allow"
 
       include = [
         {
           email_domain = {
-            domain = data.dotenv.env.env["ALLOWED_EMAIL_DOMAIN"]
+            domain = local.allowed_email_domain
           }
         }
       ]
@@ -69,7 +69,7 @@ resource "cloudflare_zero_trust_access_application" "app" {
       require = [
         {
           login_method = {
-            id = data.dotenv.env.env["CLOUDFLARE_ACCESS_IDP_ID"]
+            id = local.access_idp_id
           }
         }
       ]
