@@ -1,0 +1,7 @@
+{
+  // MD013 — line-length: not enforced; text wraps in editors and renderers ignore it
+  "MD013": false,
+
+  // MD060 — no-missing-space-in-heading: table column headers trigger false positives
+  "MD060": false
+}
