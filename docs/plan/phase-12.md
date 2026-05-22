@@ -34,6 +34,7 @@ conditions.
 - Code review focused on security vulnerabilities
 - Supply-chain CI gate restoration
 - `SECURITY.md` vulnerability disclosure policy
+- Code validation against official documentation from Cloudflare, <https://vitest.dev/guide>, and other sources. Identify deviations from best practices. If possible, identify potential fixes to bring in line with documented best practices.
 
 ### Out of Scope
 

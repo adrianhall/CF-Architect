@@ -2,7 +2,7 @@
 phase: "02"
 title: "Identity, Access & Multi-User"
 feature: "F2"
-status: "Planned"
+status: "In Progress"
 depends_on: ["01"]
 ---
 
@@ -12,7 +12,20 @@ depends_on: ["01"]
 
 Wire Cloudflare Access authentication into the Hono Worker, provision user records on first login,
 enforce CSRF protection on all mutating endpoints, and provide an admin panel with full audit trail
-and user management. Add per-PR preview environment provisioning (the item deferred from Phase 01).
+and user management.
+
+## Deviations from original spec
+
+The following decisions were made during implementation. Full rationale in
+[`docs/DECISION_LOG.md`](../DECISION_LOG.md).
+
+| #   | Original spec                                                                       | Decision                                                                                                           |
+| --- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| D01 | Session-expiry banner reads `exp` from `CF_Authorization` cookie (`HttpOnly=false`) | `GET /api/me` returns `exp` field; cookie stays `HttpOnly`. See D01.                                               |
+| D02 | KV-backed sliding-window rate limiter                                               | Native Cloudflare Workers `ratelimit` binding (GA Sept 2025). See D02.                                             |
+| D03 | Per-PR preview environments (`scripts/preview-env.ts`, GitHub Actions workflow)     | **Deferred**. F1-US2 is out of scope for this phase. See D03.                                                      |
+| D05 | Seed admin promoted on every login if email matches                                 | Promoted only on first INSERT. Re-logins never overwrite `role`. See D05.                                          |
+| D06 | `DEV_MODE=true` in `.dev.vars` required for dev login                               | **Removed**. `developerAuthentication` activates automatically; `DEV_MODE` was never read by the library. See D06. |
 
 ## Scope
 
@@ -20,30 +33,33 @@ and user management. Add per-PR preview environment provisioning (the item defer
 
 - `@adrianhall/cloudflare-auth` middleware (`developerAuthentication` + `cloudflareAccess`) wired
   into Hono with a shared `PathPolicy[]`
-- D1 `users` table; first-login upsert; `SEED_ADMIN_EMAIL` admin promotion
+- D1 `users` table; first-login upsert; `SEED_ADMIN_EMAIL` admin promotion (first INSERT only)
 - D1 `admin_audit` table; audit entries written on every admin mutation
 - Admin route group: user list (paginated, sortable, searchable), promote/demote/delete actions
 - Cannot-promote/demote/delete-self guard
 - CSRF middleware (Origin check + double-submit cookie)
-- Real rate-limit implementation replacing the Phase 01 stub (D1 or KV sliding window)
-- Session-expiry banner (30 min before JWT `exp`; client-side)
-- `GET /api/me` user profile endpoint
+- Real rate-limit implementation replacing the Phase 01 stub — **native Workers `ratelimit`
+  binding** (`RL_SHARES`, `RL_ADMIN`, `RL_AUTOSAVE`)
+- Session-expiry banner (30 min before JWT `exp`; `exp` sourced from `GET /api/me` response)
+- `GET /api/me` user profile endpoint (includes `exp` field)
 - User profile widget (avatar, email) in app shell
 - `D1 user_preferences` table and `GET/PUT /api/me/preferences` (theme, palette state)
-- Per-PR preview environment: `scripts/preview-env.ts` + GitHub Actions jobs
+- TanStack Table v8 (`@tanstack/react-table`) for admin user list
 
 ### Out of Scope
 
 - Diagram ownership (Phase 05)
 - User diagram/share counts in admin list (Phase 05 completes these columns)
 - OAuth avatar URL enrichment (future; `avatar_url` defaults to null)
+- Per-PR preview environments (deferred — see D03 in DECISION_LOG.md)
 
 ## Pre-requisites
 
 - Phase 01 complete and deployed
 - Cloudflare Access application configured and associated with the deployment domain
-- `CLOUDFLARE_TEAM_DOMAIN` set in `.env`
-- `SEED_ADMIN_EMAIL` set in `.env`
+- `CLOUDFLARE_TEAM_DOMAIN` set in `.env` (injected into `wrangler.jsonc` by Terraform)
+- `SEED_ADMIN_EMAIL` set in `.env` (used by Terraform output; also set as a Worker secret via `wrangler secret put SEED_ADMIN_EMAIL`)
+- No `DEV_MODE` variable needed — `@adrianhall/cloudflare-auth` activates dev login automatically (see D06 in DECISION_LOG.md)
 
 ## Tasks
 
@@ -65,7 +81,7 @@ and user management. Add per-PR preview environment provisioning (the item defer
 - [ ] Mount `developerAuthentication({ policies: AUTH_POLICIES })` as the first middleware in `index.ts`
 - [ ] Mount `cloudflareAccess({ policies: AUTH_POLICIES, teamDomain: env.CLOUDFLARE_TEAM_DOMAIN })` as the second middleware
 - [ ] Add wrangler ASSETS config entry for `/_auth/*` in `run_worker_first` (already in template from Phase 01; verify)
-- [ ] First-login hook: after `cloudflareAccess`, call `upsertUser` with `c.get("userSub")` and `c.get("userEmail")`; promote to admin if email matches `env.SEED_ADMIN_EMAIL`; attach `userId` and `userRole` to Hono context
+- [ ] First-login hook (`attachUserContext` middleware): after `cloudflareAccess`, call `upsertUser` with `c.get("userSub")` and `c.get("userEmail")`; promote to admin **only on first INSERT** if email matches `env.SEED_ADMIN_EMAIL`; decode JWT payload to extract `exp`; attach `userId`, `userRole`, and `userExp` to Hono context
 
 ### CSRF middleware
 
@@ -75,8 +91,9 @@ and user management. Add per-PR preview environment provisioning (the item defer
 
 ### Rate limits
 
-- [ ] Replace Phase 01 stub with real KV-backed sliding-window rate limiter in `apps/worker/src/middleware/rate-limit.ts`
-- [ ] Apply per-endpoint limits: `POST /api/shares` 10/min per user; `POST|PATCH|DELETE /api/admin/*` 20/min per user; autosave limit stubbed (Phase 05 wires it)
+- [ ] Replace Phase 01 stub with real rate-limit middleware in `apps/worker/src/middleware/rate-limit.ts` using the **native Cloudflare Workers `ratelimit` binding** (not KV)
+- [ ] Add three `ratelimits` entries to `wrangler.template.jsonc` and `wrangler.test.jsonc`: `RL_SHARES` (10/60s), `RL_ADMIN` (20/60s), `RL_AUTOSAVE` (30/60s)
+- [ ] Apply per-endpoint limits: `POST /api/shares` uses `RL_SHARES`; `POST|PATCH|DELETE /api/admin/*` uses `RL_ADMIN`; `RL_AUTOSAVE` binding declared now, wired in Phase 05
 
 ### API routes
 
@@ -90,7 +107,7 @@ and user management. Add per-PR preview environment provisioning (the item defer
 
 ### Client — admin UI
 
-- [ ] `apps/web/src/routes/admin/index.tsx` (TanStack Router) — users list with DataTable; columns: name, email, role badge, joined date, diagram count (shows 0), share count (shows 0), actions
+- [ ] `apps/web/src/routes/admin/index.tsx` (TanStack Router) — users list with **TanStack Table v8** (`@tanstack/react-table`); columns: name, email, role badge, joined date, diagram count (shows 0), share count (shows 0), actions
 - [ ] Sort and search controls on admin user list
 - [ ] Pagination controls
 - [ ] Promote/demote action (dropdown per row); confirmation for demote; disabled on own row
@@ -102,14 +119,12 @@ and user management. Add per-PR preview environment provisioning (the item defer
 
 - [ ] `apps/web/src/features/f02-auth/useCurrentUser.ts` — TanStack Query hook for `GET /api/me`; used in app shell
 - [ ] Profile widget `ProfileWidget.tsx` — avatar (initials fallback), email, role badge; in top-right of app shell; shown on all protected pages
-- [ ] Session-expiry banner `SessionExpiryBanner.tsx` — reads JWT `exp` from `CF_Authorization` cookie (accessible since `HttpOnly=false`); shows banner with "Re-authenticate" link 30 min before expiry; dismissible
+- [ ] Session-expiry banner `SessionExpiryBanner.tsx` — reads `exp` from `useCurrentUser()` (sourced from `GET /api/me` response); shows banner with "Re-authenticate" link 30 min before expiry; dismissible. `CF_Authorization` cookie stays `HttpOnly`.
 - [ ] Route guard: unauthenticated requests to protected TanStack Router routes redirect to `/_auth/login`
 
 ### Preview environments
 
-- [ ] `scripts/preview-env.ts` — sub-commands: `create <pr-number>` (terraform workspace new + apply) and `destroy <pr-number>` (workspace select + destroy); reads `.env` for credentials
-- [ ] `.github/workflows/preview.yml` — on `pull_request` opened/reopened: run `preview-env create ${{ github.event.number }}`; on `pull_request` closed: run `preview-env destroy ${{ github.event.number }}`; output preview URL as PR comment
-- [ ] Update `infra/variables.tf` to accept `environment` override per workspace
+> **Deferred** — removed from Phase 02 scope. See D03 in `docs/DECISION_LOG.md`.
 
 ## Schema Changes
 
@@ -216,11 +231,13 @@ CREATE TABLE user_preferences (
       previous test appear with correct actor, target, action, and timestamp.
 - [ ] **CSRF rejection** — Using curl, send a mutating request without `Origin` or `X-CSRF-Token`:
       `curl -X DELETE http://localhost:8787/api/admin/users/some-id`. Confirm HTTP 403.
-- [ ] **Session expiry banner** — Manually craft a dev JWT with `exp = now + 20 minutes` using the
-      dev secret. Set it as the `CF_Authorization` cookie in the browser. Reload the app. Confirm the
-      session-expiry banner appears with a re-authenticate link.
-- [ ] **Rate limit** — Send 25 rapid-fire requests to `POST /api/shares` (stub endpoint is ok; use
-      any POST /api/admin route). Confirm the 21st+ request returns HTTP 429.
+- [ ] **Session expiry banner** — Manually craft a dev JWT with `exp = now + 20 minutes` using
+      `signDevJwt` from `@adrianhall/cloudflare-auth` (the same function used in tests). Set it as
+      the `CF_Authorization` cookie in the browser and reload. Confirm the session-expiry banner
+      appears (the banner reads `exp` from `GET /api/me`, not from the cookie directly).
+- [ ] **Rate limit** — Send 25 rapid-fire authenticated requests to a `POST /api/admin/*` route.
+      Confirm the 21st+ request returns HTTP 429 with `{ ok: false, error: { code: "RATE_LIMITED" } }`.
+      (Limits are per-location; run from the same machine to ensure the same Cloudflare PoP.)
 - [ ] **Preview environment** — Open a draft PR. Confirm the `preview.yml` GitHub Actions job runs.
       Confirm a new isolated D1 database and KV namespace appear in the Cloudflare dashboard for that PR.
       Close the PR. Confirm the resources are destroyed.
@@ -238,12 +255,14 @@ CREATE TABLE user_preferences (
 | **F2-US7** — DEV_MODE bypass; production fails closed without `CLOUDFLARE_TEAM_DOMAIN` | Dev login manual test; verify 401 in local without `DEV_MODE` |
 | **F2-US8** — CSRF on all mutating endpoints                                            | CSRF rejection manual test                                    |
 | **F2-US9** — Audit log records actor, target, action, timestamp                        | Audit log manual test                                         |
-| **F1-US2** — Preview deploys per PR with isolated data, cleaned up on PR close         | Preview environment manual test                               |
+| **F1-US2** — Preview deploys per PR with isolated data, cleaned up on PR close         | **Deferred** — see D03 in DECISION_LOG.md                     |
 
 ## Rollout / Rollback
 
-**Rollout:** Run `npm run migrate` (applies 0001 and 0002), then `npm run deploy`. Set
-`CLOUDFLARE_TEAM_DOMAIN`, `SEED_ADMIN_EMAIL` as Worker secrets via `wrangler secret put`.
+**Rollout:** Run `npm run deploy` (chains `generate:wrangler → migrate:remote → deploy:worker`,
+applying migrations 0001 and 0002). Set `SEED_ADMIN_EMAIL` as a Worker secret via
+`wrangler secret put SEED_ADMIN_EMAIL`. `CLOUDFLARE_TEAM_DOMAIN` is injected by Terraform into
+`wrangler.jsonc` automatically — no separate secret needed for it.
 
 **Rollback:** Redeploy previous Worker version (which has no auth middleware). If migrations must
 be reverted: `DROP TABLE user_preferences; DROP TABLE admin_audit; DROP TABLE users;` via

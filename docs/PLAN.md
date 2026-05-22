@@ -199,14 +199,20 @@ flowchart TD
 
 ## 5. Environments
 
-| Environment    | Wrangler env                  | D1                 | KV                 | R2                       | Auth                       |
-| -------------- | ----------------------------- | ------------------ | ------------------ | ------------------------ | -------------------------- |
-| **Local**      | (default)                     | miniflare local D1 | miniflare local KV | miniflare R2 emulation   | DEV_MODE interactive login |
-| **Preview**    | `preview` (per-PR, Phase 02+) | Isolated D1 per PR | Isolated KV per PR | Shared preview R2 prefix | DEV_MODE or Access         |
-| **Production** | `production`                  | Production D1      | Production KV      | Production R2            | Cloudflare Access          |
+| Environment    | Wrangler env | D1                 | KV                 | R2                     | Auth                                        |
+| -------------- | ------------ | ------------------ | ------------------ | ---------------------- | ------------------------------------------- |
+| **Local**      | (default)    | miniflare local D1 | miniflare local KV | miniflare R2 emulation | `developerAuthentication` interactive login |
+| **Production** | `production` | Production D1      | Production KV      | Production R2          | Cloudflare Access JWT                       |
 
-`DEV_MODE` is set only in `.dev.vars` (gitignored). Production fails closed if
-`CLOUDFLARE_TEAM_DOMAIN` is unset and `DEV_MODE` is absent, satisfying F2-US7.
+No `DEV_MODE` flag is required. `@adrianhall/cloudflare-auth` detects real Cloudflare Access
+headers automatically (no-ops when `Cf-Access-Jwt-Assertion` is present) and falls through to
+the interactive email-login form in local development. See **D06** in `docs/DECISION_LOG.md`.
+
+Production fails closed if `CLOUDFLARE_TEAM_DOMAIN` is unset and a real (non-dev) JWT is
+presented, satisfying F2-US7.
+
+> **Note — Per-PR preview environments (F1-US2):** Deferred from Phase 02. See **D03** in
+> `docs/DECISION_LOG.md`.
 
 ---
 
@@ -270,12 +276,16 @@ The client shows "Another session saved changes — reload?" (Design Notes §Con
 
 ### Rate limits
 
-| Endpoint group                     | Limit                |
-| ---------------------------------- | -------------------- |
-| `POST /api/shares`                 | 10 / minute per user |
-| `GET /share/:token`                | 60 / minute per IP   |
-| `PUT /api/diagrams/:id` (autosave) | 30 / minute per user |
-| `POST /api/admin/*`                | 20 / minute per user |
+Rate limits are enforced by the native Cloudflare Workers `ratelimit` binding (GA Sept 2025).
+Three bindings are declared in `wrangler.template.jsonc`: `RL_SHARES`, `RL_ADMIN`, `RL_AUTOSAVE`.
+Limits are per Cloudflare location (not globally per user). See **D02** in `docs/DECISION_LOG.md`.
+
+| Endpoint group                     | Binding       | Limit              |
+| ---------------------------------- | ------------- | ------------------ |
+| `POST /api/shares`                 | `RL_SHARES`   | 10 / 60 s per user |
+| `GET /share/:token`                | _(Phase 07)_  | 60 / 60 s per IP   |
+| `PUT /api/diagrams/:id` (autosave) | `RL_AUTOSAVE` | 30 / 60 s per user |
+| `POST\|PATCH\|DELETE /api/admin/*` | `RL_ADMIN`    | 20 / 60 s per user |
 
 ### CSRF
 
@@ -291,26 +301,37 @@ Public endpoints (`GET /api/health`, `GET /api/version`, `GET /share/:token`) ar
 ## 8. Authentication Architecture
 
 `@adrianhall/cloudflare-auth` provides two Hono middleware functions configured with a shared
-`PathPolicy[]` array. Public paths: `/api/health`, `/api/version`, `/share/:token`. All other
-`/api/*` paths require authentication.
+`PathPolicy[]` array. Public paths: `/api/health`, `/api/version`, `/_auth/.*`, `/share/.*`. All
+other `/api/*` paths require authentication.
 
 ```mermaid
 flowchart LR
-    Req["Incoming Request"] --> Dev["developerAuthentication<br/><i>dev: serve /_auth/login + set cookie<br/>prod: no-op</i>"]
-    Dev --> Access["cloudflareAccess<br/><i>validate JWT; set userEmail + userSub on context</i>"]
-    Access --> Handler["Route handler"]
+    Req["Incoming Request"] --> Dev["developerAuthentication<br/><i>real CF headers? → no-op<br/>local dev? → serve /_auth/login</i>"]
+    Dev --> Access["cloudflareAccess<br/><i>HMAC (dev JWT) or JWKS (real JWT)<br/>sets userEmail + userSub on context</i>"]
+    Access --> Attach["attachUserContext<br/><i>upsertUser; sets userId, userRole, userExp</i>"]
+    Attach --> CSRF["csrfMiddleware<br/><i>Origin check or double-submit cookie</i>"]
+    CSRF --> Handler["Route handler"]
 ```
 
-- **`developerAuthentication`** — in production, detects existing CF Access headers and no-ops.
-  In local dev (`DEV_MODE`), serves an interactive email login at `/_auth/login` and sets a
-  `CF_Authorization` cookie.
-- **`cloudflareAccess`** — validates the JWT (real or dev-issued); sets `c.get("userEmail")` and
-  `c.get("userSub")` on the Hono context.
+- **`developerAuthentication`** — detects real `Cf-Access-Jwt-Assertion` header and no-ops
+  (production path). Without that header, serves an interactive email-login form at `/_auth/login`
+  and issues a dev JWT (local development path). **No `DEV_MODE` flag required.**
+- **`cloudflareAccess`** — verifies the JWT via HMAC first (for dev JWTs), then falls back to
+  the Cloudflare JWKS endpoint (for real Access JWTs). Sets `c.get("userEmail")` and
+  `c.get("userSub")` on the Hono context. Requires `CLOUDFLARE_TEAM_DOMAIN` **only** for real
+  (non-dev) JWTs.
+- **`attachUserContext`** — calls `upsertUser` (creates the user row on first login; promotes to
+  admin only on first insert if email matches `SEED_ADMIN_EMAIL`). Decodes the JWT payload to
+  extract `exp`. Sets `userId`, `userRole`, `userExp` on context.
+- **`csrfMiddleware`** — validates `Origin` header or double-submit `CF_CSRF` cookie for all
+  mutating requests (`POST`, `PUT`, `PATCH`, `DELETE`). Exempt: public paths and `GET/HEAD/OPTIONS`.
 
 ### Admin role
 
-The first user whose email matches `SEED_ADMIN_EMAIL` is promoted to `role = 'admin'` on their
-first login. All subsequent admin changes go through the admin UI with full audit-log entries.
+The first user whose email matches `SEED_ADMIN_EMAIL` is promoted to `role = 'admin'` when their
+user row is **first inserted** (first-ever login). Re-logins update `last_login_at` only and never
+overwrite `role`. See **D05** in `docs/DECISION_LOG.md`. All subsequent admin changes go through
+the admin UI with full audit-log entries.
 
 ### Wrangler ASSETS routing
 

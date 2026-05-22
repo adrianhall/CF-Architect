@@ -12,6 +12,7 @@
   "main": "apps/worker/src/index.ts",
   "compatibility_date": "2025-05-01",
   "compatibility_flags": ["nodejs_compat"],
+  "preview_urls": false,
 
   // ---------------------------------------------------------------------------
   // Static assets — Vite SPA build output
@@ -68,10 +69,37 @@
   // ---------------------------------------------------------------------------
   "vars": {
     "ENVIRONMENT": "production",
-    // Cloudflare Access audience tag — used by cloudflareAccess middleware
-    // (Phase 02) to validate JWT `aud` claims.
+    // Cloudflare Access audience tag — used by cloudflareAccess middleware to
+    // validate JWT `aud` claims. Auto-populated by Terraform.
     "CLOUDFLARE_ACCESS_AUD": "${TF_OUTPUT_ACCESS_AUD}",
+    // Cloudflare Access team domain — used by cloudflareAccess to fetch the
+    // JWKS for validating real (non-dev) Access JWTs. Auto-populated by TF.
+    "CLOUDFLARE_TEAM_DOMAIN": "${TF_OUTPUT_CLOUDFLARE_TEAM_DOMAIN}",
   },
+
+  // ---------------------------------------------------------------------------
+  // Rate limiting (native Workers ratelimit binding — GA Sept 2025)
+  // Limits are per Cloudflare location. See D02 in docs/DECISION_LOG.md.
+  // ---------------------------------------------------------------------------
+  "ratelimits": [
+    {
+      "name": "RL_SHARES",
+      "namespace_id": "1001",
+      "simple": { "limit": 10, "period": 60 },
+    },
+    {
+      "name": "RL_ADMIN",
+      "namespace_id": "1002",
+      "simple": { "limit": 20, "period": 60 },
+    },
+    {
+      // Autosave limit — binding declared now; wired to the PUT /api/diagrams
+      // route in Phase 05 when diagram persistence is added.
+      "name": "RL_AUTOSAVE",
+      "namespace_id": "1003",
+      "simple": { "limit": 30, "period": 60 },
+    },
+  ],
 
   // ---------------------------------------------------------------------------
   // Observability

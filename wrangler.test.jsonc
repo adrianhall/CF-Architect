@@ -54,5 +54,17 @@
 
   "vars": {
     "ENVIRONMENT": "test",
+    // Fake team domain for tests — dev JWTs are verified via HMAC and never
+    // reach the JWKS endpoint, so this value is never actually used.
+    "CLOUDFLARE_TEAM_DOMAIN": "test.cloudflareaccess.com",
   },
+
+  // Rate-limit bindings with intentionally high limits so integration tests
+  // never accidentally hit the cap. Unit tests for rate-limit middleware mock
+  // the binding directly with vi.fn() rather than relying on these limits.
+  "ratelimits": [
+    { "name": "RL_SHARES", "namespace_id": "1001", "simple": { "limit": 10000, "period": 60 } },
+    { "name": "RL_ADMIN", "namespace_id": "1002", "simple": { "limit": 10000, "period": 60 } },
+    { "name": "RL_AUTOSAVE", "namespace_id": "1003", "simple": { "limit": 10000, "period": 60 } },
+  ],
 }

@@ -4,19 +4,16 @@
 #
 # Wrangler reads .dev.vars automatically during `wrangler dev` / `npm start`.
 # These values override any [vars] in wrangler.jsonc for local development.
-
-# ---------------------------------------------------------------------------
-# Developer auth bypass (LOCAL ONLY)
-# ---------------------------------------------------------------------------
-
-# Set to "true" to enable the interactive dev-mode login bypass provided by
-# @adrianhall/cloudflare-auth. When set, navigating to /_auth/login in your
-# browser prompts for an email address and issues a local CF_Authorization cookie.
 #
-# IMPORTANT: This variable MUST NOT appear in wrangler.jsonc or be deployed.
-# Production fails closed if CLOUDFLARE_TEAM_DOMAIN is unset AND DEV_MODE is absent.
-DEV_MODE=true
+# For most local development sessions this file can remain empty.
+# @adrianhall/cloudflare-auth activates its interactive login flow automatically
+# when real Cloudflare Access headers are absent — no flag required.
+# See D06 in docs/DECISION_LOG.md.
 
-# Optional: Cloudflare IdP ID to pre-select on the login screen.
-# Leave blank to show the default Cloudflare Access login page.
-# DEV_IDP_ID=
+# ---------------------------------------------------------------------------
+# Seed admin (optional — only needed if you want to test admin promotion locally)
+# ---------------------------------------------------------------------------
+
+# Email address to promote to role='admin' on first login.
+# The promotion only fires on the first INSERT of this user's row.
+# SEED_ADMIN_EMAIL=dev@example.com

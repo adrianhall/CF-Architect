@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { SELF } from "cloudflare:test";
+import { devAuthHeaders, seedUser } from "../../test/auth-helper.js";
 
 describe("GET /api/health", () => {
   it("returns 200 with ok: true and status: ok", async () => {
@@ -29,8 +30,15 @@ describe("GET /api/health", () => {
 });
 
 describe("GET /api/unknown — 404 envelope", () => {
-  it("returns 404 with ok: false and NOT_FOUND code", async () => {
-    const res = await SELF.fetch("http://localhost/api/does-not-exist");
+  it("returns 404 with ok: false and NOT_FOUND code when authenticated", async () => {
+    // Unauthenticated requests are redirected to the login form by
+    // developerAuthentication. Use a valid dev JWT so auth passes and the
+    // 404 handler is reached.
+    const email = `404test-${crypto.randomUUID().slice(0, 8)}@example.com`;
+    await seedUser({ email });
+    const headers = await devAuthHeaders(email);
+
+    const res = await SELF.fetch("http://localhost/api/does-not-exist", { headers });
     expect(res.status).toBe(404);
 
     const body = await res.json<{
@@ -41,22 +49,5 @@ describe("GET /api/unknown — 404 envelope", () => {
     expect(body.ok).toBe(false);
     expect(body.error.code).toBe("NOT_FOUND");
     expect(typeof body.error.message).toBe("string");
-  });
-});
-
-describe("Rate-limit stub — X-Rate-Limit-Bypass header", () => {
-  it("returns 429 envelope when bypass header is set to trigger", async () => {
-    const res = await SELF.fetch("http://localhost/api/health", {
-      headers: { "X-Rate-Limit-Bypass": "trigger" },
-    });
-    expect(res.status).toBe(429);
-
-    const body = await res.json<{
-      ok: boolean;
-      error: { code: string };
-    }>();
-
-    expect(body.ok).toBe(false);
-    expect(body.error.code).toBe("RATE_LIMITED");
   });
 });

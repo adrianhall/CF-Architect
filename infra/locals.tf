@@ -12,7 +12,8 @@ locals {
   api_token  = data.dotenv.env.env["CLOUDFLARE_API_TOKEN"]
 
   # Cloudflare Access settings
-  access_idp_id        = data.dotenv.env.env["CLOUDFLARE_ACCESS_IDP_ID"]
-  worker_domain        = data.dotenv.env.env["WORKER_DOMAIN"]
-  allowed_email_domain = data.dotenv.env.env["ALLOWED_EMAIL_DOMAIN"]
+  access_idp_id          = data.dotenv.env.env["CLOUDFLARE_ACCESS_IDP_ID"]
+  worker_domain          = data.dotenv.env.env["WORKER_DOMAIN"]
+  allowed_email_domain   = data.dotenv.env.env["ALLOWED_EMAIL_DOMAIN"]
+  cloudflare_team_domain = data.dotenv.env.env["CLOUDFLARE_TEAM_DOMAIN"]
 }

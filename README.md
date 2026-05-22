@@ -2,7 +2,7 @@
 
 Visual architecture design tool purpose-built for Cloudflare.
 
-> **Status:** Phase 01 in progress — Platform Foundations.
+> **Status:** Phase 02 in progress — Identity, Access & Multi-User.
 > See [docs/PLAN.md](./docs/PLAN.md) for the full engineering reference.
 
 ---
@@ -97,8 +97,16 @@ npm run dev:worker
 
 The Vite dev server proxies `/api/*` and `/_auth/*` to `http://localhost:8787`.
 
-Copy `.dev.vars.example` to `.dev.vars` and set `DEV_MODE=true` to enable
-the interactive developer login bypass (no Cloudflare Access required locally).
+Copy `.dev.vars.example` to `.dev.vars`. No special variables are required for
+local development — `@adrianhall/cloudflare-auth` activates its interactive
+email-login form automatically when real Cloudflare Access headers are absent.
+
+To test admin promotion locally, add `SEED_ADMIN_EMAIL=your@email.com` to `.dev.vars`,
+log in with that email via the dev login form, and the first login will promote
+the user to admin (first-INSERT-only behaviour — see `docs/DECISION_LOG.md` D05).
+
+> **Note:** `DEV_MODE` is not a real configuration key — it was removed in Phase 02.
+> See D06 in `docs/DECISION_LOG.md` for why it was never needed.
 
 ---
 
@@ -200,6 +208,15 @@ deploy to production:
 | ----------------------- | ------------------------- | ----------------------------------------------- |
 | `CLOUDFLARE_ACCOUNT_ID` | Repository                | Target Cloudflare account ID                    |
 | `CLOUDFLARE_API_TOKEN`  | Environment: `production` | Workers Scripts:Edit-scoped token (deploy only) |
+
+After `npm run provision`, set the following Worker secrets via Wrangler:
+
+```bash
+wrangler secret put SEED_ADMIN_EMAIL   # Email of the first admin user
+```
+
+`CLOUDFLARE_TEAM_DOMAIN` is injected into `wrangler.jsonc` by Terraform automatically
+and does not need to be set as a separate secret.
 
 > Recommendation: use a dedicated CI sub-account with the narrowest possible
 > token scope. The provisioning token (broad) should never be stored as a

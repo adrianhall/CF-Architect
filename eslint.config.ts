@@ -11,6 +11,7 @@ export default tseslint.config(
       "**/dist/**",
       "**/coverage/**",
       "**/.terraform/**",
+      "**/.wrangler/**",
       "apps/web/src/routeTree.gen.ts",
       "playwright-report/**",
       "test-results/**",
