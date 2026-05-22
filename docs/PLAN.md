@@ -18,34 +18,34 @@ Cloudflare developer platform.
 
 ## 2. Tech Stack
 
-| Concern | Choice | Rationale |
-|---|---|---|
-| **Frontend bundler** | Vite + React 19 + TypeScript (strict) | SPA on Worker ASSETS; fast HMR; modern toolchain |
-| **Routing** | TanStack Router | Type-safe file-based routes; best DX for typed params |
-| **Canvas** | @xyflow/react (React Flow v12+) | De-facto node-based editor; custom node/edge renderers; accessible |
-| **Auto-layout** | elkjs in a Web Worker | Spec requires off-main-thread layout (F4-US9) |
-| **Client state** | Zustand + zundo (temporal middleware) | Tiny; undo/redo-friendly; no boilerplate |
-| **Server state** | TanStack Query | Caching; optimistic updates; autosave coordination |
-| **Worker framework** | Hono | Required by `@adrianhall/cloudflare-auth`; lightweight; also a scaffold template (F9) |
-| **Validation** | Zod v4 | Shared between client/worker/MCP; single source of truth for all schemas |
-| **ORM** | Drizzle on D1 | Type-safe; spec explicitly mentions it (F9-US4) |
-| **Primary storage** | D1 (metadata + JSON blob) | Simple; most diagrams <64 KB; optimistic-concurrency via `version` column |
-| **Object storage** | R2 | Diagram thumbnails; large blob overflow |
-| **Cache** | KV | Share-token lookup; catalog ETag; edge-local performance |
-| **Thumbnails** | Client-side canvas→PNG→R2 | Free; accurate; no server-side rendering cost |
-| **Icon system** | Cloudflare brand SVG sprite + `<ServiceIcon>` component | Single component; no inline-SVG drift; accessible |
-| **Unit tests** | Vitest + @cloudflare/vitest-pool-workers | First-class Cloudflare tooling for Worker code |
-| **E2E tests** | Playwright | Standard for canvas/keyboard testing |
-| **A11y tests** | @axe-core/playwright | Zero serious/critical violations required on every page |
-| **Lint** | ESLint 10 flat config: `@eslint/js` + `typescript-eslint` + `@eslint-react/eslint-plugin` | TS-aware React linting per <https://www.eslint-react.xyz/docs/getting-started/typescript> |
-| **Format** | Prettier | |
-| **Pre-commit** | Husky + lint-staged | |
-| **Commit convention** | Conventional Commits + commitlint | |
-| **Script runner** | npm-run-all2 | Parallel/sequential npm script composition |
-| **CI** | GitHub Actions | Lint, type-check, test, build, deploy |
-| **Infrastructure** | Terraform with cloudflare/cloudflare v5 + jrhouston/dotenv | Secrets read from `.env`; idempotent provisioning |
-| **Auth** | @adrianhall/cloudflare-auth (Hono middleware) | Cloudflare Access JWT; interactive dev-mode login bypass |
-| **Scaffold ZIP** | @zip.js/zip.js | Client-side ZIP; no native bindings; supply-chain friendly |
+| Concern               | Choice                                                                                    | Rationale                                                                                 |
+| --------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **Frontend bundler**  | Vite + React 19 + TypeScript (strict)                                                     | SPA on Worker ASSETS; fast HMR; modern toolchain                                          |
+| **Routing**           | TanStack Router                                                                           | Type-safe file-based routes; best DX for typed params                                     |
+| **Canvas**            | @xyflow/react (React Flow v12+)                                                           | De-facto node-based editor; custom node/edge renderers; accessible                        |
+| **Auto-layout**       | elkjs in a Web Worker                                                                     | Spec requires off-main-thread layout (F4-US9)                                             |
+| **Client state**      | Zustand + zundo (temporal middleware)                                                     | Tiny; undo/redo-friendly; no boilerplate                                                  |
+| **Server state**      | TanStack Query                                                                            | Caching; optimistic updates; autosave coordination                                        |
+| **Worker framework**  | Hono                                                                                      | Required by `@adrianhall/cloudflare-auth`; lightweight; also a scaffold template (F9)     |
+| **Validation**        | Zod v4                                                                                    | Shared between client/worker/MCP; single source of truth for all schemas                  |
+| **ORM**               | Drizzle on D1                                                                             | Type-safe; spec explicitly mentions it (F9-US4)                                           |
+| **Primary storage**   | D1 (metadata + JSON blob)                                                                 | Simple; most diagrams <64 KB; optimistic-concurrency via `version` column                 |
+| **Object storage**    | R2                                                                                        | Diagram thumbnails; large blob overflow                                                   |
+| **Cache**             | KV                                                                                        | Share-token lookup; catalog ETag; edge-local performance                                  |
+| **Thumbnails**        | Client-side canvas→PNG→R2                                                                 | Free; accurate; no server-side rendering cost                                             |
+| **Icon system**       | Cloudflare brand SVG sprite + `<ServiceIcon>` component                                   | Single component; no inline-SVG drift; accessible                                         |
+| **Unit tests**        | Vitest + @cloudflare/vitest-pool-workers                                                  | First-class Cloudflare tooling for Worker code                                            |
+| **E2E tests**         | Playwright                                                                                | Standard for canvas/keyboard testing                                                      |
+| **A11y tests**        | @axe-core/playwright                                                                      | Zero serious/critical violations required on every page                                   |
+| **Lint**              | ESLint 10 flat config: `@eslint/js` + `typescript-eslint` + `@eslint-react/eslint-plugin` | TS-aware React linting per <https://www.eslint-react.xyz/docs/getting-started/typescript> |
+| **Format**            | Prettier                                                                                  |                                                                                           |
+| **Pre-commit**        | Husky + lint-staged                                                                       |                                                                                           |
+| **Commit convention** | Conventional Commits + commitlint                                                         |                                                                                           |
+| **Script runner**     | npm-run-all2                                                                              | Parallel/sequential npm script composition                                                |
+| **CI**                | GitHub Actions                                                                            | Lint, type-check, test, build, deploy                                                     |
+| **Infrastructure**    | Terraform with cloudflare/cloudflare v5 + jrhouston/dotenv                                | Secrets read from `.env`; idempotent provisioning                                         |
+| **Auth**              | @adrianhall/cloudflare-auth (Hono middleware)                                             | Cloudflare Access JWT; interactive dev-mode login bypass                                  |
+| **Scaffold ZIP**      | @zip.js/zip.js                                                                            | Client-side ZIP; no native bindings; supply-chain friendly                                |
 
 ### Supply-chain hardening decisions
 
@@ -151,7 +151,7 @@ Cloudflare developer platform.
 1. `cp .env.example .env` — Fill in `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, …
 2. `npm install` — Uses `npm ci` semantics; postinstall allowlist runs
 3. `npm run provision` — `terraform init + apply`
-4. `npm run render-wrangler` *(auto-runs via `postprovision` hook)* — Substitutes TF outputs → `wrangler.jsonc`
+4. `npm run render-wrangler` _(auto-runs via `postprovision` hook)_ — Substitutes TF outputs → `wrangler.jsonc`
 5. `npm run migrate` — Applies Drizzle migrations to remote D1
 6. `npm run deploy` — `wrangler deploy`
 
@@ -197,11 +197,11 @@ flowchart TD
 
 ## 5. Environments
 
-| Environment | Wrangler env | D1 | KV | R2 | Auth |
-|---|---|---|---|---|---|
-| **Local** | (default) | miniflare local D1 | miniflare local KV | miniflare R2 emulation | DEV_MODE interactive login |
-| **Preview** | `preview` (per-PR, Phase 02+) | Isolated D1 per PR | Isolated KV per PR | Shared preview R2 prefix | DEV_MODE or Access |
-| **Production** | `production` | Production D1 | Production KV | Production R2 | Cloudflare Access |
+| Environment    | Wrangler env                  | D1                 | KV                 | R2                       | Auth                       |
+| -------------- | ----------------------------- | ------------------ | ------------------ | ------------------------ | -------------------------- |
+| **Local**      | (default)                     | miniflare local D1 | miniflare local KV | miniflare R2 emulation   | DEV_MODE interactive login |
+| **Preview**    | `preview` (per-PR, Phase 02+) | Isolated D1 per PR | Isolated KV per PR | Shared preview R2 prefix | DEV_MODE or Access         |
+| **Production** | `production`                  | Production D1      | Production KV      | Production R2            | Cloudflare Access          |
 
 `DEV_MODE` is set only in `.dev.vars` (gitignored). Production fails closed if
 `CLOUDFLARE_TEAM_DOMAIN` is unset and `DEV_MODE` is absent, satisfying F2-US7.
@@ -212,26 +212,26 @@ flowchart TD
 
 ### D1 Tables
 
-| Table | Purpose | Key columns |
-|---|---|---|
-| `users` | Authenticated user records | `id` (CF sub), `email`, `name`, `avatar_url`, `role`, `created_at`, `last_login_at` |
-| `admin_audit` | Admin action history | `id`, `actor_id`, `action`, `target_id`, `payload_json`, `at` |
-| `diagrams` | Diagram metadata + graph state | `id`, `owner_id`, `title`, `description`, `graph_json`, `thumbnail_r2_key`, `version`, `created_at`, `updated_at` |
-| `blueprints` | Curated blueprint store | `id`, `slug`, `title`, `description`, `category`, `graph_json`, `published_at`, `author_id` |
-| `shares` | Share-link tokens | `token`, `diagram_id`, `expires_at`, `revoked_at`, `created_at`, `created_by` |
-| `user_preferences` | Per-user settings | `user_id`, `theme`, `palette_state_json`, `ai_panel_enabled`, `updated_at` |
+| Table              | Purpose                        | Key columns                                                                                                       |
+| ------------------ | ------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `users`            | Authenticated user records     | `id` (CF sub), `email`, `name`, `avatar_url`, `role`, `created_at`, `last_login_at`                               |
+| `admin_audit`      | Admin action history           | `id`, `actor_id`, `action`, `target_id`, `payload_json`, `at`                                                     |
+| `diagrams`         | Diagram metadata + graph state | `id`, `owner_id`, `title`, `description`, `graph_json`, `thumbnail_r2_key`, `version`, `created_at`, `updated_at` |
+| `blueprints`       | Curated blueprint store        | `id`, `slug`, `title`, `description`, `category`, `graph_json`, `published_at`, `author_id`                       |
+| `shares`           | Share-link tokens              | `token`, `diagram_id`, `expires_at`, `revoked_at`, `created_at`, `created_by`                                     |
+| `user_preferences` | Per-user settings              | `user_id`, `theme`, `palette_state_json`, `ai_panel_enabled`, `updated_at`                                        |
 
 ### KV Namespaces
 
-| Namespace | Purpose | TTL policy |
-|---|---|---|
-| `CF_ARCH_SHARES` | Share-token lookup cache | `min(share.expires_at, now + 1h)` |
-| `CF_ARCH_CATALOG` | Catalog response ETag cache | 24 hours |
+| Namespace         | Purpose                     | TTL policy                        |
+| ----------------- | --------------------------- | --------------------------------- |
+| `CF_ARCH_SHARES`  | Share-token lookup cache    | `min(share.expires_at, now + 1h)` |
+| `CF_ARCH_CATALOG` | Catalog response ETag cache | 24 hours                          |
 
 ### R2 Buckets
 
-| Bucket | Purpose | Key pattern |
-|---|---|---|
+| Bucket           | Purpose            | Key pattern                             |
+| ---------------- | ------------------ | --------------------------------------- |
 | `cf-arch-assets` | Diagram thumbnails | `thumbnails/{diagram_id}/{version}.png` |
 
 ### Optimistic Concurrency
@@ -256,24 +256,24 @@ The client shows "Another session saved changes — reload?" (Design Notes §Con
 
 ### Error codes
 
-| Code | HTTP | Meaning |
-|---|---|---|
-| `UNAUTHENTICATED` | 401 | No valid JWT |
-| `FORBIDDEN` | 403 | Authenticated but not authorised |
-| `NOT_FOUND` | 404 | Resource absent or not visible to caller |
-| `CONFLICT` | 409 | Optimistic-concurrency version mismatch |
-| `UNPROCESSABLE` | 422 | Validation failure; `details` contains Zod field errors |
-| `RATE_LIMITED` | 429 | Endpoint-level rate limit exceeded |
-| `INTERNAL` | 500 | Unexpected error; full error logged server-side only |
+| Code              | HTTP | Meaning                                                 |
+| ----------------- | ---- | ------------------------------------------------------- |
+| `UNAUTHENTICATED` | 401  | No valid JWT                                            |
+| `FORBIDDEN`       | 403  | Authenticated but not authorised                        |
+| `NOT_FOUND`       | 404  | Resource absent or not visible to caller                |
+| `CONFLICT`        | 409  | Optimistic-concurrency version mismatch                 |
+| `UNPROCESSABLE`   | 422  | Validation failure; `details` contains Zod field errors |
+| `RATE_LIMITED`    | 429  | Endpoint-level rate limit exceeded                      |
+| `INTERNAL`        | 500  | Unexpected error; full error logged server-side only    |
 
 ### Rate limits
 
-| Endpoint group | Limit |
-|---|---|
-| `POST /api/shares` | 10 / minute per user |
-| `GET /share/:token` | 60 / minute per IP |
+| Endpoint group                     | Limit                |
+| ---------------------------------- | -------------------- |
+| `POST /api/shares`                 | 10 / minute per user |
+| `GET /share/:token`                | 60 / minute per IP   |
 | `PUT /api/diagrams/:id` (autosave) | 30 / minute per user |
-| `POST /api/admin/*` | 20 / minute per user |
+| `POST /api/admin/*`                | 20 / minute per user |
 
 ### CSRF
 
@@ -471,8 +471,8 @@ All npm scripts follow a consistent `{verb}:{scope}` pattern. `npm-run-all2` com
     "postprovision": "npm run render-wrangler",
     "render-wrangler": "tsx scripts/render-wrangler.ts",
     "migrate": "tsx scripts/migrate.ts",
-    "deploy": "wrangler deploy"
-  }
+    "deploy": "wrangler deploy",
+  },
 }
 ```
 
@@ -508,51 +508,51 @@ root scripts can delegate via `--workspace=` flags or `vitest --project` selecto
 
 ### Verb semantics
 
-| Verb | Meaning | Destructive? |
-|---|---|---|
-| `build` | Compile/bundle for production | No |
-| `check` | Non-destructive validation | No |
-| `fix` | Auto-correct lint + format | Yes (modifies files) |
-| `test` | Run automated test suites | No |
-| `dev` / `start` | Local development server | No |
-| `provision` | Terraform apply | Yes (creates cloud resources) |
-| `render-wrangler` | Generate `wrangler.jsonc` from TF outputs | Yes (writes file) |
-| `migrate` | Apply Drizzle migrations to D1 | Yes (mutates database) |
-| `deploy` | Deploy Worker via wrangler | Yes (mutates production) |
+| Verb              | Meaning                                   | Destructive?                  |
+| ----------------- | ----------------------------------------- | ----------------------------- |
+| `build`           | Compile/bundle for production             | No                            |
+| `check`           | Non-destructive validation                | No                            |
+| `fix`             | Auto-correct lint + format                | Yes (modifies files)          |
+| `test`            | Run automated test suites                 | No                            |
+| `dev` / `start`   | Local development server                  | No                            |
+| `provision`       | Terraform apply                           | Yes (creates cloud resources) |
+| `render-wrangler` | Generate `wrangler.jsonc` from TF outputs | Yes (writes file)             |
+| `migrate`         | Apply Drizzle migrations to D1            | Yes (mutates database)        |
+| `deploy`          | Deploy Worker via wrangler                | Yes (mutates production)      |
 
 ---
 
 ## 13. Phase Index
 
-| # | Title | Source | Status | Depends On |
-|---|---|---|---|---|
-| [01](./plan/phase-01.md) | Platform Foundations | F1 | Planned | — |
-| [02](./plan/phase-02.md) | Identity, Access & Multi-User | F2 | Planned | 01 |
-| [03](./plan/phase-03.md) | Cloudflare Service Catalog | F3 | Planned | 01 |
-| [04](./plan/phase-04.md) | Architecture Canvas | F4 | Planned | 02, 03 |
-| [05](./plan/phase-05.md) | Diagram Lifecycle | F5 | Planned | 04 |
-| [06](./plan/phase-06.md) | Blueprints & Templates | F6 | Planned | 05 |
-| [07](./plan/phase-07.md) | Sharing & Read-Only View | F7 | Planned | 05 |
-| [08](./plan/phase-08.md) | Export & Print | F8 | Planned | 04 |
-| [09](./plan/phase-09.md) | Project Scaffold Export | F9 | Planned | 03, 08 |
-| [10](./plan/phase-10.md) | MCP Server *(post-MVP)* | F10 | Planned | 09 |
-| [11](./plan/phase-11.md) | In-App AI Architect Chat *(post-MVP)* | F11 | Planned | 10 |
+| #                        | Title                                 | Source | Status  | Depends On |
+| ------------------------ | ------------------------------------- | ------ | ------- | ---------- |
+| [01](./plan/phase-01.md) | Platform Foundations                  | F1     | Planned | —          |
+| [02](./plan/phase-02.md) | Identity, Access & Multi-User         | F2     | Planned | 01         |
+| [03](./plan/phase-03.md) | Cloudflare Service Catalog            | F3     | Planned | 01         |
+| [04](./plan/phase-04.md) | Architecture Canvas                   | F4     | Planned | 02, 03     |
+| [05](./plan/phase-05.md) | Diagram Lifecycle                     | F5     | Planned | 04         |
+| [06](./plan/phase-06.md) | Blueprints & Templates                | F6     | Planned | 05         |
+| [07](./plan/phase-07.md) | Sharing & Read-Only View              | F7     | Planned | 05         |
+| [08](./plan/phase-08.md) | Export & Print                        | F8     | Planned | 04         |
+| [09](./plan/phase-09.md) | Project Scaffold Export               | F9     | Planned | 03, 08     |
+| [10](./plan/phase-10.md) | MCP Server _(post-MVP)_               | F10    | Planned | 09         |
+| [11](./plan/phase-11.md) | In-App AI Architect Chat _(post-MVP)_ | F11    | Planned | 10         |
 
 ---
 
 ## 14. Glossary
 
-| Term | Definition |
-|---|---|
-| **Diagram** | A user-owned graph of Cloudflare service nodes and connecting edges |
-| **Blueprint** | A curated, read-only reference diagram published by a blueprint author |
-| **Share** | A token-protected read-only link to a diagram |
-| **Service** | An entry in the Cloudflare service catalog (e.g. "Workers KV", "D1") |
-| **Category** | A grouping of services with a shared colour (e.g. "Storage", "Compute") |
-| **Edge type** | One of four connection styles: `data-flow`, `binding`, `dependency`, `logical` |
-| **Scaffold** | A downloadable ZIP containing a ready-to-run Wrangler project derived from a diagram |
-| **DEV_MODE** | A `.dev.vars`-only flag enabling the interactive developer login bypass |
-| **Envelope** | Standard JSON response wrapper: `{ ok, data, meta }` or `{ ok, error }` |
-| **Version** | Optimistic-concurrency integer on each diagram row; increments on every save |
-| **Thumbnail** | A PNG preview of a diagram's canvas, generated client-side and stored in R2 |
+| Term                      | Definition                                                                                  |
+| ------------------------- | ------------------------------------------------------------------------------------------- |
+| **Diagram**               | A user-owned graph of Cloudflare service nodes and connecting edges                         |
+| **Blueprint**             | A curated, read-only reference diagram published by a blueprint author                      |
+| **Share**                 | A token-protected read-only link to a diagram                                               |
+| **Service**               | An entry in the Cloudflare service catalog (e.g. "Workers KV", "D1")                        |
+| **Category**              | A grouping of services with a shared colour (e.g. "Storage", "Compute")                     |
+| **Edge type**             | One of four connection styles: `data-flow`, `binding`, `dependency`, `logical`              |
+| **Scaffold**              | A downloadable ZIP containing a ready-to-run Wrangler project derived from a diagram        |
+| **DEV_MODE**              | A `.dev.vars`-only flag enabling the interactive developer login bypass                     |
+| **Envelope**              | Standard JSON response wrapper: `{ ok, data, meta }` or `{ ok, error }`                     |
+| **Version**               | Optimistic-concurrency integer on each diagram row; increments on every save                |
+| **Thumbnail**             | A PNG preview of a diagram's canvas, generated client-side and stored in R2                 |
 | **Postinstall allowlist** | The set of packages explicitly permitted to run build scripts via `scripts/postinstall.mjs` |

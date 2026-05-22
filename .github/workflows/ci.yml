@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: Check + Test + Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+
+      # Clean install — respects .npmrc ignore-scripts=true.
+      # No package lifecycle scripts run automatically (supply-chain hardening).
+      - name: Install dependencies
+        run: npm ci
+
+      # Rebuild native deps from the allowlist.
+      # npm ci with ignore-scripts=true skips all postinstall hooks including
+      # our own. We call the allowlist runner explicitly so CI has full control
+      # and visibility over what runs.
+      - name: Rebuild native deps (postinstall allowlist)
+        run: node scripts/postinstall.mjs
+
+      # ---------------------------------------------------------------------------
+      # Check
+      # ---------------------------------------------------------------------------
+      - name: Type-check
+        run: npm run check:types
+
+      - name: Lint
+        run: npm run check:lint
+
+      - name: Format check
+        run: npm run check:format
+
+      - name: Audit
+        run: npm audit --audit-level=high && npm audit signatures
+
+      # ---------------------------------------------------------------------------
+      # Lockfile integrity
+      # ---------------------------------------------------------------------------
+      - name: Lockfile lint
+        run: npx lockfile-lint --config .lockfile-lintrc.json
+
+      # ---------------------------------------------------------------------------
+      # Tests with Istanbul coverage
+      # ---------------------------------------------------------------------------
+      - name: Unit tests + coverage
+        run: npm run test:ci
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-lcov
+          path: coverage/lcov.info
+          if-no-files-found: error
+
+      # ---------------------------------------------------------------------------
+      # Build
+      # ---------------------------------------------------------------------------
+      - name: Build
+        run: npm run build
+
+      # ---------------------------------------------------------------------------
+      # Security scanning
+      # ---------------------------------------------------------------------------
+      - name: OSV Scanner
+        uses: google/osv-scanner-action@v2
+        with:
+          scan-args: |-
+            --recursive
+            .

@@ -180,78 +180,78 @@ None. Phase 04 reads from `GET /api/catalog` (Phase 03). All other data is local
 ## Manual Tests
 
 - [ ] **Drag and drop** — Open the canvas at `/canvas/local`. Drag "D1" from the palette and drop it
-  on the canvas. Confirm the node appears at the drop position with the correct icon, label, and
-  category colour. Drag "Workers KV" and drop it nearby. Confirm both nodes are on canvas.
+      on the canvas. Confirm the node appears at the drop position with the correct icon, label, and
+      category colour. Drag "Workers KV" and drop it nearby. Confirm both nodes are on canvas.
 - [ ] **Palette search** — Type "ai" in the palette search box. Confirm only AI-related services
-  appear. Clear the search. Confirm all categories reappear.
+      appear. Clear the search. Confirm all categories reappear.
 - [ ] **Category collapse** — Collapse the "Storage" category. Confirm it collapses and the chevron
-  rotates. Reload the page. Confirm the "Storage" category remains collapsed (state persisted in localStorage).
+      rotates. Reload the page. Confirm the "Storage" category remains collapsed (state persisted in localStorage).
 - [ ] **Category search override** — Collapse the "Storage" category. Then search for "r2". Confirm
-  the Storage category expands to show R2 even though it was collapsed.
+      the Storage category expands to show R2 even though it was collapsed.
 - [ ] **Connection** — Add two nodes. Hover a node to reveal handles. Drag from a handle on node A to
-  node B. Confirm an edge is created. Attempt to drag a handle to the same node (self-loop); confirm
-  the connection is rejected.
+      node B. Confirm an edge is created. Attempt to drag a handle to the same node (self-loop); confirm
+      the connection is rejected.
 - [ ] **Properties panel — node** — Select a node. Confirm the properties panel shows the label,
-  description, and accent colour fields. Edit the label (type more than 80 characters; confirm the
-  input stops accepting input or shows an error at 80). Click "Open docs" and confirm it opens the
-  correct Cloudflare documentation URL in a new tab.
+      description, and accent colour fields. Edit the label (type more than 80 characters; confirm the
+      input stops accepting input or shows an error at 80). Click "Open docs" and confirm it opens the
+      correct Cloudflare documentation URL in a new tab.
 - [ ] **Properties panel — edge** — Select an edge. Confirm the type selector shows all 4 edge types
-  with visual indicators. Change the type to "binding". Confirm the edge on canvas changes to the
-  dashed orange style.
+      with visual indicators. Change the type to "binding". Confirm the edge on canvas changes to the
+      dashed orange style.
 - [ ] **Undo/redo** — Add 3 nodes. Press `Ctrl+Z` three times. Confirm the canvas is empty. Press
-  `Ctrl+Shift+Z` three times. Confirm all 3 nodes are restored.
+      `Ctrl+Shift+Z` three times. Confirm all 3 nodes are restored.
 - [ ] **Undo/redo limit** — Perform 55 distinct add-node actions. Press `Ctrl+Z` 55 times. Confirm
-  only 50 undos are possible and the canvas still shows the first 5 nodes added.
+      only 50 undos are possible and the canvas still shows the first 5 nodes added.
 - [ ] **Keyboard delete — focus safety** — Select a node. Click into the label input in the properties
-  panel (keyboard focus is now inside the input). Press `Delete`. Confirm the node is NOT deleted
-  and the character in the input is deleted instead.
+      panel (keyboard focus is now inside the input). Press `Delete`. Confirm the node is NOT deleted
+      and the character in the input is deleted instead.
 - [ ] **Auto-layout** — Add 8 nodes with edges connecting them in a random arrangement. Click
-  "Layout Top-to-Bottom". Confirm nodes rearrange cleanly. Confirm the canvas remains interactive
-  during layout (you can scroll or zoom while it runs). Click "Layout Left-to-Right" and confirm
-  a different arrangement.
+      "Layout Top-to-Bottom". Confirm nodes rearrange cleanly. Confirm the canvas remains interactive
+      during layout (you can scroll or zoom while it runs). Click "Layout Left-to-Right" and confirm
+      a different arrangement.
 - [ ] **Minimap** — Add 10 nodes spread widely across the canvas. Confirm the minimap (bottom-right)
-  shows their relative positions coloured by category. Pan the main canvas and confirm the minimap
-  viewport indicator moves.
+      shows their relative positions coloured by category. Pan the main canvas and confirm the minimap
+      viewport indicator moves.
 - [ ] **Snap to grid** — Enable snap-to-grid from the toolbar. Drag a node. Confirm it snaps to grid
-  increments. Disable snap-to-grid. Drag a node. Confirm free positioning.
+      increments. Disable snap-to-grid. Drag a node. Confirm free positioning.
 - [ ] **Status bar** — Make a change. Confirm "Unsaved changes" appears in the status bar. Wait 500 ms.
-  Confirm "Saving…" appears briefly, then "Saved Xs ago". Confirm node and edge counts update.
+      Confirm "Saving…" appears briefly, then "Saved Xs ago". Confirm node and edge counts update.
 - [ ] **Unsaved changes warning** — Make a change. Attempt to close the browser tab. Confirm the
-  browser shows a "Leave site?" / "Changes you made may not be saved" warning.
+      browser shows a "Leave site?" / "Changes you made may not be saved" warning.
 - [ ] **JSON modal** — Click the `</>` button in the status bar. Confirm a modal opens showing the
-  current graph as formatted JSON. Confirm the copy button copies the JSON to clipboard.
+      current graph as formatted JSON. Confirm the copy button copies the JSON to clipboard.
 - [ ] **Dark mode FOUC** — Set dark mode. Close the browser. Re-open the URL. Confirm there is NO
-  flash of the light theme before dark mode applies (the inline script sets the theme before React
-  renders).
+      flash of the light theme before dark mode applies (the inline script sets the theme before React
+      renders).
 - [ ] **High-contrast mode** — Toggle to the high-contrast theme. Confirm all text and interactive
-  elements have sufficient contrast. Zoom into the canvas and confirm node borders and labels are
-  clearly legible.
+      elements have sufficient contrast. Zoom into the canvas and confirm node borders and labels are
+      clearly legible.
 - [ ] **Reduced motion** — Enable `prefers-reduced-motion: reduce` in OS accessibility settings.
-  Reload. Add an edge. Confirm the edge has no animated dashes or strokes. Click auto-layout.
-  Confirm nodes jump to their new positions without animation.
+      Reload. Add an edge. Confirm the edge has no animated dashes or strokes. Click auto-layout.
+      Confirm nodes jump to their new positions without animation.
 - [ ] **Keyboard-only walkthrough** — Using only the keyboard (no mouse): open the canvas, use `Tab`
-  to navigate to the palette, press `Enter` to add a service node, `Tab` to another service, `Enter`
-  to add it, then use keyboard shortcuts to zoom and fit view. Confirm all actions are achievable
-  without touching the mouse.
+      to navigate to the palette, press `Enter` to add a service node, `Tab` to another service, `Enter`
+      to add it, then use keyboard shortcuts to zoom and fit view. Confirm all actions are achievable
+      without touching the mouse.
 
 ## Acceptance Criteria
 
-| Story | How we verify |
-|---|---|
-| **F4-US1** — Drag service from palette; node at cursor; default label; immediately selectable | Drag-and-drop E2E + manual test |
-| **F4-US2** — Palette search: case-insensitive substring; empty categories hidden | Unit + manual search test |
-| **F4-US3** — Collapse/expand categories; persists; search overrides collapsed state | Manual collapse/search override test |
-| **F4-US4** — Connect via handles; default `data-flow`; no self-loops | E2E connection test |
-| **F4-US5** — Edit label (1–80), description (≤500), accent colour with reset | Properties panel manual test |
-| **F4-US6** — Edge type/label/protocol/description editable | Edge properties manual test |
-| **F4-US7** — Delete with `Delete`/`Backspace`; no-op when focus in text input | Keyboard delete safety manual test |
-| **F4-US8** — Undo/redo ≥50 steps; redo stack clears on new action | Unit store test + undo/redo manual test |
-| **F4-US9** — Auto-layout off main thread; UI responsive during layout; two directions | Auto-layout manual test; confirm via DevTools > Threads |
-| **F4-US10** — Live save status; 500 ms debounce; unload warning when dirty | Status bar + unsaved warning manual test |
-| **F4-US11** — Node + edge count in status bar | Visible in status bar throughout manual tests |
-| **F4-US12** — Zoom/pan/fit with keyboard shortcuts + toolbar buttons | Keyboard-only walkthrough |
-| **F4-US13** — Dark/light theme; persists; no FOUC; respects `prefers-color-scheme` | FOUC + dark mode manual test |
-| **F4-US14** — Keyboard-only operable; focus rings; zero axe serious/critical violations | Keyboard-only walkthrough + `@a11y` test |
+| Story                                                                                         | How we verify                                           |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| **F4-US1** — Drag service from palette; node at cursor; default label; immediately selectable | Drag-and-drop E2E + manual test                         |
+| **F4-US2** — Palette search: case-insensitive substring; empty categories hidden              | Unit + manual search test                               |
+| **F4-US3** — Collapse/expand categories; persists; search overrides collapsed state           | Manual collapse/search override test                    |
+| **F4-US4** — Connect via handles; default `data-flow`; no self-loops                          | E2E connection test                                     |
+| **F4-US5** — Edit label (1–80), description (≤500), accent colour with reset                  | Properties panel manual test                            |
+| **F4-US6** — Edge type/label/protocol/description editable                                    | Edge properties manual test                             |
+| **F4-US7** — Delete with `Delete`/`Backspace`; no-op when focus in text input                 | Keyboard delete safety manual test                      |
+| **F4-US8** — Undo/redo ≥50 steps; redo stack clears on new action                             | Unit store test + undo/redo manual test                 |
+| **F4-US9** — Auto-layout off main thread; UI responsive during layout; two directions         | Auto-layout manual test; confirm via DevTools > Threads |
+| **F4-US10** — Live save status; 500 ms debounce; unload warning when dirty                    | Status bar + unsaved warning manual test                |
+| **F4-US11** — Node + edge count in status bar                                                 | Visible in status bar throughout manual tests           |
+| **F4-US12** — Zoom/pan/fit with keyboard shortcuts + toolbar buttons                          | Keyboard-only walkthrough                               |
+| **F4-US13** — Dark/light theme; persists; no FOUC; respects `prefers-color-scheme`            | FOUC + dark mode manual test                            |
+| **F4-US14** — Keyboard-only operable; focus rings; zero axe serious/critical violations       | Keyboard-only walkthrough + `@a11y` test                |
 
 ## Rollout / Rollback
 
@@ -263,9 +263,9 @@ adds persistence.
 ## Open Questions
 
 - [ ] ELK layout options: `"elk.algorithm": "layered"` is the right choice for a top-down/left-right
-  Cloudflare architecture diagram. Confirm `"elk.layered.spacing.nodeNodeBetweenLayers"` and
-  `"elk.spacing.nodeNode"` default values are acceptable, or tune them during implementation.
+      Cloudflare architecture diagram. Confirm `"elk.layered.spacing.nodeNodeBetweenLayers"` and
+      `"elk.spacing.nodeNode"` default values are acceptable, or tune them during implementation.
 - [ ] Drag-to-add: React Flow `onDrop` with `reactFlowInstance.screenToFlowPosition()` is the
-  canonical approach. Confirm this works with `snapToGrid` enabled before finalising.
+      canonical approach. Confirm this works with `snapToGrid` enabled before finalising.
 - [ ] Should the properties panel slide in/out with an animation, or be always visible (collapsible)?
-  Recommendation: always-visible two-panel layout; collapsible toggle for small viewports.
+      Recommendation: always-visible two-panel layout; collapsible toggle for small viewports.

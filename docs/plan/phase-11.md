@@ -6,7 +6,7 @@ status: "Planned"
 depends_on: ["10"]
 ---
 
-# Phase 11 — In-App AI Architect Chat *(post-MVP)*
+# Phase 11 — In-App AI Architect Chat _(post-MVP)_
 
 ## Goal
 
@@ -35,10 +35,10 @@ Per-deployment `AI_ENABLED` env flag.
 ### Infrastructure
 
 - [ ] Provision Cloudflare AI Gateway in `infra/ai-gateway.tf` using the Cloudflare v5 provider;
-  output the gateway ID and URL; add to `wrangler.template.jsonc` as `AI_GATEWAY_ID` env var
+      output the gateway ID and URL; add to `wrangler.template.jsonc` as `AI_GATEWAY_ID` env var
 - [ ] Add `AI_ENABLED` variable to `infra/variables.tf` (default `true`); expose as Worker env var
 - [ ] `apps/worker/src/middleware/ai-gate.ts`: middleware that checks `env.AI_ENABLED !== "false"`;
-  returns 403 with `{ code: "AI_DISABLED" }` for all `/api/ai/*` routes when disabled
+      returns 403 with `{ code: "AI_DISABLED" }` for all `/api/ai/*` routes when disabled
 
 ### AI backend route
 
@@ -48,14 +48,14 @@ Per-deployment `AI_ENABLED` env flag.
   - Loads current diagram from D1 (read-only; no save in this handler)
   - Builds system prompt: serialised diagram graph (nodes + edges with labels and typeIds) + catalog
     context (service descriptions for nodes present in the diagram) + architectural ruleset context
-    + instructions that AI must propose changes in a structured JSON diff format
+    - instructions that AI must propose changes in a structured JSON diff format
   - Calls the configured LLM (Cloudflare Workers AI `@cf/meta/llama-3.3-70b-instruct` or
     configurable via `AI_MODEL` env var) through AI Gateway; enables logging + caching
   - Parses LLM response to extract `proposedChanges: DiagramDiff[]` and `narrative: string`
   - Returns `{ narrative, proposedChanges }` as SSE events
 - [ ] `DiagramDiff` type (in `packages/shared/src/schemas/ai.ts`): discriminated union of
-  `AddNodeDiff | RemoveNodeDiff | ConnectNodesDiff | RemoveEdgeDiff | UpdateNodeDataDiff` —
-  exactly the same operations as the MCP write tools; Zod-validated
+      `AddNodeDiff | RemoveNodeDiff | ConnectNodesDiff | RemoveEdgeDiff | UpdateNodeDataDiff` —
+      exactly the same operations as the MCP write tools; Zod-validated
 
 ### Web app — AI chat panel
 
@@ -81,7 +81,7 @@ Per-deployment `AI_ENABLED` env flag.
     the proposed changes list; no diagram change
 - [ ] Each applied diff shows a brief toast: "AI change applied — Ctrl+Z to undo"
 - [ ] AI changes never auto-apply without a button click; the LLM response only stages diffs;
-  no code path applies a diff without user action (F11-US5)
+      no code path applies a diff without user action (F11-US5)
 
 ### Per-user toggle
 
@@ -96,8 +96,8 @@ None. AI panel state and preferences use the existing `user_preferences` table
 
 ## API Additions
 
-| Method | Path | Auth | Purpose |
-|---|---|---|---|
+| Method | Path           | Auth     | Purpose                                |
+| ------ | -------------- | -------- | -------------------------------------- |
 | `POST` | `/api/ai/chat` | Required | Stream AI response with proposed diffs |
 
 `GET /api/version` gains an `aiEnabled: boolean` field.
@@ -135,44 +135,44 @@ None. AI panel state and preferences use the existing `user_preferences` table
 ## Manual Tests
 
 - [ ] **AI panel toggle** — Open the canvas editor. Click the AI panel button in the toolbar.
-  Confirm the AI chat panel opens on the right side. Click it again to close. Confirm it closes.
+      Confirm the AI chat panel opens on the right side. Click it again to close. Confirm it closes.
 - [ ] **Deployment-level disable** — Set `AI_ENABLED=false` in `.dev.vars`. Restart `npm start`.
-  Confirm the AI panel button is absent from the toolbar entirely. Confirm `GET /api/version`
-  returns `aiEnabled: false`.
+      Confirm the AI panel button is absent from the toolbar entirely. Confirm `GET /api/version`
+      returns `aiEnabled: false`.
 - [ ] **Ask for a change** — Open a diagram with Workers + D1 nodes. Open the AI panel. Type
-  "Suggest adding a caching layer between the Worker and D1". Confirm a response arrives with
-  a narrative explanation and at least one proposed change (likely an "Add Workers KV" node diff).
+      "Suggest adding a caching layer between the Worker and D1". Confirm a response arrives with
+      a narrative explanation and at least one proposed change (likely an "Add Workers KV" node diff).
 - [ ] **Apply a proposed change** — Click "Apply" on the proposed AddNode diff. Confirm the KV node
-  appears on the canvas with the label suggested by the AI. Confirm the save status changes to
-  "Unsaved changes" and then saves.
+      appears on the canvas with the label suggested by the AI. Confirm the save status changes to
+      "Unsaved changes" and then saves.
 - [ ] **Undo applied AI change** — After applying the AI change above, press `Ctrl+Z`. Confirm the
-  AI-applied node is removed from the canvas. Confirm it re-enters the proposed changes list (or
-  is simply gone — either behaviour is acceptable, but undo must work).
+      AI-applied node is removed from the canvas. Confirm it re-enters the proposed changes list (or
+      is simply gone — either behaviour is acceptable, but undo must work).
 - [ ] **Reject proposed change** — When AI proposes a change, click "Reject". Confirm the proposed
-  change is dismissed from the list. Confirm the diagram is unchanged.
+      change is dismissed from the list. Confirm the diagram is unchanged.
 - [ ] **Run critique** — Click the "Run critique" button in the AI panel header. Confirm a critique
-  response arrives describing any architectural issues. If the diagram is well-formed, confirm the
-  AI reports no critical findings.
+      response arrives describing any architectural issues. If the diagram is well-formed, confirm the
+      AI reports no critical findings.
 - [ ] **AI chat never auto-applies** — Send several messages to the AI. Confirm that at no point
-  does any node or edge appear on the canvas without you explicitly clicking "Apply". The diagram
-  store must only change when the user actively applies a diff.
+      does any node or edge appear on the canvas without you explicitly clicking "Apply". The diagram
+      store must only change when the user actively applies a diff.
 - [ ] **Per-user toggle** — Click "Hide AI panel" in user preferences. Log out and log back in.
-  Confirm the AI panel button is absent from the toolbar. Re-enable from preferences. Confirm it
-  returns.
+      Confirm the AI panel button is absent from the toolbar. Re-enable from preferences. Confirm it
+      returns.
 - [ ] **AI Gateway logging** — After sending a chat message, open the Cloudflare dashboard → AI
-  Gateway. Confirm a log entry for the request appears with model, token usage, and latency.
+      Gateway. Confirm a log entry for the request appears with model, token usage, and latency.
 - [ ] **Streaming** — Watch the AI response area while a request is in flight. Confirm the response
-  text appears incrementally (character by character or chunk by chunk), not all at once.
+      text appears incrementally (character by character or chunk by chunk), not all at once.
 
 ## Acceptance Criteria
 
-| Story | How we verify |
-|---|---|
-| **F11-US1** — AI chat panel in editor; propose/preview changes; apply or reject | Apply + reject manual tests |
-| **F11-US2** — Per-user toggle to hide AI panel | Per-user toggle manual test |
-| **F11-US3** — Deployment-level disable via `AI_ENABLED` env flag | Deployment-level disable manual test |
-| **F11-US4** — All AI calls routed through AI Gateway with logging and caching | AI Gateway logging manual test |
-| **F11-US5** — AI mutations require explicit user confirmation; never auto-applied | Auto-apply check manual test |
+| Story                                                                             | How we verify                        |
+| --------------------------------------------------------------------------------- | ------------------------------------ |
+| **F11-US1** — AI chat panel in editor; propose/preview changes; apply or reject   | Apply + reject manual tests          |
+| **F11-US2** — Per-user toggle to hide AI panel                                    | Per-user toggle manual test          |
+| **F11-US3** — Deployment-level disable via `AI_ENABLED` env flag                  | Deployment-level disable manual test |
+| **F11-US4** — All AI calls routed through AI Gateway with logging and caching     | AI Gateway logging manual test       |
+| **F11-US5** — AI mutations require explicit user confirmation; never auto-applied | Auto-apply check manual test         |
 
 ## Rollout / Rollback
 
@@ -186,10 +186,10 @@ from all users' UIs without any data loss.
 ## Open Questions
 
 - [ ] Which LLM to use as default? Cloudflare Workers AI (`@cf/meta/llama-3.3-70b-instruct`) keeps
-  all data within Cloudflare's network. Allow `AI_MODEL` to be overridden to support other models
-  via AI Gateway (e.g. GPT-4o, Claude).
+      all data within Cloudflare's network. Allow `AI_MODEL` to be overridden to support other models
+      via AI Gateway (e.g. GPT-4o, Claude).
 - [ ] Should AI chat history be persisted to D1 per user? Recommendation: keep it ephemeral
-  (in-memory per session) for v2. Persistence can be added in v3 if users request it.
+      (in-memory per session) for v2. Persistence can be added in v3 if users request it.
 - [ ] Token budgeting: large diagrams sent as context could exceed model context windows. Implement
-  a `trimContextToFit(diagram, model)` helper that truncates node descriptions if needed, with a
-  warning in the UI ("Some diagram details were omitted from the AI context").
+      a `trimContextToFit(diagram, model)` helper that truncates node descriptions if needed, with a
+      warning in the UI ("Some diagram details were omitted from the AI context").

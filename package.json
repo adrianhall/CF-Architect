@@ -1,0 +1,76 @@
+{
+  "name": "cf-architect",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Visual architecture design tool purpose-built for Cloudflare",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm-run-all2 --sequential build:web build:worker",
+    "build:web": "npm run build --workspace=apps/web",
+    "build:worker": "npm run build --workspace=apps/worker",
+    "check": "npm-run-all2 --sequential check:types check:lint check:format check:audit",
+    "check:types": "tsc --noEmit && npm run check:types --workspaces --if-present",
+    "check:lint": "eslint .",
+    "check:format": "prettier --check .",
+    "check:audit": "npm audit --audit-level=high && npm audit signatures",
+    "fix": "npm-run-all2 --sequential fix:lint fix:format",
+    "fix:lint": "eslint --fix .",
+    "fix:format": "prettier --write .",
+    "test": "npm-run-all2 --sequential test:unit test:e2e",
+    "test:unit": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:a11y": "playwright test --grep @a11y",
+    "test:ci": "npm-run-all2 --sequential test:unit",
+    "start": "npm-run-all2 --sequential build:web dev:worker",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "dev:worker": "wrangler dev",
+    "provision": "terraform -chdir=infra init && terraform -chdir=infra apply",
+    "postprovision": "npm run render-wrangler",
+    "render-wrangler": "tsx scripts/render-wrangler.ts",
+    "migrate": "tsx scripts/migrate.ts",
+    "deploy": "wrangler deploy",
+    "rebuild-native": "node scripts/postinstall.mjs",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,css}": [
+      "prettier --write"
+    ]
+  },
+  "overrides": {
+    "vitest": "^4.1.7",
+    "@vitest/coverage-istanbul": "^4.1.7",
+    "@cloudflare/vitest-pool-workers": "^0.16.8"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.2",
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@commitlint/types": "^19.8.1",
+    "@eslint-react/eslint-plugin": "^1.49.0",
+    "@eslint/js": "^9.28.0",
+    "@playwright/test": "^1.52.0",
+    "eslint": "^9.28.0",
+    "globals": "^16.2.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.0",
+    "lockfile-lint": "^4.14.0",
+    "npm-run-all2": "^7.0.2",
+    "prettier": "^3.5.3",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.33.0",
+    "vitest": "^4.1.7"
+  }
+}

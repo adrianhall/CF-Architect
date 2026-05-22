@@ -38,9 +38,9 @@ counts in the admin user list.
 - [ ] **Migration 0003** — Create `diagrams` table and `user_preferences` table (see Schema Changes)
 - [ ] Add Drizzle schema definitions in `apps/worker/src/db/schema.ts`
 - [ ] Query helpers: `createDiagram(ownerId, title)`, `getDiagram(id, ownerId)`,
-  `listDiagrams(ownerId, page, limit, sort, q)`, `saveDiagram(id, ownerId, graphJson, title, description, expectedVersion)` (returns `{ ok, newVersion }` or `{ conflict: true }`),
-  `deleteDiagram(id, ownerId)`, `setThumbnailKey(id, ownerId, r2Key)`,
-  `duplicateDiagram(sourceId, ownerId)`, `countDiagramsByUser(userId)`
+      `listDiagrams(ownerId, page, limit, sort, q)`, `saveDiagram(id, ownerId, graphJson, title, description, expectedVersion)` (returns `{ ok, newVersion }` or `{ conflict: true }`),
+      `deleteDiagram(id, ownerId)`, `setThumbnailKey(id, ownerId, r2Key)`,
+      `duplicateDiagram(sourceId, ownerId)`, `countDiagramsByUser(userId)`
 
 ### API routes
 
@@ -115,16 +115,16 @@ CREATE INDEX idx_diagrams_owner_title   ON diagrams (owner_id, title COLLATE NOC
 
 ## API Additions
 
-| Method | Path | Auth | Purpose |
-|---|---|---|---|
-| `POST` | `/api/diagrams` | Required | Create blank diagram |
-| `GET` | `/api/diagrams` | Required | Paginated diagram list |
-| `GET` | `/api/diagrams/:id` | Required (owner) | Load full diagram |
-| `PUT` | `/api/diagrams/:id` | Required (owner) | Save graph + metadata |
-| `DELETE` | `/api/diagrams/:id` | Required (owner) | Delete diagram |
-| `POST` | `/api/diagrams/:id/duplicate` | Required (owner) | Duplicate diagram |
-| `PUT` | `/api/diagrams/:id/thumbnail` | Required (owner) | Store thumbnail |
-| `GET` | `/api/diagrams/:id/thumbnail` | Required (owner) | Get thumbnail redirect |
+| Method   | Path                          | Auth             | Purpose                |
+| -------- | ----------------------------- | ---------------- | ---------------------- |
+| `POST`   | `/api/diagrams`               | Required         | Create blank diagram   |
+| `GET`    | `/api/diagrams`               | Required         | Paginated diagram list |
+| `GET`    | `/api/diagrams/:id`           | Required (owner) | Load full diagram      |
+| `PUT`    | `/api/diagrams/:id`           | Required (owner) | Save graph + metadata  |
+| `DELETE` | `/api/diagrams/:id`           | Required (owner) | Delete diagram         |
+| `POST`   | `/api/diagrams/:id/duplicate` | Required (owner) | Duplicate diagram      |
+| `PUT`    | `/api/diagrams/:id/thumbnail` | Required (owner) | Store thumbnail        |
+| `GET`    | `/api/diagrams/:id/thumbnail` | Required (owner) | Get thumbnail redirect |
 
 ## Test Plan
 
@@ -162,49 +162,49 @@ CREATE INDEX idx_diagrams_owner_title   ON diagrams (owner_id, title COLLATE NOC
 ## Manual Tests
 
 - [ ] **Create and autosave** — Click "New Diagram" on the dashboard. Confirm the canvas opens with
-  "Untitled Diagram" as the title. Add a Workers node to the canvas. Confirm the status bar shows
-  "Saving…" then "Saved Xs ago". Reload the page. Confirm the node is still there.
+      "Untitled Diagram" as the title. Add a Workers node to the canvas. Confirm the status bar shows
+      "Saving…" then "Saved Xs ago". Reload the page. Confirm the node is still there.
 - [ ] **Thumbnail generation** — After adding a few nodes and waiting for a save, return to the
-  dashboard. Confirm the diagram card shows a thumbnail image (not a blank or broken image).
+      dashboard. Confirm the diagram card shows a thumbnail image (not a blank or broken image).
 - [ ] **Duplicate** — On the dashboard, click the duplicate button on a diagram card. Confirm a new
-  card appears with " (Copy)" appended to the title. Confirm the browser navigates to the new
-  diagram. Confirm the canvas has the same nodes as the original.
+      card appears with " (Copy)" appended to the title. Confirm the browser navigates to the new
+      diagram. Confirm the canvas has the same nodes as the original.
 - [ ] **Delete with confirmation** — Click the delete button on a diagram card. Confirm a modal
-  appears showing the exact diagram title. Click "Cancel". Confirm the diagram is still there.
-  Click delete again, then "Delete". Confirm the card is removed from the grid.
+      appears showing the exact diagram title. Click "Cancel". Confirm the diagram is still there.
+      Click delete again, then "Delete". Confirm the card is removed from the grid.
 - [ ] **Inline rename** — Open a diagram. Click the title "Untitled Diagram" in the editor header.
-  Edit it to "My Test Architecture". Wait 1 second. Return to the dashboard. Confirm the card now
-  shows the new title.
+      Edit it to "My Test Architecture". Wait 1 second. Return to the dashboard. Confirm the card now
+      shows the new title.
 - [ ] **Conflict detection** — Open the same diagram URL in two browser tabs. In tab A, add a node
-  and wait for save. In tab B, add a different node and click save (or wait for autosave). Confirm
-  tab B shows the "Another session saved changes — reload?" modal. Click "Reload" in tab B. Confirm
-  tab B now shows the state from tab A. Reopen the diagram in a new tab B. Add a node and choose
-  "Keep mine (overwrite)" in the conflict modal. Confirm the overwrite succeeds.
+      and wait for save. In tab B, add a different node and click save (or wait for autosave). Confirm
+      tab B shows the "Another session saved changes — reload?" modal. Click "Reload" in tab B. Confirm
+      tab B now shows the state from tab A. Reopen the diagram in a new tab B. Add a node and choose
+      "Keep mine (overwrite)" in the conflict modal. Confirm the overwrite succeeds.
 - [ ] **Pagination** — Create at least 20 diagrams. Confirm the dashboard shows pagination controls.
-  Navigate to page 2. Confirm different diagrams are shown.
+      Navigate to page 2. Confirm different diagrams are shown.
 - [ ] **Sort** — On the dashboard, change sort to "Title A–Z". Confirm diagrams re-order alphabetically.
 - [ ] **Search** — Search for the partial title of an existing diagram. Confirm only matching diagrams
-  appear. Clear search. Confirm all diagrams return.
+      appear. Clear search. Confirm all diagrams return.
 - [ ] **Empty state** — Log in as a brand new user. Confirm the dashboard empty state appears with
-  "No diagrams yet" and CTA buttons for "New Diagram" and "Browse Blueprints" (even if Phase 06
-  isn't yet deployed — the link can be a placeholder).
+      "No diagrams yet" and CTA buttons for "New Diagram" and "Browse Blueprints" (even if Phase 06
+      isn't yet deployed — the link can be a placeholder).
 - [ ] **Theme persists server-side** — Set dark mode in the web app. Log in as the same user in a
-  different browser (incognito or different browser). Confirm dark mode is active on load without
-  the user toggling it (preference was fetched from the server, not localStorage).
+      different browser (incognito or different browser). Confirm dark mode is active on load without
+      the user toggling it (preference was fetched from the server, not localStorage).
 - [ ] **Admin user diagram count** — Navigate to the admin panel. Confirm each user row shows a
-  non-zero diagram count matching the number of diagrams created in manual tests above.
+      non-zero diagram count matching the number of diagrams created in manual tests above.
 
 ## Acceptance Criteria
 
-| Story | How we verify |
-|---|---|
-| **F5-US1** — Dashboard with thumbnail, title, last-updated, sorted by recency | Dashboard manual test |
-| **F5-US2** — Create blank diagram | Create and autosave manual test |
-| **F5-US3** — Duplicate; "(Copy)" suffix; navigates to new | Duplicate manual test |
-| **F5-US4** — Delete with confirmation modal showing title; cascades shares | Delete manual test; share cascade verified in Phase 07 |
-| **F5-US5** — Inline rename with 1 s debounce | Inline rename manual test |
-| **F5-US6** — Search by title | Search manual test |
-| **F5-US7** — Paginated dashboard | Pagination manual test |
+| Story                                                                         | How we verify                                          |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------ |
+| **F5-US1** — Dashboard with thumbnail, title, last-updated, sorted by recency | Dashboard manual test                                  |
+| **F5-US2** — Create blank diagram                                             | Create and autosave manual test                        |
+| **F5-US3** — Duplicate; "(Copy)" suffix; navigates to new                     | Duplicate manual test                                  |
+| **F5-US4** — Delete with confirmation modal showing title; cascades shares    | Delete manual test; share cascade verified in Phase 07 |
+| **F5-US5** — Inline rename with 1 s debounce                                  | Inline rename manual test                              |
+| **F5-US6** — Search by title                                                  | Search manual test                                     |
+| **F5-US7** — Paginated dashboard                                              | Pagination manual test                                 |
 
 ## Rollout / Rollback
 
@@ -217,8 +217,8 @@ preferences tables remain intact).
 ## Open Questions
 
 - [ ] Thumbnail library: `html2canvas` is the simplest option but has known quirks with SVG. React
-  Flow's `toSvg()` utility (from `@xyflow/react`) may be more reliable — evaluate both during
-  implementation and choose whichever produces correct output.
+      Flow's `toSvg()` utility (from `@xyflow/react`) may be more reliable — evaluate both during
+      implementation and choose whichever produces correct output.
 - [ ] Should `graph_json` have a size limit enforced at the API layer? A 4 MB D1 row limit applies.
-  Recommendation: validate JSON size ≤ 500 KB server-side; return 422 if exceeded; add an R2 blob
-  overflow path in a future phase if real diagrams hit this limit.
+      Recommendation: validate JSON size ≤ 500 KB server-side; return 422 if exceeded; add an R2 blob
+      overflow path in a future phase if real diagrams hit this limit.

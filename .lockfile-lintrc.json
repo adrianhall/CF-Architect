@@ -1,0 +1,6 @@
+{
+  "allowed-hosts": ["registry.npmjs.org", "github.com"],
+  "allowed-schemes": ["https:", "git+ssh:", "git+https:"],
+  "path": "package-lock.json",
+  "type": "npm"
+}

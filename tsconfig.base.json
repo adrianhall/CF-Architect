@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022"],
+
+    // Strict mode
+    "strict": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+
+    // Emit
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "noEmit": true,
+
+    // Module hygiene
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    // Skip type-checking of third-party .d.ts files in node_modules.
+    // In a monorepo, workspaces have different lib/types configurations
+    // (e.g. shared has no DOM, web has full DOM, worker has CF Workers types).
+    // Third-party declarations like @types/react-dom assume DOM which causes
+    // false positives in non-browser packages. Own-code type safety is
+    // maintained via the strict mode flags above.
+    "skipLibCheck": true,
+
+    // Paths — workspaces consume @cf-architect/shared
+    "paths": {
+      "@cf-architect/shared": ["./packages/shared/src/index.ts"],
+      "@cf-architect/shared/*": ["./packages/shared/src/*"]
+    }
+  },
+  "exclude": ["node_modules", "**/dist", "**/coverage", "**/*.test.ts", "**/*.test.tsx"]
+}

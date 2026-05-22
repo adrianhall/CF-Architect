@@ -1,0 +1,8 @@
+-- Migration 0000: init
+--
+-- Phase 01 bootstrap migration. This migration is intentionally empty.
+-- It establishes the Drizzle migrations infrastructure (the _drizzle_migrations
+-- table is created automatically by `wrangler d1 migrations apply`) without
+-- creating any application tables.
+--
+-- Application tables (users, diagrams, shares, etc.) are added in Phase 02+.

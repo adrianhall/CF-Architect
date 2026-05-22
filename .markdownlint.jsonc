@@ -3,5 +3,5 @@
   "MD013": false,
 
   // MD060 — no-missing-space-in-heading: table column headers trigger false positives
-  "MD060": false
+  "MD060": false,
 }

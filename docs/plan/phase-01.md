@@ -169,7 +169,7 @@ creating any tables.
 {
   "ok": true,
   "data": { "status": "ok", "timestamp": "2026-05-22T00:00:00.000Z" },
-  "meta": { "requestId": "req_01abc…" }
+  "meta": { "requestId": "req_01abc…" },
 }
 ```
 
@@ -180,7 +180,7 @@ creating any tables.
 {
   "ok": true,
   "data": { "version": "0.1.0", "environment": "production" },
-  "meta": { "requestId": "req_01abc…" }
+  "meta": { "requestId": "req_01abc…" },
 }
 ```
 
@@ -191,7 +191,7 @@ creating any tables.
 {
   "ok": false,
   "error": { "code": "NOT_FOUND", "message": "Route not found" },
-  "meta": { "requestId": "req_01abc…" }
+  "meta": { "requestId": "req_01abc…" },
 }
 ```
 
@@ -235,53 +235,53 @@ creating any tables.
 Work through these after all automated checks pass. Tick each box when confirmed.
 
 - [ ] **Clean install** — Delete `node_modules/` and run `npm ci` from a clean shell. Confirm
-  no unexpected postinstall scripts fire (terminal output shows only the allowlist runner logging
-  "running esbuild"; no other package scripts execute).
+      no unexpected postinstall scripts fire (terminal output shows only the allowlist runner logging
+      "running esbuild"; no other package scripts execute).
 - [ ] **Provision** — Copy `.env.example` to `.env`, fill in credentials. Run `npm run provision`.
-  Open the Cloudflare dashboard. Confirm: a D1 database named `cf-arch-production`, two KV
-  namespaces (`cf-arch-shares-production`, `cf-arch-catalog-production`), and one R2 bucket
-  (`cf-arch-assets-production`) all exist.
+      Open the Cloudflare dashboard. Confirm: a D1 database named `cf-arch-production`, two KV
+      namespaces (`cf-arch-shares-production`, `cf-arch-catalog-production`), and one R2 bucket
+      (`cf-arch-assets-production`) all exist.
 - [ ] **render-wrangler** — After provision, confirm `wrangler.jsonc` was auto-generated (the
-  `postprovision` hook ran `render-wrangler`). Open it. Confirm no `${TF_OUTPUT_*}` tokens remain
-  — all are replaced with real IDs/names from Terraform outputs.
+      `postprovision` hook ran `render-wrangler`). Open it. Confirm no `${TF_OUTPUT_*}` tokens remain
+      — all are replaced with real IDs/names from Terraform outputs.
 - [ ] **Local dev** — Run `npm start`. Open `http://localhost:8787`. Confirm the "CF-Architect"
-  heading renders and the health status shows "ok".
+      heading renders and the health status shows "ok".
 - [ ] **Health endpoint** — In a terminal: `curl -s http://localhost:8787/api/health | jq`. Confirm
-  `ok: true`, `data.status: "ok"`, and a `meta.requestId` field present.
+      `ok: true`, `data.status: "ok"`, and a `meta.requestId` field present.
 - [ ] **Version endpoint** — `curl -s http://localhost:8787/api/version | jq`. Confirm `version`
-  field is present and matches the version in root `package.json`.
+      field is present and matches the version in root `package.json`.
 - [ ] **404 envelope** — `curl -s http://localhost:8787/api/does-not-exist | jq`. Confirm
-  HTTP 404 and `ok: false` with `error.code: "NOT_FOUND"`.
+      HTTP 404 and `ok: false` with `error.code: "NOT_FOUND"`.
 - [ ] **Structured logging** — Make a request to `http://localhost:8787/api/health`. In the wrangler
-  dev console, confirm a JSON log line appears containing `method`, `path`, `status`, `duration_ms`,
-  and `requestId`.
+      dev console, confirm a JSON log line appears containing `method`, `path`, `status`, `duration_ms`,
+      and `requestId`.
 - [ ] **Commit hook — commitlint** — Stage a file and run `git commit -m "blah"`. Confirm commitlint
-  rejects it with a message about Conventional Commits format. Then commit with
-  `git commit -m "chore: test commit hook"` and confirm it succeeds.
+      rejects it with a message about Conventional Commits format. Then commit with
+      `git commit -m "chore: test commit hook"` and confirm it succeeds.
 - [ ] **Commit hook — lint-staged** — Introduce a deliberate ESLint error (e.g. add `var x = 1` to
-  any `.ts` file). Stage the file and attempt a commit. Confirm lint-staged blocks the commit and
-  reports the ESLint error. Fix the error and confirm the commit then succeeds.
+      any `.ts` file). Stage the file and attempt a commit. Confirm lint-staged blocks the commit and
+      reports the ESLint error. Fix the error and confirm the commit then succeeds.
 - [ ] **Lockfile registry check** — Open `package-lock.json`. Spot-check 10 different `"resolved"`
-  entries across different packages. Confirm every one begins with `https://registry.npmjs.org/`.
-  Confirm the `@adrianhall/cloudflare-auth` entry uses a GitHub SHA URL, not a branch name.
+      entries across different packages. Confirm every one begins with `https://registry.npmjs.org/`.
+      Confirm the `@adrianhall/cloudflare-auth` entry uses a GitHub SHA URL, not a branch name.
 - [ ] **Deploy to production** — Run `npm run migrate && npm run deploy`. Open the production URL
-  from wrangler output. Confirm the page loads and `GET /api/health` returns `{ status: "ok" }`.
+      from wrangler output. Confirm the page loads and `GET /api/health` returns `{ status: "ok" }`.
 - [ ] **Coverage output** — Run `npm run test:unit` locally. Confirm a `./coverage/` directory is
-  created containing `lcov.info`, an `html/` folder, and a text summary printed to the terminal
-  showing per-file line/branch/function coverage percentages. Open `coverage/html/index.html` in a
-  browser and confirm it shows coverage for files in all three projects (web, shared, worker).
+      created containing `lcov.info`, an `html/` folder, and a text summary printed to the terminal
+      showing per-file line/branch/function coverage percentages. Open `coverage/html/index.html` in a
+      browser and confirm it shows coverage for files in all three projects (web, shared, worker).
 - [ ] **CI green** — Push a branch to GitHub. Confirm the `ci.yml` workflow run completes entirely
-  green (all check, test, and build steps pass). Confirm the `coverage/lcov.info` artefact is
-  visible in the workflow run's artefacts list.
+      green (all check, test, and build steps pass). Confirm the `coverage/lcov.info` artefact is
+      visible in the workflow run's artefacts list.
 
 ## Acceptance Criteria
 
-| Story | How we verify |
-|---|---|
-| **F1-US4** — `npm run provision` provisions all Cloudflare resources with one command | `npm run provision` succeeds from scratch; D1/KV/R2/Worker all appear in the Cloudflare dashboard |
-| **F1-US5** — `npm run deploy` is idempotent; applies migrations before deploying | Run `npm run migrate && npm run deploy` twice consecutively; both succeed; second run is a no-op for migrations and a clean redeploy for the Worker |
-| **F1-US6** — `npm start` runs the code locally | `npm start` launches wrangler dev; app accessible at `localhost:8787` |
-| **F1-US1** — Structured JSON logs on every request | Manual logging test above: each request emits a JSON log with `method`, `path`, `status`, `duration_ms`, `requestId` |
+| Story                                                                                 | How we verify                                                                                                                                       |
+| ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **F1-US4** — `npm run provision` provisions all Cloudflare resources with one command | `npm run provision` succeeds from scratch; D1/KV/R2/Worker all appear in the Cloudflare dashboard                                                   |
+| **F1-US5** — `npm run deploy` is idempotent; applies migrations before deploying      | Run `npm run migrate && npm run deploy` twice consecutively; both succeed; second run is a no-op for migrations and a clean redeploy for the Worker |
+| **F1-US6** — `npm start` runs the code locally                                        | `npm start` launches wrangler dev; app accessible at `localhost:8787`                                                                               |
+| **F1-US1** — Structured JSON logs on every request                                    | Manual logging test above: each request emits a JSON log with `method`, `path`, `status`, `duration_ms`, `requestId`                                |
 
 ## Rollout / Rollback
 
@@ -294,10 +294,10 @@ at this phase.
 ## Open Questions
 
 - [ ] Which Cloudflare account to use for CI deployments? A dedicated sub-account or the main
-  account? Recommend: dedicated CI sub-account with a narrow `Workers Scripts:Edit`-scoped API token
-  stored as a GitHub secret.
+      account? Recommend: dedicated CI sub-account with a narrow `Workers Scripts:Edit`-scoped API token
+      stored as a GitHub secret.
 - [ ] Should `wrangler.jsonc` be entirely gitignored (cleanest), or should a blank/example version
-  be committed? Recommendation: gitignore `wrangler.jsonc`; commit only `wrangler.template.jsonc`.
-  Document this clearly in the README.
+      be committed? Recommendation: gitignore `wrangler.jsonc`; commit only `wrangler.template.jsonc`.
+      Document this clearly in the README.
 - [ ] Confirm the exact commit SHA to pin for `@adrianhall/cloudflare-auth` before writing
-  `apps/worker/package.json`.
+      `apps/worker/package.json`.

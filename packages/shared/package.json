@@ -1,0 +1,20 @@
+{
+  "name": "@cf-architect/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "check:types": "tsc --noEmit",
+    "test:unit": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^3.25.28"
+  },
+  "devDependencies": {
+    "@vitest/coverage-istanbul": "^4.1.7",
+    "vitest": "^4.1.7"
+  }
+}

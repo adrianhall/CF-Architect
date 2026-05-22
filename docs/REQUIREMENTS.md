@@ -18,14 +18,14 @@ CF-Architect v2 is a visual architecture design tool purpose-built for Cloudflar
 
 ## 2. Personas
 
-| Persona | Description | Primary needs |
-|---|---|---|
-| **Sasha** — Solo Architect | Cloudflare developer designing one architecture for a personal project or customer demo | Fast canvas, good catalog, accurate scaffold, easy sharing |
-| **Priya** — Solutions Architect | SA / partner SE who builds many diagrams for many customers | Many diagrams, template starts, fast switching, branded exports |
-| **Carlos** — Customer Reviewer | Recipient of a share link; needs to understand an architecture without an account | No-login read-only view, pan/zoom/print, copy to own account |
-| **Tomas** — Admin / Team Lead | Owner of a CF-Architect deployment for their team or org | User management, audit, auth provider control |
-| **Bea** — Blueprint Author | Internal expert who curates the reference architecture gallery | Publish blueprints without writing code or deploying |
-| **Aria** — AI Agent *(post-MVP)* | An LLM or Cloudflare AI agent acting on behalf of another persona via MCP | Stable, typed, idempotent tools for reading and mutating diagrams |
+| Persona                          | Description                                                                             | Primary needs                                                     |
+| -------------------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| **Sasha** — Solo Architect       | Cloudflare developer designing one architecture for a personal project or customer demo | Fast canvas, good catalog, accurate scaffold, easy sharing        |
+| **Priya** — Solutions Architect  | SA / partner SE who builds many diagrams for many customers                             | Many diagrams, template starts, fast switching, branded exports   |
+| **Carlos** — Customer Reviewer   | Recipient of a share link; needs to understand an architecture without an account       | No-login read-only view, pan/zoom/print, copy to own account      |
+| **Tomas** — Admin / Team Lead    | Owner of a CF-Architect deployment for their team or org                                | User management, audit, auth provider control                     |
+| **Bea** — Blueprint Author       | Internal expert who curates the reference architecture gallery                          | Publish blueprints without writing code or deploying              |
+| **Aria** — AI Agent _(post-MVP)_ | An LLM or Cloudflare AI agent acting on behalf of another persona via MCP               | Stable, typed, idempotent tools for reading and mutating diagrams |
 
 ---
 
@@ -62,11 +62,11 @@ CF-Architect v2 is a visual architecture design tool purpose-built for Cloudflar
 
 - **F1-US5** As Tomas, I want `npm run deploy` to be idempotent and to apply pending schema migrations before deploying, so that schema changes are never skipped.
 
-- **F1-US6** As Tomas, I want `npm start` to run the code locally. 
+- **F1-US6** As Tomas, I want `npm start` to run the code locally.
 
 #### F1 Notes
 
-We use a combination of Terraform and Wrangler to deploy the app.  The ideal process is:
+We use a combination of Terraform and Wrangler to deploy the app. The ideal process is:
 
 - User copies `.env.example` to `.env` and fills in appropriate information.
 - User then runs `npm run provision` - this deploys infrastructure.
@@ -105,14 +105,14 @@ The [`dotenv` terraform provider](https://registry.terraform.io/providers/jrhous
 - **F2-US3** As Tomas, I want a paginated, sortable, searchable list of users at `/admin`, so that I can manage the user base.
 
 - **F2-US4** As Tomas, I want to promote, demote, or delete a user, so that I can manage access as the team changes.
-  - *AC:* Tomas cannot demote or delete his own account.
+  - _AC:_ Tomas cannot demote or delete his own account.
 
 - **F2-US5** As Tomas, I want to see each user's diagram count and share count in the admin list, so that I can assess usage before deleting an account.
 
 - **F2-US6** As Sasha, I want to see my profile (name, email, avatar) in the editor and dashboard, so that I know I'm logged in with the right account.
 
 - **F2-US7** As a developer, I want local development to bypass auth automatically when `DEV_MODE` is set in `.dev.vars`, so that I can work without a Cloudflare Access setup.
-  - *AC:* `DEV_MODE` is never committed in `wrangler.jsonc`; production fails closed if `CF_ACCESS_TEAM_DOMAIN` is unset.
+  - _AC:_ `DEV_MODE` is never committed in `wrangler.jsonc`; production fails closed if `CF_ACCESS_TEAM_DOMAIN` is unset.
 
 - **F2-US8** As ops, I want all mutating endpoints to require an Origin check or CSRF token, so that cross-site forgery is prevented even with a valid Access JWT.
 
@@ -148,20 +148,20 @@ The developer can specify the ID of the IdP to be used from a pre-configured IdP
 - **F3-US1** As Sasha, I want each service rendered with the correct icon, category colour, and connection handles, so that my diagrams are immediately recognisable.
 
 - **F3-US2** As Bea, I want to add a new service to the catalog without editing application source code, so that I can ship catalog updates without a developer.
-  - *AC:* New service appears in the palette and is valid in blueprints after a catalog data update (no rebuild needed).
+  - _AC:_ New service appears in the palette and is valid in blueprints after a catalog data update (no rebuild needed).
 
 - **F3-US3** As Bea, I want to rename a service while keeping existing diagrams renderable, so that renaming doesn't break saved diagrams.
-  - *AC:* Alias map resolves old type ID → new type ID; both render identically on canvas.
+  - _AC:_ Alias map resolves old type ID → new type ID; both render identically on canvas.
 
 - **F3-US4** As Sasha, I want to click a Documentation link in the properties panel, so that I can read the official Cloudflare docs without leaving my flow.
-  - *AC:* Opens in a new tab; links provided per node type in the catalog.
+  - _AC:_ Opens in a new tab; links provided per node type in the catalog.
 
 - **F3-US5** As Sasha, I want new Cloudflare products to appear in the palette within hours of launch, so that my diagrams are always current.
-  - *AC:* Catalog data can be updated independently of application code.
+  - _AC:_ Catalog data can be updated independently of application code.
 
 #### F3 Notes
 
-It's ok to require a new deployment to get new products.  However, it must be "easy" to do as part of regular maintenance.
+It's ok to require a new deployment to get new products. However, it must be "easy" to do as part of regular maintenance.
 
 The set of data comprising a cloudflare service:
 
@@ -198,45 +198,45 @@ The set of data comprising a cloudflare service:
 #### F4 User Stories
 
 - **F4-US1** As Sasha, I want to drag a service from a categorised palette onto the canvas, so that I can build a diagram visually.
-  - *AC:* Node dropped at cursor position; receives catalog default label; immediately selectable.
+  - _AC:_ Node dropped at cursor position; receives catalog default label; immediately selectable.
 
 - **F4-US2** As Sasha, I want to search the palette by service name or type ID, so that I can find the service I need quickly.
-  - *AC:* Case-insensitive substring match; categories with zero matches hidden.
+  - _AC:_ Case-insensitive substring match; categories with zero matches hidden.
 
 - **F4-US3** As Sasha, I want to collapse/expand palette categories, so that I can reduce visual noise.
-  - *AC:* State persists in user preferences; search overrides collapsed state (all matching items shown).
+  - _AC:_ State persists in user preferences; search overrides collapsed state (all matching items shown).
 
 - **F4-US4** As Sasha, I want to connect two nodes by dragging from a handle, so that I can model data flows and bindings.
-  - *AC:* Default edge type is `data-flow`; connection must start from a handle; no self-loops.
+  - _AC:_ Default edge type is `data-flow`; connection must start from a handle; no self-loops.
 
 - **F4-US5** As Sasha, I want to select a node and edit its label, description, and accent colour, so that I can annotate my design.
-  - *AC:* Label 1–80 chars; description ≤500 chars; accent colour resets to category default on clear.
+  - _AC:_ Label 1–80 chars; description ≤500 chars; accent colour resets to category default on clear.
 
 - **F4-US6** As Sasha, I want to select an edge and change its type, label, protocol, and description, so that I can express the nature of the connection.
-  - *AC:* Edge type selector shows all 4 types with visual indicator; label ≤80 chars.
+  - _AC:_ Edge type selector shows all 4 types with visual indicator; label ≤80 chars.
 
 - **F4-US7** As Sasha, I want to delete the selected nodes/edges with `Delete` or `Backspace`, so that I can remove mistakes.
-  - *AC:* Shortcut never triggers while focus is in a text input or textarea.
+  - _AC:_ Shortcut never triggers while focus is in a text input or textarea.
 
 - **F4-US8** As Sasha, I want to undo and redo at least 50 steps with `Ctrl/Cmd+Z` and `Ctrl/Cmd+Shift+Z`, so that I can experiment freely.
-  - *AC:* Undo/redo covers structural changes and data-only edits; redo stack clears on new action.
+  - _AC:_ Undo/redo covers structural changes and data-only edits; redo stack clears on new action.
 
 - **F4-US9** As Sasha, I want to auto-layout the diagram top-to-bottom or left-to-right, so that I can tidy a messy canvas in one click.
-  - *AC:* Layout runs off the main thread; UI remains responsive during layout; edges re-routed to matching handles; two directions selectable.
+  - _AC:_ Layout runs off the main thread; UI remains responsive during layout; edges re-routed to matching handles; two directions selectable.
 
 - **F4-US10** As Sasha, I want to see live save status (saving / saved Xs ago / unsaved / error), so that I know whether my changes are safe.
-  - *AC:* Debounce 500 ms; "unsaved changes" browser warning shown on unload when dirty.
+  - _AC:_ Debounce 500 ms; "unsaved changes" browser warning shown on unload when dirty.
 
 - **F4-US11** As Sasha, I want to see node and edge counts in the status bar, so that I can gauge diagram size at a glance.
 
 - **F4-US12** As Sasha, I want to zoom in/out/fit-to-view and pan the canvas, so that I can navigate large diagrams.
-  - *AC:* Keyboard shortcuts: `+`, `-`, `Ctrl+Shift+F` (fit view); also available via toolbar buttons.
+  - _AC:_ Keyboard shortcuts: `+`, `-`, `Ctrl+Shift+F` (fit view); also available via toolbar buttons.
 
 - **F4-US13** As Sasha, I want to toggle dark/light theme and have it persist, so that I can use the app in any environment.
-  - *AC:* No flash of incorrect theme on reload; respects `prefers-color-scheme` as default.  Store theme with user data in backend (and potentially local storage)
+  - _AC:_ No flash of incorrect theme on reload; respects `prefers-color-scheme` as default. Store theme with user data in backend (and potentially local storage)
 
 - **F4-US14** As any user, I want the editor to be operable with keyboard only, so that it is accessible regardless of input device.
-  - *AC:* All interactive controls have visible focus and accessible names; passes axe-core with zero serious/critical violations.
+  - _AC:_ All interactive controls have visible focus and accessible names; passes axe-core with zero serious/critical violations.
 
 ---
 
@@ -263,13 +263,13 @@ The set of data comprising a cloudflare service:
 - **F5-US2** As Sasha, I want to create a new blank diagram from the dashboard, so that I can start designing immediately.
 
 - **F5-US3** As Sasha, I want to duplicate any diagram with one click, so that I can fork a design without starting over.
-  - *AC:* Duplicate has title `<original> (Copy)`; browser navigates to the new diagram.
+  - _AC:_ Duplicate has title `<original> (Copy)`; browser navigates to the new diagram.
 
 - **F5-US4** As Sasha, I want to delete a diagram with a confirmation modal that shows the title, so that I don't accidentally destroy work.
-  - *AC:* Deletion cascades share links server-side.
+  - _AC:_ Deletion cascades share links server-side.
 
 - **F5-US5** As Sasha, I want to rename a diagram inline from the editor, so that I can keep titles meaningful as the design evolves.
-  - *AC:* Change saved on a 1 s debounce.
+  - _AC:_ Change saved on a 1 s debounce.
 
 - **F5-US6** As Priya, I want to search my diagrams by title, so that I can find the right one among many.
 
@@ -301,10 +301,10 @@ The set of data comprising a cloudflare service:
 - **F6-US2** As Sasha, I want to see a non-interactive preview of each blueprint before using it, so that I can choose the right one.
 
 - **F6-US3** As Sasha, I want to create a new diagram from a blueprint with a custom title and description, so that I can start tailored instead of blank.
-  - *AC:* New diagram opens immediately in the editor; blueprint graph is the starting state.
+  - _AC:_ New diagram opens immediately in the editor; blueprint graph is the starting state.
 
 - **F6-US4** As Bea, I want to publish a new blueprint via an admin UI, so that I can add reference architectures without a code deploy.
-  - *AC:* Blueprint data validated against the diagram schema at publish time; invalid data rejected with a descriptive error.
+  - _AC:_ Blueprint data validated against the diagram schema at publish time; invalid data rejected with a descriptive error.
 
 - **F6-US5** As Bea, I want to preview a blueprint in the admin UI before publishing, so that I can verify it renders correctly.
 
@@ -339,7 +339,7 @@ The set of data comprising a cloudflare service:
 - **F7-US4** As Carlos, I want to open a shared link without logging in and view the diagram with pan/zoom/print only, so that I can review architectures without an account.
 
 - **F7-US5** As Carlos (when logged in), I want to click "Save a copy to my account" on a shared diagram, so that I can iterate on it myself.
-  - *AC:* Creates a new owned diagram with the share's graph data; navigates to the new diagram in the editor.
+  - _AC:_ Creates a new owned diagram with the share's graph data; navigates to the new diagram in the editor.
 
 - **F7-US6** As Sasha, I want the share button to return the existing unexpired link rather than generating a new one, so that I don't accumulate stale tokens.
 
@@ -402,7 +402,7 @@ The set of data comprising a cloudflare service:
 - **F9-US2** As Sasha, I want to choose a base framework template (vanilla / Hono / Astro; extensible), so that the scaffold matches my preferred runtime.
 
 - **F9-US3** As Sasha, I want all bindings reflected accurately in `wrangler.jsonc` with sane resource names derived from node labels, so that I don't have to hand-edit the config.
-  - *AC:* Covers D1, KV, R2, Queues, Vectorize, AI, Browser, Containers, mTLS, Hyperdrive, Email, Workers VPC, Pipelines, Artifacts, Dynamic Workers.
+  - _AC:_ Covers D1, KV, R2, Queues, Vectorize, AI, Browser, Containers, mTLS, Hyperdrive, Email, Workers VPC, Pipelines, Artifacts, Dynamic Workers.
 
 - **F9-US4** As Sasha, I want a Drizzle config and D1 migration stub included when D1 is on the canvas, so that I have a complete ORM setup from day one.
 
@@ -414,7 +414,7 @@ The set of data comprising a cloudflare service:
 
 ---
 
-### F10 — MCP Server *(post-MVP)*
+### F10 — MCP Server _(post-MVP)_
 
 **Goal:** Expose CF-Architect to AI agents via Model Context Protocol so an LLM can read the catalog and blueprints and create or mutate diagrams on a user's behalf.
 
@@ -438,13 +438,13 @@ The set of data comprising a cloudflare service:
 - **F10-US2** As Aria, I want to read the catalog, blueprint list, and a specific diagram via MCP tools, so that I can understand the user's current context.
 
 - **F10-US3** As Aria, I want to create a diagram, add/remove nodes, and connect/disconnect edges via MCP tools, so that I can build diagrams on behalf of users.
-  - *AC:* Every call validated against the same schema as the UI; all mutations flow through the same data layer.
+  - _AC:_ Every call validated against the same schema as the UI; all mutations flow through the same data layer.
 
 - **F10-US4** As Aria, I want to call a validation tool and receive a structured architecture critique, so that I can advise users on improvements.
 
 ---
 
-### F11 — In-App AI Architect Chat *(post-MVP)*
+### F11 — In-App AI Architect Chat _(post-MVP)_
 
 **Goal:** Let users converse with an AI collaborator inside the editor that can read the open diagram, propose changes, run a best-practices critique, and apply changes only with explicit user consent.
 

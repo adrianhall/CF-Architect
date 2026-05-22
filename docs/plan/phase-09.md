@@ -45,12 +45,13 @@ and D1 migration stub when D1 is present. CI gate: every seed blueprint scaffold
 - [ ] `packages/shared/src/templates/astro.ts`: Astro SSR template for Workers
 
 Each template generates:
-  - `wrangler.jsonc` — from `generateWranglerConfig(ctx)`
-  - `package.json` — dependencies appropriate to the template
-  - `tsconfig.json`
-  - Main source file(s) (`src/index.ts` or Astro app skeleton)
-  - `drizzle.config.ts` + `migrations/0000_init.sql` — only when `hasD1`
-  - `README.md` — conditional sections per service type (D1 setup, Queues setup, etc.)
+
+- `wrangler.jsonc` — from `generateWranglerConfig(ctx)`
+- `package.json` — dependencies appropriate to the template
+- `tsconfig.json`
+- Main source file(s) (`src/index.ts` or Astro app skeleton)
+- `drizzle.config.ts` + `migrations/0000_init.sql` — only when `hasD1`
+- `README.md` — conditional sections per service type (D1 setup, Queues setup, etc.)
 
 ### Web app — scaffold export UI
 
@@ -111,48 +112,48 @@ None.
 ## Manual Tests
 
 - [ ] **Export scaffold — vanilla** — Open a diagram with Workers + KV + D1. Click "Export Scaffold".
-  Confirm the export button is enabled. Select "vanilla". Enter "my-project" as the project name.
-  Click "Download ZIP". Confirm a `.zip` file downloads named `my-project.zip`.
+      Confirm the export button is enabled. Select "vanilla". Enter "my-project" as the project name.
+      Click "Download ZIP". Confirm a `.zip` file downloads named `my-project.zip`.
 - [ ] **Inspect ZIP contents** — Unzip `my-project.zip`. Confirm it contains: `wrangler.jsonc`,
-  `package.json`, `tsconfig.json`, `src/index.ts`, `drizzle.config.ts` (D1 was on canvas),
-  `migrations/0000_init.sql`, and `README.md`.
+      `package.json`, `tsconfig.json`, `src/index.ts`, `drizzle.config.ts` (D1 was on canvas),
+      `migrations/0000_init.sql`, and `README.md`.
 - [ ] **wrangler.jsonc bindings** — Open `wrangler.jsonc` from the ZIP. Confirm D1 binding section
-  is present with a `binding` name derived from the node's label (e.g. `"D1_PRODUCTION_DB"`).
-  Confirm KV namespace section is present. Confirm no sections exist for services not on the canvas.
+      is present with a `binding` name derived from the node's label (e.g. `"D1_PRODUCTION_DB"`).
+      Confirm KV namespace section is present. Confirm no sections exist for services not on the canvas.
 - [ ] **README conditional sections** — Open `README.md`. Confirm there is a D1 setup section.
-  Export a second scaffold from a diagram with no D1. Confirm the second README has no D1 section.
+      Export a second scaffold from a diagram with no D1. Confirm the second README has no D1 section.
 - [ ] **Export scaffold — hono** — On the same diagram, select "hono" template. Download ZIP. Open
-  `src/index.ts`. Confirm it contains Hono boilerplate with the Hono import and a basic route.
+      `src/index.ts`. Confirm it contains Hono boilerplate with the Hono import and a basic route.
 - [ ] **Export scaffold — astro** — Select "astro" template. Download ZIP. Open `wrangler.jsonc`.
-  Confirm `"pages_build_output_dir"` or equivalent Astro Workers config is present.
+      Confirm `"pages_build_output_dir"` or equivalent Astro Workers config is present.
 - [ ] **Disabled when no CF services** — Open a diagram with only label/annotation nodes (no
-  services from the catalog). Confirm the "Export Scaffold" button is greyed out and the tooltip
-  explains why.
+      services from the catalog). Confirm the "Export Scaffold" button is greyed out and the tooltip
+      explains why.
 - [ ] **Binding name sanitisation** — Create a node labelled "My D1 DB (Production) #2". Export a
-  scaffold. Open `wrangler.jsonc`. Confirm the binding name is a valid identifier (no spaces,
-  parentheses, or `#`).
+      scaffold. Open `wrangler.jsonc`. Confirm the binding name is a valid identifier (no spaces,
+      parentheses, or `#`).
 - [ ] **wrangler dry-run** — From the unzipped project directory, run
-  `npx wrangler deploy --dry-run --config ./wrangler.jsonc`. Confirm the command exits 0 with
-  no errors (note: you may need a Cloudflare account for the dry-run to pass the API shape check;
-  use a test account).
+      `npx wrangler deploy --dry-run --config ./wrangler.jsonc`. Confirm the command exits 0 with
+      no errors (note: you may need a Cloudflare account for the dry-run to pass the API shape check;
+      use a test account).
 - [ ] **All binding types** — Create a diagram with one node of each type listed in F9-US3
-  (D1, KV, R2, Queues, Vectorize, AI, Browser, Containers, mTLS, Hyperdrive, Email, VPC, Pipelines,
-  Artifacts, Dynamic Workers). Export as vanilla. Open `wrangler.jsonc`. Confirm every binding
-  type has a corresponding section.
+      (D1, KV, R2, Queues, Vectorize, AI, Browser, Containers, mTLS, Hyperdrive, Email, VPC, Pipelines,
+      Artifacts, Dynamic Workers). Export as vanilla. Open `wrangler.jsonc`. Confirm every binding
+      type has a corresponding section.
 - [ ] **CI scaffold gate** — Run `npm run test:scaffold`. Confirm all seed blueprints × all 3
-  templates pass the `wrangler deploy --dry-run` check with exit code 0.
+      templates pass the `wrangler deploy --dry-run` check with exit code 0.
 
 ## Acceptance Criteria
 
-| Story | How we verify |
-|---|---|
-| **F9-US1** — ZIP with `wrangler.jsonc`, `package.json`, `tsconfig.json`, sources, README | Inspect ZIP contents manual test |
-| **F9-US2** — Framework template selection (vanilla / hono / astro) | Export scaffold hono + astro manual tests |
-| **F9-US3** — All binding types reflected accurately in `wrangler.jsonc` | All-binding-types manual test + dry-run |
-| **F9-US4** — Drizzle config + D1 migration stub when D1 is present | Inspect ZIP + README conditional sections |
-| **F9-US5** — README shows D1 instructions only when D1 is in the diagram | README conditional manual test |
-| **F9-US6** — Export button disabled with explanation when no CF services | Disabled-when-no-services manual test |
-| **F9-US7** — Every seed blueprint scaffold passes `wrangler deploy --dry-run` in CI | CI scaffold gate manual + automated test |
+| Story                                                                                    | How we verify                             |
+| ---------------------------------------------------------------------------------------- | ----------------------------------------- |
+| **F9-US1** — ZIP with `wrangler.jsonc`, `package.json`, `tsconfig.json`, sources, README | Inspect ZIP contents manual test          |
+| **F9-US2** — Framework template selection (vanilla / hono / astro)                       | Export scaffold hono + astro manual tests |
+| **F9-US3** — All binding types reflected accurately in `wrangler.jsonc`                  | All-binding-types manual test + dry-run   |
+| **F9-US4** — Drizzle config + D1 migration stub when D1 is present                       | Inspect ZIP + README conditional sections |
+| **F9-US5** — README shows D1 instructions only when D1 is in the diagram                 | README conditional manual test            |
+| **F9-US6** — Export button disabled with explanation when no CF services                 | Disabled-when-no-services manual test     |
+| **F9-US7** — Every seed blueprint scaffold passes `wrangler deploy --dry-run` in CI      | CI scaffold gate manual + automated test  |
 
 ## Rollout / Rollback
 
@@ -163,11 +164,11 @@ None.
 ## Open Questions
 
 - [ ] Should the scaffold ZIP include `node_modules` (no — always) or a `.npmrc` that the user
-  runs `npm install` in? Recommendation: no `node_modules`; README instructs `npm install` as
-  the first step after unzipping.
+      runs `npm install` in? Recommendation: no `node_modules`; README instructs `npm install` as
+      the first step after unzipping.
 - [ ] Astro template: should it target Cloudflare Workers (SSR) or Cloudflare Pages? Recommendation:
-  Workers SSR, consistent with the rest of the stack and `wrangler.jsonc` deployment model.
+      Workers SSR, consistent with the rest of the stack and `wrangler.jsonc` deployment model.
 - [ ] Project name in `wrangler.jsonc`: should it be the sanitised diagram title, or should the
-  user be able to enter a different project name? Per F9 spec, use node labels for binding names,
-  but the top-level `"name"` in `wrangler.jsonc` should be the overall project name from the
-  dialog input.
+      user be able to enter a different project name? Per F9 spec, use node labels for binding names,
+      but the top-level `"name"` in `wrangler.jsonc` should be the overall project name from the
+      dialog input.

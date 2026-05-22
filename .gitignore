@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+apps/web/dist/
+apps/worker/dist/
+
+# Generated Wrangler config (produced by scripts/render-wrangler.ts after `npm run provision`)
+wrangler.jsonc
+
+# Local environment and secrets — never committed
+.env
+.dev.vars
+
+# Terraform state and outputs
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.backup
+.terraform-outputs.json
+
+# Test and coverage
+coverage/
+playwright-report/
+test-results/
+blob-report/
+
+# Husky internal directory
+.husky/_
+
+# TanStack Router generated route tree
+# NOTE: routeTree.gen.ts is committed as a stub and regenerated on vite build/dev.
+# Do NOT gitignore it — CI needs it for check:types before the first Vite run.
+# apps/web/src/routeTree.gen.ts
+
+# Editor directories and files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS artefacts
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+lerna-debug.log*
+
+# TypeScript build cache
+*.tsbuildinfo

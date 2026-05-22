@@ -1,0 +1,115 @@
+/**
+ * apps/web/src/styles/tokens.css
+ *
+ * CSS custom properties (design tokens) for light, dark, and high-contrast themes.
+ *
+ * Phase 01: Stub values establishing the token structure.
+ * Full design tokens (Cloudflare brand colours, spacing scale, typography)
+ * will be applied in Phase 04 (Architecture Canvas).
+ *
+ * Applied via the `data-theme` attribute on <html> set by the no-FOUC script
+ * in index.html and controlled by the user's theme preference stored in
+ * localStorage.
+ */
+
+/* ---------------------------------------------------------------------------
+   Light theme (default)
+   --------------------------------------------------------------------------- */
+:root,
+[data-theme="light"] {
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f6f6f6;
+  --color-bg-surface: #ffffff;
+  --color-bg-overlay: rgba(0, 0, 0, 0.5);
+
+  --color-text-primary: #1d1d1d;
+  --color-text-secondary: #6b7280;
+  --color-text-disabled: #9ca3af;
+  --color-text-inverse: #ffffff;
+
+  --color-border-default: #e5e7eb;
+  --color-border-strong: #d1d5db;
+
+  --color-accent: #f6821f; /* Cloudflare orange */
+  --color-accent-hover: #e06b0a;
+  --color-accent-subtle: #fff3e0;
+
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-error: #dc2626;
+  --color-info: #2563eb;
+
+  color-scheme: light;
+}
+
+/* ---------------------------------------------------------------------------
+   Dark theme
+   --------------------------------------------------------------------------- */
+[data-theme="dark"] {
+  --color-bg-primary: #1a1a1a;
+  --color-bg-secondary: #242424;
+  --color-bg-surface: #2d2d2d;
+  --color-bg-overlay: rgba(0, 0, 0, 0.7);
+
+  --color-text-primary: #f0f0f0;
+  --color-text-secondary: #9ca3af;
+  --color-text-disabled: #6b7280;
+  --color-text-inverse: #1d1d1d;
+
+  --color-border-default: #3d3d3d;
+  --color-border-strong: #525252;
+
+  --color-accent: #f6821f;
+  --color-accent-hover: #ffa044;
+  --color-accent-subtle: #3d2000;
+
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+  --color-error: #f87171;
+  --color-info: #60a5fa;
+
+  color-scheme: dark;
+}
+
+/* ---------------------------------------------------------------------------
+   High-contrast theme
+   --------------------------------------------------------------------------- */
+[data-theme="high-contrast"] {
+  --color-bg-primary: #000000;
+  --color-bg-secondary: #0a0a0a;
+  --color-bg-surface: #000000;
+  --color-bg-overlay: rgba(0, 0, 0, 0.9);
+
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #d4d4d4;
+  --color-text-disabled: #a3a3a3;
+  --color-text-inverse: #000000;
+
+  --color-border-default: #ffffff;
+  --color-border-strong: #ffffff;
+
+  --color-accent: #ffbb00;
+  --color-accent-hover: #ffd000;
+  --color-accent-subtle: #332500;
+
+  --color-success: #00ff00;
+  --color-warning: #ffbb00;
+  --color-error: #ff4444;
+  --color-info: #44aaff;
+
+  color-scheme: dark;
+}
+
+/* ---------------------------------------------------------------------------
+   Reduced motion — disables animations globally
+   --------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

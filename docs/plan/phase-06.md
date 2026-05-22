@@ -109,13 +109,13 @@ CREATE INDEX idx_blueprints_category ON blueprints (category, published_at DESC)
 
 ## API Additions
 
-| Method | Path | Auth | Purpose |
-|---|---|---|---|
-| `GET` | `/api/blueprints` | Public | List published blueprints |
-| `GET` | `/api/blueprints/:slug` | Public | Full blueprint with graph |
-| `POST` | `/api/blueprints` | Admin | Create draft blueprint |
-| `PUT` | `/api/blueprints/:id` | Admin | Update draft blueprint |
-| `POST` | `/api/blueprints/:id/publish` | Admin | Publish a draft |
+| Method | Path                                 | Auth     | Purpose                       |
+| ------ | ------------------------------------ | -------- | ----------------------------- |
+| `GET`  | `/api/blueprints`                    | Public   | List published blueprints     |
+| `GET`  | `/api/blueprints/:slug`              | Public   | Full blueprint with graph     |
+| `POST` | `/api/blueprints`                    | Admin    | Create draft blueprint        |
+| `PUT`  | `/api/blueprints/:id`                | Admin    | Update draft blueprint        |
+| `POST` | `/api/blueprints/:id/publish`        | Admin    | Publish a draft               |
 | `POST` | `/api/diagrams/from-blueprint/:slug` | Required | Create diagram from blueprint |
 
 ## Test Plan
@@ -148,42 +148,42 @@ CREATE INDEX idx_blueprints_category ON blueprints (category, published_at DESC)
 ## Manual Tests
 
 - [ ] **Gallery loads** — Navigate to `/blueprints`. Confirm at least 5 blueprint cards appear.
-  Confirm each card shows a title, category badge, and description.
+      Confirm each card shows a title, category badge, and description.
 - [ ] **Category filter** — Click the "AI & ML" tab. Confirm only AI-related blueprints are shown.
-  Click "All". Confirm all blueprints return.
+      Click "All". Confirm all blueprints return.
 - [ ] **Blueprint search** — Type "workers" in the search box. Confirm only blueprints with "workers"
-  in the title appear.
+      in the title appear.
 - [ ] **Non-interactive preview** — Click "Preview" on any blueprint. Confirm a mini canvas renders
-  showing the blueprint's nodes and edges. Confirm you cannot drag nodes, connect handles, or
-  scroll/zoom within the preview (it should be completely static).
+      showing the blueprint's nodes and edges. Confirm you cannot drag nodes, connect handles, or
+      scroll/zoom within the preview (it should be completely static).
 - [ ] **Create from blueprint** — Click "Use This" on a blueprint. Confirm a modal appears with the
-  blueprint title pre-filled. Change the title to "My Custom Architecture". Click "Create". Confirm
-  the browser navigates to the canvas with the blueprint's nodes already on the canvas and the title
-  "My Custom Architecture" shown in the header.
+      blueprint title pre-filled. Change the title to "My Custom Architecture". Click "Create". Confirm
+      the browser navigates to the canvas with the blueprint's nodes already on the canvas and the title
+      "My Custom Architecture" shown in the header.
 - [ ] **Admin — create draft** — Log in as admin. Navigate to `/admin/blueprints`. Click "New
-  Blueprint". Fill in title, slug, description, and category. Paste the `graph_json` from an
-  existing diagram's `</>` JSON modal. Click "Validate". Confirm validation passes. Click "Save
-  Draft". Confirm the blueprint appears in the admin list with status "Draft".
+      Blueprint". Fill in title, slug, description, and category. Paste the `graph_json` from an
+      existing diagram's `</>` JSON modal. Click "Validate". Confirm validation passes. Click "Save
+      Draft". Confirm the blueprint appears in the admin list with status "Draft".
 - [ ] **Admin — validation failure** — In the admin create form, paste malformed JSON into the
-  `graph_json` field. Click "Validate". Confirm a descriptive error message appears (e.g. "Invalid
-  JSON" or specific Zod validation errors).
+      `graph_json` field. Click "Validate". Confirm a descriptive error message appears (e.g. "Invalid
+      JSON" or specific Zod validation errors).
 - [ ] **Admin — publish** — Open the draft blueprint created above. Click "Preview". Confirm the
-  canvas preview matches the graph you entered. Click "Publish". Confirm the status changes to
-  "Published". Navigate to `/blueprints` and confirm the new blueprint appears in the gallery.
+      canvas preview matches the graph you entered. Click "Publish". Confirm the status changes to
+      "Published". Navigate to `/blueprints` and confirm the new blueprint appears in the gallery.
 - [ ] **Dashboard empty state CTA** — Log in as a new user with no diagrams. Confirm the dashboard
-  empty state "Browse blueprints" link navigates to `/blueprints`.
+      empty state "Browse blueprints" link navigates to `/blueprints`.
 - [ ] **Seed blueprints in CI** — Run `npm run test:unit` and confirm the CI seed validation test
-  passes (all 5+ seed blueprints pass schema validation).
+      passes (all 5+ seed blueprints pass schema validation).
 
 ## Acceptance Criteria
 
-| Story | How we verify |
-|---|---|
-| **F6-US1** — Blueprint gallery with category filter including "All" | Gallery manual test; category filter manual test |
-| **F6-US2** — Non-interactive preview before using a blueprint | Preview manual test |
-| **F6-US3** — Create diagram from blueprint with custom title; opens in editor | Create-from-blueprint manual test |
-| **F6-US4** — Admin can publish a blueprint via UI; invalid graph rejected | Admin publish + validation failure manual test |
-| **F6-US5** — Admin can preview blueprint before publishing | Admin preview manual test |
+| Story                                                                         | How we verify                                    |
+| ----------------------------------------------------------------------------- | ------------------------------------------------ |
+| **F6-US1** — Blueprint gallery with category filter including "All"           | Gallery manual test; category filter manual test |
+| **F6-US2** — Non-interactive preview before using a blueprint                 | Preview manual test                              |
+| **F6-US3** — Create diagram from blueprint with custom title; opens in editor | Create-from-blueprint manual test                |
+| **F6-US4** — Admin can publish a blueprint via UI; invalid graph rejected     | Admin publish + validation failure manual test   |
+| **F6-US5** — Admin can preview blueprint before publishing                    | Admin preview manual test                        |
 
 ## Rollout / Rollback
 
@@ -195,9 +195,9 @@ become orphaned but remain intact (they are full copies, not references).
 
 ## Open Questions
 
-- [ ] Should blueprint `graph_json` be validated against the *live* service catalog at publish time
-  (so unknown service typeIds are caught), or only against the structural `DiagramGraphSchema`?
-  Recommendation: validate against the live catalog — import `getCatalog()` from shared and check
-  every node's `type` is a known `typeId` or a resolvable alias.
+- [ ] Should blueprint `graph_json` be validated against the _live_ service catalog at publish time
+      (so unknown service typeIds are caught), or only against the structural `DiagramGraphSchema`?
+      Recommendation: validate against the live catalog — import `getCatalog()` from shared and check
+      every node's `type` is a known `typeId` or a resolvable alias.
 - [ ] Slug format constraints: lowercase alphanumeric + hyphens, max 64 chars. Enforce at API level
-  with Zod + a `UNIQUE` constraint in D1.
+      with Zod + a `UNIQUE` constraint in D1.

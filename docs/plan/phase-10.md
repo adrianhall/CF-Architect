@@ -6,7 +6,7 @@ status: "Planned"
 depends_on: ["09"]
 ---
 
-# Phase 10 — MCP Server *(post-MVP)*
+# Phase 10 — MCP Server _(post-MVP)_
 
 ## Goal
 
@@ -37,7 +37,7 @@ token.
 ### Dependencies
 
 - [ ] `npm install @modelcontextprotocol/sdk` in `apps/worker` — evaluate version for Worker
-  compatibility (must not use Node.js APIs unsupported in Workers)
+      compatibility (must not use Node.js APIs unsupported in Workers)
 
 ### MCP transport
 
@@ -89,9 +89,9 @@ None. MCP reuses existing D1 tables via the same query helpers.
 
 ## API Additions
 
-| Method | Path | Auth | Purpose |
-|---|---|---|---|
-| `GET` | `/mcp` | Access Service Token | MCP SSE transport |
+| Method | Path   | Auth                 | Purpose            |
+| ------ | ------ | -------------------- | ------------------ |
+| `GET`  | `/mcp` | Access Service Token | MCP SSE transport  |
 | `POST` | `/mcp` | Access Service Token | MCP HTTP transport |
 
 ## Test Plan
@@ -115,40 +115,40 @@ None. MCP reuses existing D1 tables via the same query helpers.
 ## Manual Tests
 
 - [ ] **Tool discovery** — Using an MCP client (or `curl` with the appropriate MCP protocol headers),
-  call the MCP endpoint at `GET /mcp`. Confirm a list of available tools is returned including
-  `list_services`, `create_diagram`, and `validate_architecture`.
+      call the MCP endpoint at `GET /mcp`. Confirm a list of available tools is returned including
+      `list_services`, `create_diagram`, and `validate_architecture`.
 - [ ] **`list_services`** — Call `list_services` with no params. Confirm the response contains at
-  least 30 services and each has `typeId`, `name`, `categoryId`, and `docLink`.
+      least 30 services and each has `typeId`, `name`, `categoryId`, and `docLink`.
 - [ ] **`create_diagram`** — Call `create_diagram` with `{ "title": "MCP Test Diagram" }`. Confirm
-  a `diagramId` is returned. Open the CF-Architect dashboard in the browser. Confirm the new
-  diagram appears with the title "MCP Test Diagram".
+      a `diagramId` is returned. Open the CF-Architect dashboard in the browser. Confirm the new
+      diagram appears with the title "MCP Test Diagram".
 - [ ] **`add_node`** — Call `add_node` with `{ "diagramId": "<id>", "typeId": "workers-kv", "label": "Cache Layer" }`. Confirm the tool returns a new `version`. Open the diagram in the canvas.
-  Confirm the "Cache Layer" KV node is present.
+      Confirm the "Cache Layer" KV node is present.
 - [ ] **`connect_nodes`** — After adding two nodes via `add_node`, call `connect_nodes` with their
-  IDs and `edgeType: "binding"`. Open the diagram. Confirm a binding edge connects the two nodes.
+      IDs and `edgeType: "binding"`. Open the diagram. Confirm a binding edge connects the two nodes.
 - [ ] **`validate_architecture`** — On a diagram with a D1 node but no Workers node, call
-  `validate_architecture`. Confirm a finding with severity `"error"` and a message about
-  `d1-requires-worker` is returned. Add a Workers node. Call again. Confirm the finding is gone.
+      `validate_architecture`. Confirm a finding with severity `"error"` and a message about
+      `d1-requires-worker` is returned. Add a Workers node. Call again. Confirm the finding is gone.
 - [ ] **`apply_blueprint`** — Call `apply_blueprint` with a known blueprint slug. Open the diagram.
-  Confirm the graph now matches the blueprint.
+      Confirm the graph now matches the blueprint.
 - [ ] **`export_scaffold`** — Call `export_scaffold` with a diagramId and `framework: "hono"`.
-  Confirm the response contains a `files` array including `wrangler.jsonc`, `package.json`, and
-  `src/index.ts`. Paste the `wrangler.jsonc` content into a file and run
-  `wrangler deploy --dry-run`; confirm it passes.
+      Confirm the response contains a `files` array including `wrangler.jsonc`, `package.json`, and
+      `src/index.ts`. Paste the `wrangler.jsonc` content into a file and run
+      `wrangler deploy --dry-run`; confirm it passes.
 - [ ] **Idempotency** — Call `create_diagram` with `idempotencyKey: "test-key-1"`. Note the
-  returned `diagramId`. Call the same tool with the same key. Confirm the same `diagramId` is
-  returned and no duplicate row appears in the dashboard.
+      returned `diagramId`. Call the same tool with the same key. Confirm the same `diagramId` is
+      returned and no duplicate row appears in the dashboard.
 - [ ] **Auth rejection** — Call `POST /mcp` without a Cloudflare Access service token. Confirm HTTP
-  401 is returned.
+      401 is returned.
 
 ## Acceptance Criteria
 
-| Story | How we verify |
-|---|---|
-| **F10-US1** — Discover MCP endpoint; list tools | Tool discovery manual test |
-| **F10-US2** — Read catalog, blueprint list, and diagram via MCP | `list_services`, `list_blueprints`, `get_diagram` manual tests |
+| Story                                                                                              | How we verify                                                                                        |
+| -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| **F10-US1** — Discover MCP endpoint; list tools                                                    | Tool discovery manual test                                                                           |
+| **F10-US2** — Read catalog, blueprint list, and diagram via MCP                                    | `list_services`, `list_blueprints`, `get_diagram` manual tests                                       |
 | **F10-US3** — Create diagram, add/remove nodes, connect edges; validated against same schema as UI | `create_diagram`, `add_node`, `connect_nodes`, `remove_node` manual tests + worker integration tests |
-| **F10-US4** — `validate_architecture` returns structured critique | Validate architecture manual test |
+| **F10-US4** — `validate_architecture` returns structured critique                                  | Validate architecture manual test                                                                    |
 
 ## Rollout / Rollback
 
@@ -159,8 +159,8 @@ None. MCP reuses existing D1 tables via the same query helpers.
 ## Open Questions
 
 - [ ] Which MCP transport does `@modelcontextprotocol/sdk` support on Cloudflare Workers? The
-  standard SDK targets Node.js. Evaluate the `workers` transport variant or the `streamable-http`
-  transport which may work without Node APIs. Resolve before implementation starts.
+      standard SDK targets Node.js. Evaluate the `workers` transport variant or the `streamable-http`
+      transport which may work without Node APIs. Resolve before implementation starts.
 - [ ] Should MCP mutations require the same CSRF protection as the HTTP API? MCP uses a different
-  auth mechanism (service tokens), so Origin-based CSRF is not applicable. The service token
-  itself is the CSRF equivalent. Document this exception clearly.
+      auth mechanism (service tokens), so Origin-based CSRF is not applicable. The service token
+      itself is the CSRF equivalent. Document this exception clearly.

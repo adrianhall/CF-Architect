@@ -1,0 +1,49 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+
+  "minimumReleaseAge": "14d",
+  "prCreation": "not-pending",
+
+  "separateMajorMinor": true,
+  "separateMultipleMajor": true,
+
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "dependencies",
+      "groupSlug": "dependencies",
+      "schedule": ["on monday"]
+    },
+    {
+      "matchUpdateTypes": ["major"],
+      "labels": ["major-update"],
+      "reviewers": [],
+      "minimumReleaseAge": "14d"
+    },
+    {
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": false
+    },
+    {
+      "matchCategories": ["security"],
+      "minimumReleaseAge": "0d",
+      "prCreation": "immediate",
+      "labels": ["security"]
+    }
+  ],
+
+  "vulnerabilityAlerts": {
+    "labels": ["security"],
+    "minimumReleaseAge": "0d",
+    "prCreation": "immediate"
+  },
+
+  "osvVulnerabilityAlerts": true,
+
+  "commitMessagePrefix": "chore(deps):",
+  "rebaseWhen": "conflicted",
+
+  "ignorePaths": ["**/node_modules/**", "**/__tests__/**", "**/coverage/**"]
+}

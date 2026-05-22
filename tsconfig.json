@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  // Root tsconfig — extends base config and includes all root-level TS files
+  // (scripts, config files). Per-workspace type-checking is done by running
+  // `check:types` in each workspace (see root package.json).
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    "noEmit": true,
+    // Third-party declaration files (playwright-core, @types/react-dom) reference
+    // DOM types that are not in scope for root-level scripts. Skip lib checks here;
+    // each workspace tsconfig handles its own lib/types configuration.
+    "skipLibCheck": true
+  },
+  "include": ["scripts/**/*.ts", "*.config.ts", "commitlint.config.ts"],
+  "exclude": ["node_modules", "apps", "packages", "scripts/**/*.test.ts"]
+}

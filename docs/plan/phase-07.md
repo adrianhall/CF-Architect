@@ -109,13 +109,13 @@ The `deleteSharesByDiagram` query helper is still needed to bulk-purge the corre
 
 ## API Additions
 
-| Method | Path | Auth | Purpose |
-|---|---|---|---|
-| `POST` | `/api/diagrams/:id/shares` | Required (owner) | Create share link |
-| `GET` | `/api/diagrams/:id/shares` | Required (owner) | List shares for diagram |
-| `DELETE` | `/api/diagrams/:id/shares/:token` | Required (owner) | Revoke share |
-| `GET` | `/share/:token` | Public | Resolve share token |
-| `POST` | `/api/diagrams/from-share/:token` | Required | Save a copy from share |
+| Method   | Path                              | Auth             | Purpose                 |
+| -------- | --------------------------------- | ---------------- | ----------------------- |
+| `POST`   | `/api/diagrams/:id/shares`        | Required (owner) | Create share link       |
+| `GET`    | `/api/diagrams/:id/shares`        | Required (owner) | List shares for diagram |
+| `DELETE` | `/api/diagrams/:id/shares/:token` | Required (owner) | Revoke share            |
+| `GET`    | `/share/:token`                   | Public           | Resolve share token     |
+| `POST`   | `/api/diagrams/from-share/:token` | Required         | Save a copy from share  |
 
 ## Test Plan
 
@@ -150,48 +150,48 @@ The `deleteSharesByDiagram` query helper is still needed to bulk-purge the corre
 ## Manual Tests
 
 - [ ] **Create share link** — Open a diagram. Click "Share" in the toolbar. Select "1 day" expiry.
-  Click "Create link". Confirm the full share URL appears with a copy button. Click copy. Confirm
-  the URL is copied to clipboard.
+      Click "Create link". Confirm the full share URL appears with a copy button. Click copy. Confirm
+      the URL is copied to clipboard.
 - [ ] **Open as anonymous user** — Paste the share URL into a private/incognito browser window
-  (no login). Confirm the diagram renders with the share banner at the top showing the owner's
-  email and "Expires in 1 day". Confirm you cannot drag nodes, draw connections, or access any
-  editing controls. Confirm pan and zoom still work.
+      (no login). Confirm the diagram renders with the share banner at the top showing the owner's
+      email and "Expires in 1 day". Confirm you cannot drag nodes, draw connections, or access any
+      editing controls. Confirm pan and zoom still work.
 - [ ] **"Save a copy" as authenticated user** — While logged in, open a share URL. Confirm the
-  "Save a copy to my account" button appears. Click it. Confirm the browser navigates to a new
-  canvas with the same graph but a new title "(Copy)". Confirm the new diagram appears in your
-  dashboard.
+      "Save a copy to my account" button appears. Click it. Confirm the browser navigates to a new
+      canvas with the same graph but a new title "(Copy)". Confirm the new diagram appears in your
+      dashboard.
 - [ ] **Share returns existing token** — Click "Share" on the same diagram a second time without
-  revoking the first. Confirm the same URL is returned (not a new token).
+      revoking the first. Confirm the same URL is returned (not a new token).
 - [ ] **Revoke share** — In the share dialog, click "Revoke". Confirm the dialog shows "Link revoked".
-  Open the old share URL. Confirm an "invalid or expired" error page is shown.
+      Open the old share URL. Confirm an "invalid or expired" error page is shown.
 - [ ] **Expiry options** — Create a share with each preset: 1 hour, 1 day, 1 week, no expiry.
-  Confirm each shows the correct expiry time in the share dialog.
+      Confirm each shows the correct expiry time in the share dialog.
 - [ ] **Custom expiry** — Create a share with "Custom" expiry and set it to 30 minutes. Confirm the
-  share dialog shows "Expires in 30 minutes".
+      share dialog shows "Expires in 30 minutes".
 - [ ] **No expiry** — Create a share with "No expiry". Confirm no expiry date is shown in the share
-  banner on the viewer.
+      banner on the viewer.
 - [ ] **Token entropy** — Inspect several generated share tokens. Confirm each is 40 characters of
-  base32 (uppercase A-Z and 2-7 only). Confirm no two tokens are the same.
+      base32 (uppercase A-Z and 2-7 only). Confirm no two tokens are the same.
 - [ ] **Delete diagram cascades shares** — Create a share link for a diagram. Note the share URL.
-  Delete the diagram from the dashboard. Confirm the share URL now returns a 404/invalid page.
+      Delete the diagram from the dashboard. Confirm the share URL now returns a 404/invalid page.
 - [ ] **Rate limit on share creation** — Send 15 rapid POST requests to `POST /api/diagrams/:id/shares`.
-  Confirm requests 11+ return HTTP 429.
+      Confirm requests 11+ return HTTP 429.
 - [ ] **Admin share count** — Navigate to `/admin`. Confirm the user list shows a share count
-  greater than zero for your account (after creating shares above).
+      greater than zero for your account (after creating shares above).
 - [ ] **KV cache check** — After accessing a share URL, inspect the local KV namespace in Miniflare.
-  Confirm an entry exists for the token. After revoking the share, confirm the entry is gone.
+      Confirm an entry exists for the token. After revoking the share, confirm the entry is gone.
 
 ## Acceptance Criteria
 
-| Story | How we verify |
-|---|---|
-| **F7-US1** — Create share link; copy to clipboard with one click | Create share manual test |
-| **F7-US2** — Optional expiry presets when creating a share | Expiry options manual test |
-| **F7-US3** — Revoke share at any time | Revoke share manual test |
-| **F7-US4** — Open shared link without login; read-only pan/zoom/print | Anonymous viewer manual test |
-| **F7-US5** — "Save a copy" for authenticated visitors | Save a copy manual test |
-| **F7-US6** — Share button returns existing unexpired link | Returns-existing-token manual test |
-| **F7-US7** — Tokens ≥128-bit entropy | Token entropy manual test (192-bit base32) |
+| Story                                                                 | How we verify                              |
+| --------------------------------------------------------------------- | ------------------------------------------ |
+| **F7-US1** — Create share link; copy to clipboard with one click      | Create share manual test                   |
+| **F7-US2** — Optional expiry presets when creating a share            | Expiry options manual test                 |
+| **F7-US3** — Revoke share at any time                                 | Revoke share manual test                   |
+| **F7-US4** — Open shared link without login; read-only pan/zoom/print | Anonymous viewer manual test               |
+| **F7-US5** — "Save a copy" for authenticated visitors                 | Save a copy manual test                    |
+| **F7-US6** — Share button returns existing unexpired link             | Returns-existing-token manual test         |
+| **F7-US7** — Tokens ≥128-bit entropy                                  | Token entropy manual test (192-bit base32) |
 
 ## Rollout / Rollback
 
@@ -203,8 +203,8 @@ redeploy previous Worker. No diagram data at risk.
 ## Open Questions
 
 - [ ] Should the read-only viewer show the palette and properties panel (hidden/disabled), or omit
-  those components entirely? Recommendation: omit entirely — the viewer uses a separate lighter
-  route component that only renders the React Flow canvas + share banner.
+      those components entirely? Recommendation: omit entirely — the viewer uses a separate lighter
+      route component that only renders the React Flow canvas + share banner.
 - [ ] Should expired-but-not-revoked shares be garbage-collected automatically? Recommendation: add
-  a nightly Cron Trigger (Cloudflare Workers Cron) that deletes rows where `expires_at < now AND
-  revoked_at IS NULL`. Implement in a future maintenance phase.
+      a nightly Cron Trigger (Cloudflare Workers Cron) that deletes rows where `expires_at < now AND
+revoked_at IS NULL`. Implement in a future maintenance phase.

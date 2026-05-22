@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json.schemastore.org/icu-messages.json",
+  "_comment": "ICU message bundle — English. All user-facing strings live here. Supports plural, select, and number formatting. Layouts must tolerate ±40% length variance for future translations.",
+
+  "app.title": "CF-Architect",
+  "app.tagline": "Visual architecture design for Cloudflare",
+
+  "nav.dashboard": "Dashboard",
+  "nav.newDiagram": "New diagram",
+  "nav.blueprints": "Blueprints",
+  "nav.admin": "Admin",
+  "nav.profile": "Profile",
+
+  "health.status.ok": "System operational",
+  "health.status.unknown": "Checking status…",
+  "health.status.error": "Service unavailable",
+
+  "error.UNAUTHENTICATED": "You must be logged in to access this resource.",
+  "error.FORBIDDEN": "You do not have permission to perform this action.",
+  "error.NOT_FOUND": "The requested resource was not found.",
+  "error.CONFLICT": "Another session saved changes — reload to continue.",
+  "error.UNPROCESSABLE": "The submitted data is invalid. Please check the highlighted fields.",
+  "error.RATE_LIMITED": "Too many requests. Please wait a moment and try again.",
+  "error.INTERNAL": "An unexpected error occurred. Please try again later.",
+
+  "loading.generic": "Loading…"
+}

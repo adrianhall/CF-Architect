@@ -1,0 +1,78 @@
+// wrangler.template.jsonc
+//
+// This is the TEMPLATE for wrangler.jsonc. It contains ${TF_OUTPUT_*}
+// placeholders that are substituted by `npm run render-wrangler` after
+// `npm run provision` writes .terraform-outputs.json.
+//
+// DO NOT edit wrangler.jsonc directly — it is generated and gitignored.
+// Edit this file instead, then re-run `npm run render-wrangler`.
+{
+  "name": "${TF_OUTPUT_WORKER_NAME}",
+  // Path is relative to this file (repo root)
+  "main": "apps/worker/src/index.ts",
+  "compatibility_date": "2025-05-01",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // ---------------------------------------------------------------------------
+  // Static assets — Vite SPA build output
+  // ---------------------------------------------------------------------------
+  "assets": {
+    "directory": "./apps/web/dist",
+    "binding": "ASSETS",
+    // Serve index.html for all unmatched routes (SPA client-side routing)
+    "not_found_handling": "single-page-application",
+    // Only let the Worker see /api/* and /_auth/* — everything else goes
+    // straight to ASSETS without hitting the Worker.
+    "run_worker_first": ["/api/*", "/_auth/*"],
+  },
+
+  // ---------------------------------------------------------------------------
+  // D1 database binding
+  // ---------------------------------------------------------------------------
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "${TF_OUTPUT_D1_DATABASE_NAME}",
+      "database_id": "${TF_OUTPUT_D1_DATABASE_ID}",
+    },
+  ],
+
+  // ---------------------------------------------------------------------------
+  // KV namespace bindings
+  // ---------------------------------------------------------------------------
+  "kv_namespaces": [
+    {
+      "binding": "CF_ARCH_SHARES",
+      "id": "${TF_OUTPUT_KV_SHARES_ID}",
+    },
+    {
+      "binding": "CF_ARCH_CATALOG",
+      "id": "${TF_OUTPUT_KV_CATALOG_ID}",
+    },
+  ],
+
+  // ---------------------------------------------------------------------------
+  // R2 bucket binding
+  // ---------------------------------------------------------------------------
+  "r2_buckets": [
+    {
+      "binding": "ASSETS_BUCKET",
+      "bucket_name": "${TF_OUTPUT_R2_BUCKET_NAME}",
+    },
+  ],
+
+  // ---------------------------------------------------------------------------
+  // Environment variables available at runtime
+  // ---------------------------------------------------------------------------
+  "vars": {
+    "ENVIRONMENT": "production",
+  },
+
+  // ---------------------------------------------------------------------------
+  // Observability
+  // ---------------------------------------------------------------------------
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+  },
+}

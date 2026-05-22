@@ -53,15 +53,15 @@ and user management. Add per-PR preview environment provisioning (the item defer
 - [ ] **Migration 0002** — Create `user_preferences` table (see Schema Changes)
 - [ ] Add Drizzle schema definitions in `apps/worker/src/db/schema.ts` for both tables
 - [ ] Add query helpers: `upsertUser(sub, email, name, avatarUrl)`, `getUserById(id)`,
-  `setUserRole(actorId, targetId, role)`, `deleteUser(actorId, targetId)`,
-  `insertAuditEntry(actorId, action, targetId, payload)`,
-  `listUsers(page, limit, sort, order, q)`, `getUserPreferences(userId)`, `setUserPreferences(userId, prefs)`
+      `setUserRole(actorId, targetId, role)`, `deleteUser(actorId, targetId)`,
+      `insertAuditEntry(actorId, action, targetId, payload)`,
+      `listUsers(page, limit, sort, order, q)`, `getUserPreferences(userId)`, `setUserPreferences(userId, prefs)`
 
 ### Authentication middleware
 
 - [ ] Install `@adrianhall/cloudflare-auth` (pinned SHA) in `apps/worker/package.json`
 - [ ] Define `AUTH_POLICIES: PathPolicy[]` in `apps/worker/src/middleware/auth.ts`:
-  public: `/api/health`, `/api/version`, `/share/.*`; protected: all other `/api/.*`
+      public: `/api/health`, `/api/version`, `/share/.*`; protected: all other `/api/.*`
 - [ ] Mount `developerAuthentication({ policies: AUTH_POLICIES })` as the first middleware in `index.ts`
 - [ ] Mount `cloudflareAccess({ policies: AUTH_POLICIES, teamDomain: env.CLOUDFLARE_TEAM_DOMAIN })` as the second middleware
 - [ ] Add wrangler ASSETS config entry for `/_auth/*` in `run_worker_first` (already in template from Phase 01; verify)
@@ -153,15 +153,15 @@ CREATE TABLE user_preferences (
 
 ## API Additions
 
-| Method | Path | Auth | Purpose |
-|---|---|---|---|
-| `GET` | `/api/me` | Required | Current user profile |
-| `GET` | `/api/me/preferences` | Required | User preferences |
-| `PUT` | `/api/me/preferences` | Required | Update user preferences |
-| `GET` | `/api/admin/users` | Admin | Paginated user list |
-| `PATCH` | `/api/admin/users/:id/role` | Admin | Promote or demote user |
-| `DELETE` | `/api/admin/users/:id` | Admin | Delete user |
-| `GET` | `/api/admin/audit` | Admin | Paginated audit log |
+| Method   | Path                        | Auth     | Purpose                 |
+| -------- | --------------------------- | -------- | ----------------------- |
+| `GET`    | `/api/me`                   | Required | Current user profile    |
+| `GET`    | `/api/me/preferences`       | Required | User preferences        |
+| `PUT`    | `/api/me/preferences`       | Required | Update user preferences |
+| `GET`    | `/api/admin/users`          | Admin    | Paginated user list     |
+| `PATCH`  | `/api/admin/users/:id/role` | Admin    | Promote or demote user  |
+| `DELETE` | `/api/admin/users/:id`      | Admin    | Delete user             |
+| `GET`    | `/api/admin/audit`          | Admin    | Paginated audit log     |
 
 ## Test Plan
 
@@ -198,47 +198,47 @@ CREATE TABLE user_preferences (
 ## Manual Tests
 
 - [ ] **Dev login flow** — `npm start`. Open `http://localhost:8787`. Confirm redirect to `/_auth/login`.
-  Enter any email address. Confirm redirect back to the app with the profile widget showing that email.
+      Enter any email address. Confirm redirect back to the app with the profile widget showing that email.
 - [ ] **Protected route 401** — `curl -s http://localhost:8787/api/me` with no cookie or header.
-  Confirm HTTP 401 and `{ ok: false, error: { code: "UNAUTHENTICATED" } }`.
+      Confirm HTTP 401 and `{ ok: false, error: { code: "UNAUTHENTICATED" } }`.
 - [ ] **Seed admin promotion** — Set `SEED_ADMIN_EMAIL=your@email.com` in `.dev.vars`. Log in with that
-  email via the dev login flow. Confirm `curl http://localhost:8787/api/me` returns `role: "admin"`.
-  Log in with a different email. Confirm `role: "user"`.
+      email via the dev login flow. Confirm `curl http://localhost:8787/api/me` returns `role: "admin"`.
+      Log in with a different email. Confirm `role: "user"`.
 - [ ] **Admin panel access** — Logged in as admin, navigate to `/admin`. Confirm the user list renders.
-  Log out, log in as a non-admin user, navigate to `/admin`. Confirm redirect to `/`.
+      Log out, log in as a non-admin user, navigate to `/admin`. Confirm redirect to `/`.
 - [ ] **User list sort and search** — In the admin panel, click the "Email" column header. Confirm the
-  list re-sorts. Type a partial email in the search box. Confirm the list filters correctly.
+      list re-sorts. Type a partial email in the search box. Confirm the list filters correctly.
 - [ ] **Promote/demote** — As admin, promote a non-admin user to admin. Confirm their role badge
-  changes. Demote them back. Confirm the change. Verify both actions appear in the audit log.
+      changes. Demote them back. Confirm the change. Verify both actions appear in the audit log.
 - [ ] **Cannot delete self** — As admin, try to delete your own row. Confirm the delete button is
-  disabled or produces a 403 error.
+      disabled or produces a 403 error.
 - [ ] **Audit log** — Navigate to the audit log tab. Confirm the promote and demote actions from the
-  previous test appear with correct actor, target, action, and timestamp.
+      previous test appear with correct actor, target, action, and timestamp.
 - [ ] **CSRF rejection** — Using curl, send a mutating request without `Origin` or `X-CSRF-Token`:
-  `curl -X DELETE http://localhost:8787/api/admin/users/some-id`. Confirm HTTP 403.
+      `curl -X DELETE http://localhost:8787/api/admin/users/some-id`. Confirm HTTP 403.
 - [ ] **Session expiry banner** — Manually craft a dev JWT with `exp = now + 20 minutes` using the
-  dev secret. Set it as the `CF_Authorization` cookie in the browser. Reload the app. Confirm the
-  session-expiry banner appears with a re-authenticate link.
+      dev secret. Set it as the `CF_Authorization` cookie in the browser. Reload the app. Confirm the
+      session-expiry banner appears with a re-authenticate link.
 - [ ] **Rate limit** — Send 25 rapid-fire requests to `POST /api/shares` (stub endpoint is ok; use
-  any POST /api/admin route). Confirm the 21st+ request returns HTTP 429.
+      any POST /api/admin route). Confirm the 21st+ request returns HTTP 429.
 - [ ] **Preview environment** — Open a draft PR. Confirm the `preview.yml` GitHub Actions job runs.
-  Confirm a new isolated D1 database and KV namespace appear in the Cloudflare dashboard for that PR.
-  Close the PR. Confirm the resources are destroyed.
+      Confirm a new isolated D1 database and KV namespace appear in the Cloudflare dashboard for that PR.
+      Close the PR. Confirm the resources are destroyed.
 
 ## Acceptance Criteria
 
-| Story | How we verify |
-|---|---|
-| **F2-US1** — Protected routes require Access auth; 401 for unauthenticated | Manual 401 test above |
-| **F2-US2** — First admin via `SEED_ADMIN_EMAIL` | Seed admin promotion manual test |
-| **F2-US3** — Paginated, sortable, searchable user list at `/admin` | Admin panel manual tests |
-| **F2-US4** — Promote/demote/delete; cannot target self | Cannot-delete-self manual test |
-| **F2-US5** — User list shows diagram count and share count | Columns visible (values are 0; counts wired in Phase 05) |
-| **F2-US6** — Profile widget shows name, email, avatar | Profile widget shown in dev login E2E test |
+| Story                                                                                  | How we verify                                                 |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| **F2-US1** — Protected routes require Access auth; 401 for unauthenticated             | Manual 401 test above                                         |
+| **F2-US2** — First admin via `SEED_ADMIN_EMAIL`                                        | Seed admin promotion manual test                              |
+| **F2-US3** — Paginated, sortable, searchable user list at `/admin`                     | Admin panel manual tests                                      |
+| **F2-US4** — Promote/demote/delete; cannot target self                                 | Cannot-delete-self manual test                                |
+| **F2-US5** — User list shows diagram count and share count                             | Columns visible (values are 0; counts wired in Phase 05)      |
+| **F2-US6** — Profile widget shows name, email, avatar                                  | Profile widget shown in dev login E2E test                    |
 | **F2-US7** — DEV_MODE bypass; production fails closed without `CLOUDFLARE_TEAM_DOMAIN` | Dev login manual test; verify 401 in local without `DEV_MODE` |
-| **F2-US8** — CSRF on all mutating endpoints | CSRF rejection manual test |
-| **F2-US9** — Audit log records actor, target, action, timestamp | Audit log manual test |
-| **F1-US2** — Preview deploys per PR with isolated data, cleaned up on PR close | Preview environment manual test |
+| **F2-US8** — CSRF on all mutating endpoints                                            | CSRF rejection manual test                                    |
+| **F2-US9** — Audit log records actor, target, action, timestamp                        | Audit log manual test                                         |
+| **F1-US2** — Preview deploys per PR with isolated data, cleaned up on PR close         | Preview environment manual test                               |
 
 ## Rollout / Rollback
 
@@ -252,6 +252,6 @@ be reverted: `DROP TABLE user_preferences; DROP TABLE admin_audit; DROP TABLE us
 ## Open Questions
 
 - [ ] Should `avatar_url` be populated from CF Access JWT claims if available, or always left null until
-  a profile-edit UI exists? Recommendation: null for now; enrich in Phase 05 when preferences are wired.
+      a profile-edit UI exists? Recommendation: null for now; enrich in Phase 05 when preferences are wired.
 - [ ] Preview environment isolation: should the preview D1 database be seeded with the `SEED_ADMIN_EMAIL`
-  user, or left completely empty? Recommendation: empty — each preview is independent.
+      user, or left completely empty? Recommendation: empty — each preview is independent.

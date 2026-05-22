@@ -116,44 +116,44 @@ None. All export operations are purely client-side.
 ## Manual Tests
 
 - [ ] **PNG export** — Open a diagram with at least 5 nodes. Click "Export → PNG". Confirm a `.png`
-  file downloads. Open the PNG. Confirm all nodes are visible with correct icons and labels. Confirm
-  there is visible padding around the edges. Confirm the image is at least 400×400 px (check with
-  image properties).
+      file downloads. Open the PNG. Confirm all nodes are visible with correct icons and labels. Confirm
+      there is visible padding around the edges. Confirm the image is at least 400×400 px (check with
+      image properties).
 - [ ] **PNG minimum size** — Create a diagram with only one small node. Export as PNG. Confirm the
-  output is exactly 400×400 px (or larger with padding, but never smaller).
+      output is exactly 400×400 px (or larger with padding, but never smaller).
 - [ ] **SVG export** — Click "Export → SVG". Open the downloaded `.svg` file in a browser. Confirm
-  the diagram renders with correct icons, colours, and labels. Confirm no broken image placeholders
-  (all icons should be inlined or embedded).
+      the diagram renders with correct icons, colours, and labels. Confirm no broken image placeholders
+      (all icons should be inlined or embedded).
 - [ ] **JSON export** — Click "Export → JSON". Open the `.json` file. Confirm it contains `nodes`
-  and `edges` arrays in the blueprint-compatible format. Paste the JSON into the admin blueprint
-  create form (Phase 06). Confirm "Validate" passes.
+      and `edges` arrays in the blueprint-compatible format. Paste the JSON into the admin blueprint
+      create form (Phase 06). Confirm "Validate" passes.
 - [ ] **JSON modal** — Click the `</>` button in the status bar. Confirm the modal opens with
-  formatted JSON. Click "Copy". Paste into a text editor and confirm the full JSON is present.
-  Click "Download" and confirm the JSON file downloads. Close with ESC. Confirm the modal closes.
+      formatted JSON. Click "Copy". Paste into a text editor and confirm the full JSON is present.
+      Click "Download" and confirm the JSON file downloads. Close with ESC. Confirm the modal closes.
 - [ ] **Print — light theme forced** — Switch to dark mode. Click the print button (or `Ctrl+P`).
-  In the print preview, confirm the diagram renders in the light theme regardless of the current
-  app theme.
+      In the print preview, confirm the diagram renders in the light theme regardless of the current
+      app theme.
 - [ ] **Print — landscape orientation** — Create a wide diagram (many nodes connected left to right).
-  Open the print preview. Confirm the `@page` orientation is set to landscape.
+      Open the print preview. Confirm the `@page` orientation is set to landscape.
 - [ ] **Print — portrait orientation** — Create a tall diagram (many nodes stacked top to bottom).
-  Open the print preview. Confirm the `@page` orientation is set to portrait.
+      Open the print preview. Confirm the `@page` orientation is set to portrait.
 - [ ] **Print — panels hidden** — In the print preview, confirm the palette panel, properties panel,
-  toolbar, and status bar are all hidden. Only the canvas should be visible.
+      toolbar, and status bar are all hidden. Only the canvas should be visible.
 - [ ] **Print from read-only viewer** — Open a share URL (Phase 07). Click the print button in the
-  viewer toolbar. Confirm the same print behavior applies (light theme forced, panels hidden, correct
-  orientation).
+      viewer toolbar. Confirm the same print behavior applies (light theme forced, panels hidden, correct
+      orientation).
 - [ ] **Export from read-only viewer** — Open a share URL. Use the Export dropdown to download PNG,
-  SVG, and JSON. Confirm all three downloads work correctly.
+      SVG, and JSON. Confirm all three downloads work correctly.
 
 ## Acceptance Criteria
 
-| Story | How we verify |
-|---|---|
-| **F8-US1** — PNG with padding; minimum 400×400 | PNG export + minimum size manual tests |
-| **F8-US2** — SVG export with correct rendering | SVG export manual test |
-| **F8-US3** — JSON export in blueprint-compatible format | JSON export manual test + JSON validation |
+| Story                                                                 | How we verify                                       |
+| --------------------------------------------------------------------- | --------------------------------------------------- |
+| **F8-US1** — PNG with padding; minimum 400×400                        | PNG export + minimum size manual tests              |
+| **F8-US2** — SVG export with correct rendering                        | SVG export manual test                              |
+| **F8-US3** — JSON export in blueprint-compatible format               | JSON export manual test + JSON validation           |
 | **F8-US4** — Print with auto-detected orientation; forced light theme | Print landscape/portrait + light-theme manual tests |
-| **F8-US5** — `</>` JSON modal in status bar | JSON modal manual test |
+| **F8-US5** — `</>` JSON modal in status bar                           | JSON modal manual test                              |
 
 ## Rollout / Rollback
 
@@ -164,7 +164,7 @@ None. All export operations are purely client-side.
 ## Open Questions
 
 - [ ] SVG icon embedding: React Flow's `toSvg()` may not automatically inline `<use href>` sprite
-  references. If the exported SVG shows broken icons when opened standalone, we will need to inline
-  each icon's `<path>` data into the SVG output. Plan for this fallback during implementation.
+      references. If the exported SVG shows broken icons when opened standalone, we will need to inline
+      each icon's `<path>` data into the SVG output. Plan for this fallback during implementation.
 - [ ] `html2canvas` vs React Flow's `toSvg()` + canvas conversion: Phase 05 chose one for thumbnails
-  — confirm the same library is used here for PNG export to avoid two competing approaches.
+      — confirm the same library is used here for PNG export to avoid two competing approaches.
