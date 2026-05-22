@@ -37,6 +37,7 @@
     "postprovision": "npm run render-wrangler",
     "render-wrangler": "tsx scripts/render-wrangler.ts",
     "migrate": "tsx scripts/migrate.ts",
+    "predeploy": "npm run render-wrangler",
     "deploy": "wrangler deploy --config wrangler.jsonc",
     "rebuild-native": "node scripts/postinstall.mjs",
     "prepare": "husky"
