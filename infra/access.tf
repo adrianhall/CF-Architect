@@ -2,19 +2,16 @@
 # Cloudflare Access — application + allow policy
 #
 # Protects the CF-Architect Worker so that only authenticated users whose
-# email matches ALLOWED_EMAIL_DOMAIN can access it. The `aud` attribute
-# (audience tag) is read from the Terraform output and injected into
-# wrangler.jsonc so the Worker middleware can validate JWTs.
+# email matches ALLOWED_EMAIL_DOMAIN AND who authenticated via the
+# configured IdP (CLOUDFLARE_ACCESS_IDP_ID) can access it.
 #
-# Pre-requisites:
-#   - WORKER_DOMAIN set in .env (e.g. cf-architect-production.<sub>.workers.dev)
-#   - ALLOWED_EMAIL_DOMAIN set in .env (e.g. example.com)
+# The `aud` attribute (audience tag) is captured as a Terraform output and
+# injected into wrangler.jsonc so the Worker middleware can validate JWTs.
 #
-# Two-step first provisioning:
-#   1. Run `npm run provision` without WORKER_DOMAIN to create the Worker
-#      and note its workers.dev URL from the Cloudflare dashboard.
-#   2. Set WORKER_DOMAIN in .env and re-run `npm run provision`.
-#      Terraform will create the Access application on the second run.
+# Pre-requisites (all set in .env before running `npm run provision`):
+#   - WORKER_DOMAIN          — workers.dev or custom domain to protect
+#   - ALLOWED_EMAIL_DOMAIN   — org email domain (e.g. example.com)
+#   - CLOUDFLARE_ACCESS_IDP_ID — ID of the configured IdP in Zero Trust
 # ---------------------------------------------------------------------------
 
 resource "cloudflare_zero_trust_access_application" "app" {
@@ -22,10 +19,13 @@ resource "cloudflare_zero_trust_access_application" "app" {
   name       = "CF-Architect (${var.environment})"
   type       = "self_hosted"
 
+  # Restrict authentication to the single configured IdP.
+  # Prevents users from choosing an alternative IdP at login.
+  allowed_idps = [data.dotenv.env.env["CLOUDFLARE_ACCESS_IDP_ID"]]
+
   # Protect the Worker domain.
-  # For workers.dev deployments set WORKER_DOMAIN to:
-  #   <worker-name>.<account-workers-subdomain>.workers.dev
-  # For custom domains set it to the domain or path (wildcards supported).
+  # For workers.dev: <worker-name>.<account-workers-subdomain>.workers.dev
+  # For custom domains: the full domain or path (wildcards supported).
   destinations = [
     {
       type = "public"
@@ -33,7 +33,7 @@ resource "cloudflare_zero_trust_access_application" "app" {
     }
   ]
 
-  # JWT session length — must be long enough for a working day.
+  # JWT session length — long enough for a working day.
   session_duration = "24h"
 
   # Set HttpOnly=true on the CF_Authorization cookie.
@@ -44,11 +44,17 @@ resource "cloudflare_zero_trust_access_application" "app" {
   skip_interstitial = true
 
   # ---------------------------------------------------------------------------
-  # Inline allow policy — users whose email is @<ALLOWED_EMAIL_DOMAIN>
+  # Inline allow policy
+  # Users must satisfy BOTH conditions (Cloudflare Access AND semantics):
+  #   include — at least one must match  → email is @<ALLOWED_EMAIL_DOMAIN>
+  #   require — all must match           → authenticated via the configured IdP
+  #
+  # `allowed_idps` above already restricts the IdP at the application level;
+  # `require.login_method` adds defence-in-depth at the policy level.
   # ---------------------------------------------------------------------------
   policies = [
     {
-      name       = "Allow @${data.dotenv.env.env["ALLOWED_EMAIL_DOMAIN"]} users"
+      name       = "Allow @${data.dotenv.env.env["ALLOWED_EMAIL_DOMAIN"]} via IdP"
       precedence = 1
       decision   = "allow"
 
@@ -56,6 +62,14 @@ resource "cloudflare_zero_trust_access_application" "app" {
         {
           email_domain = {
             domain = data.dotenv.env.env["ALLOWED_EMAIL_DOMAIN"]
+          }
+        }
+      ]
+
+      require = [
+        {
+          login_method = {
+            id = data.dotenv.env.env["CLOUDFLARE_ACCESS_IDP_ID"]
           }
         }
       ]
