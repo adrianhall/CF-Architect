@@ -61,7 +61,7 @@ Cloudflare developer platform.
 
 ## 3. Repository Layout
 
-```
+```text
 /
 ├── .env.example                  # All required environment variables (documented, no values)
 ├── .dev.vars.example             # Local-only vars (DEV_MODE, etc.) — never committed
@@ -148,19 +148,16 @@ Cloudflare developer platform.
 
 ### First-time provisioning
 
-```
-1. cp .env.example .env              # Fill in CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN, …
-2. npm install                        # Uses npm ci semantics; postinstall allowlist runs
-3. npm run provision                  # terraform init + apply (postprovision hook auto-runs next)
-   # postprovision hook auto-runs:
-4.   npm run render-wrangler          # Substitutes TF outputs → wrangler.jsonc
-5. npm run migrate                    # Applies Drizzle migrations to remote D1
-6. npm run deploy                     # wrangler deploy
-```
+1. `cp .env.example .env` — Fill in `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, …
+2. `npm install` — Uses `npm ci` semantics; postinstall allowlist runs
+3. `npm run provision` — `terraform init + apply`
+4. `npm run render-wrangler` *(auto-runs via `postprovision` hook)* — Substitutes TF outputs → `wrangler.jsonc`
+5. `npm run migrate` — Applies Drizzle migrations to remote D1
+6. `npm run deploy` — `wrangler deploy`
 
 ### Subsequent deploys
 
-```
+```bash
 npm run migrate && npm run deploy
 ```
 
@@ -168,7 +165,7 @@ Schema migrations always run before deploy, satisfying F1-US5 (idempotent, migra
 
 ### Local development
 
-```
+```bash
 npm start    # runs: npm run build:web && wrangler dev
 ```
 
@@ -178,18 +175,22 @@ separate terminals; a proxy is configured in `vite.config.ts` for `/api/*`.
 
 ### CI pipeline
 
-```
-On every push / PR:
-  npm run check        # types + lint + format + audit (parallel)
-  npm run test:ci      # unit tests across all projects, with coverage (no browser)
-  npm run build        # web + worker (parallel)
-  lockfile-lint
-  osv-scanner
+```mermaid
+flowchart TD
+    Trigger{{"Trigger"}} --> Push["push / PR"]
+    Trigger --> Merge["merge to main /<br/>manual dispatch"]
 
-On merge to main / manual dispatch:
-  All CI checks pass
-  npm run migrate      # remote D1
-  npm run deploy       # wrangler deploy
+    Push --> Check["npm run check"]
+    Check -.- C1["types"] & C2["lint"] & C3["format"] & C4["audit"]
+    Push --> Test["npm run test:ci<br/><i>unit tests + coverage</i>"]
+    Push --> Build["npm run build<br/><i>web + worker (parallel)</i>"]
+    Push --> Lock["lockfile-lint"]
+    Push --> OSV["osv-scanner"]
+
+    Merge --> Gate{"All CI checks pass?"}
+    Gate -- yes --> Migrate["npm run migrate<br/><i>remote D1</i>"]
+    Migrate --> Deploy["npm run deploy<br/><i>wrangler deploy</i>"]
+    Gate -- no --> Stop["fail"]
 ```
 
 ---
@@ -277,6 +278,7 @@ The client shows "Another session saved changes — reload?" (Design Notes §Con
 ### CSRF
 
 All mutating endpoints (`POST`, `PUT`, `PATCH`, `DELETE`) require either:
+
 - An `Origin` header matching the deployment domain, **or**
 - A `X-CSRF-Token` header matching the double-submit cookie value.
 
@@ -290,8 +292,11 @@ Public endpoints (`GET /api/health`, `GET /api/version`, `GET /share/:token`) ar
 `PathPolicy[]` array. Public paths: `/api/health`, `/api/version`, `/share/:token`. All other
 `/api/*` paths require authentication.
 
-```
-Request → developerAuthentication → cloudflareAccess → route handler
+```mermaid
+flowchart LR
+    Req["Incoming Request"] --> Dev["developerAuthentication<br/><i>dev: serve /_auth/login + set cookie<br/>prod: no-op</i>"]
+    Dev --> Access["cloudflareAccess<br/><i>validate JWT; set userEmail + userSub on context</i>"]
+    Access --> Handler["Route handler"]
 ```
 
 - **`developerAuthentication`** — in production, detects existing CF Access headers and no-ops.
@@ -344,6 +349,7 @@ exfiltrate tokens or environment variables.
 ### Layer 3 — Dependency update cooldown
 
 Renovate is configured with:
+
 - `minimumReleaseAge: "14d"` — a version published today is invisible to Renovate PRs for 14 days.
 - Minor/patch updates grouped into a single weekly PR.
 - Major updates get individual PRs with mandatory manual review.
